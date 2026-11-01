@@ -29,6 +29,16 @@ class Settings(BaseSettings):
     evidence_ttl_hours: int = Field(default=6, ge=1, le=72)
     evidence_timeout_seconds: float = Field(default=25, ge=1, le=60)
     advice_timeout_seconds: float = Field(default=180, ge=10, le=300)
+    vision_enabled: bool = True
+    vision_model: str | None = None
+    vision_base_url: str | None = None
+    vision_api_key: SecretStr | None = None
+    vision_api_mode: Literal["responses", "chat_completions"] | None = None
+    vision_detail: Literal["high", "original", "auto"] = "high"
+    attachment_max_bytes: int = Field(default=8 * 1024 * 1024, ge=1024, le=32 * 1024 * 1024)
+    attachment_max_pixels: int = Field(default=20_000_000, ge=10000, le=40_000_000)
+    attachment_retention_hours: int = Field(default=168, ge=1, le=720)
+    visual_draft_hours: int = Field(default=24, ge=1, le=168)
 
     @field_validator("base_url")
     @classmethod
@@ -51,3 +61,15 @@ class Settings(BaseSettings):
     @property
     def configured(self) -> bool:
         return bool(self.api_key.get_secret_value().strip())
+
+    @field_validator("vision_base_url")
+    @classmethod
+    def validate_vision_base_url(cls, value):
+        return cls.validate_base_url(value) if value else None
+
+    def for_vision(self):
+        return self.model_copy(update={"model": self.vision_model or self.model,
+            "base_url": self.vision_base_url or self.base_url,
+            "api_key": self.vision_api_key or self.api_key,
+            "api_mode": self.vision_api_mode or self.api_mode,
+            "max_output_tokens": max(8192, self.max_output_tokens)})

@@ -46,7 +46,7 @@ class ProtectedAssertion(BaseModel):
 class AnswerEnvelope(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
 
-    kind: Literal["chat", "calculation", "advice", "state", "clarification"]
+    kind: Literal["chat", "calculation", "advice", "state", "clarification", "visual"]
     context: ResponseContext
     protected_payload: dict = Field(default_factory=dict)
     blocks: tuple[AnswerBlock, ...]

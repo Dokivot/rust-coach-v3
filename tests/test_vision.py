@@ -1,0 +1,529 @@
+import asyncio
+import base64
+import io
+import json
+from datetime import datetime, timedelta, timezone
+from uuid import uuid4
+
+import httpx
+import pytest
+from fastapi.testclient import TestClient
+from PIL import Image
+
+from rust_coach.app import create_app
+from rust_coach.attachments.store import normalize_image
+from rust_coach.config import Settings
+from rust_coach.contracts import AppError, ImagePart, ModelMessage, ModelReply, TextPart
+from rust_coach.llm import CompatibleChatModel
+from rust_coach.player_state.schemas import ScopeCreate, StateUpdate
+from rust_coach.vision.schemas import VisualConfirmation
+from rust_coach.vision.drafts import ImageStateUpdate, VisualDraftStore
+from rust_coach.calculations import Calculator
+from rust_coach.advice.service import AdviceService
+
+
+def png(color="green", size=(320, 180)):
+    output = io.BytesIO()
+    Image.new("RGB", size, color).save(output, format="PNG")
+    return output.getvalue()
+
+
+class VisionModel:
+    def __init__(self):
+        self.calls = []
+        self.task = "observe"
+        self.coverage = "full_view"
+        self.kind = "inventory"
+        self.quantity = 100
+        self.invalid = 0
+
+    async def complete(self, messages):
+        self.calls.append(messages)
+        if self.invalid:
+            self.invalid -= 1
+            return ModelReply(content="invalid JSON")
+        parts = next(message.content for message in messages if isinstance(message.content, list))
+        context = json.loads(parts[0].text)
+        identifier = context["images"][0]["attachment_id"]
+        observation = {"id": "item_a", "attachment_id": identifier, "kind": self.kind,
+            "region_kind": {"inventory": "backpack", "equipment": "equipped", "base": "scene"}[self.kind],
+            "slot": "row_1_col_1", "label": "硫磺" if self.kind == "inventory" else "局部对象",
+            "item_id": "sulfur" if self.kind == "inventory" else None,
+            "quantity": self.quantity if self.kind == "inventory" else None,
+            "quantity_status": "readable" if self.kind == "inventory" else "unknown",
+            "bbox": [0.1, 0.2, 0.4, 0.6], "description": "截图局部可见"}
+        result = {"task": self.task, "observations": [observation], "inventory_coverage": self.coverage}
+        if self.task == "craft":
+            result["calculation"] = {"operation": "craft", "goals": {"gunpowder": 10}}
+        return ModelReply(content=json.dumps(result), usage={"total_tokens": 12})
+
+
+@pytest.fixture
+def setup(tmp_path):
+    settings = Settings(_env_file=None, api_key="test", search_provider="off", database_path=tmp_path / "vision.sqlite3")
+    model = VisionModel()
+    application = create_app(settings, model)
+    with TestClient(application) as client:
+        vision = application.state.vision
+        vision.drafts.metadata("probe:" + vision.config_id, {"status": "passed"})
+        owner = client.post("/api/conversations", json={}).json()["id"]
+        yield client, application, model, owner
+
+
+def upload(client, owner, raw=None):
+    response = client.post(f"/api/conversations/{owner}/attachments", files={"file": ("arbitrary.jpg", raw or png(), "image/jpeg")})
+    assert response.status_code == 201, response.text
+    return response.json()
+
+
+def analyze(client, owner, attachment, **kwargs):
+    response = client.post(f"/api/conversations/{owner}/messages", json={"request_id": str(uuid4()), "message": "识别截图",
+        "attachment_ids": [attachment["id"]], **kwargs})
+    assert response.status_code == 200, response.text
+    return response.json()
+
+
+def confirmation(turn, **kwargs):
+    visual = turn["visual"]
+    return {"confirmation_id": str(uuid4()), "draft_revision": visual["draft_revision"], "expected_state_revision": visual["scope_revision"],
+        "observed_at": datetime.now(timezone.utc).isoformat(), "subject": "self", "inventory_complete": True,
+        "edits": [{"observation_id": item["id"], "accepted": True} for item in visual["observations"]], **kwargs}
+
+
+def confirm(client, owner, turn, payload):
+    return client.post(f"/api/conversations/{owner}/visual-drafts/{turn['visual']['draft_id']}/confirm", json=payload)
+
+
+def bind(application, owner):
+    states = application.state.runtime.player_states
+    scope = states.create(ScopeCreate(server_id="server", wipe_id="wipe", label="test"))["scope"]["id"]
+    states.bind(owner, scope)
+    return states, scope
+
+
+def test_upload_content_sniffing_ownership_delete_and_thumbnail(setup):
+    client, application, model, owner = setup
+    attachment = upload(client, owner)
+    assert client.get(attachment["url"]).headers["content-type"] == "image/png"
+    assert Image.open(io.BytesIO(client.get(attachment["thumbnail_url"]).content)).size == (320, 180)
+    other = client.post("/api/conversations", json={}).json()["id"]
+    assert client.get(attachment["url"].replace(owner, other)).status_code == 404
+    assert client.delete(attachment["url"].replace(owner, other)).status_code == 404
+    assert client.delete(attachment["url"]).status_code == 204
+    assert client.get(attachment["url"]).status_code == 410
+    assert not list(application.state.attachments.root.glob("*.png"))
+
+
+@pytest.mark.parametrize("raw,status", [(b"<svg>fake</svg>", 422), (b"GIF89a", 422)])
+def test_invalid_files(setup, raw, status):
+    client, _, _, owner = setup
+    assert client.post(f"/api/conversations/{owner}/attachments", files={"file": ("x.png", raw)}).status_code == status
+
+
+def test_limits_and_animation():
+    with pytest.raises(AppError) as error:
+        normalize_image(png(), 10, 100000)
+    assert error.value.status == 413
+    with pytest.raises(AppError) as error:
+        normalize_image(png(), 100000, 100)
+    assert error.value.code == "image_dimensions"
+    output = io.BytesIO()
+    Image.new("RGB", (10, 10), "red").save(output, format="PNG", save_all=True, append_images=[Image.new("RGB", (10, 10), "blue")])
+    with pytest.raises(AppError) as error:
+        normalize_image(output.getvalue(), 100000, 100000)
+    assert error.value.code == "image_format"
+
+
+def test_streaming_upload_limit_returns_error(tmp_path):
+    settings = Settings(_env_file=None, database_path=tmp_path / "test.sqlite3", attachment_max_bytes=1024)
+    with TestClient(create_app(settings), raise_server_exceptions=False) as client:
+        owner = client.post("/api/conversations", json={}).json()["id"]
+        response = client.post(f"/api/conversations/{owner}/attachments", content=iter([b"x" * 50000, b"y" * 50000]),
+            headers={"content-type": "multipart/form-data; boundary=test"})
+        assert response.status_code in {400, 413}
+        response = client.post(f"/api/conversations/{owner}/attachments", files={"file": ("x.png", b"x" * 100000)})
+        assert response.status_code == 413, response.text
+
+
+def test_unconfirmed_then_confirmed_calc_replay_and_cache(setup):
+    client, application, model, owner = setup
+    model.task = "craft"
+    attachment = upload(client, owner)
+    turn = analyze(client, owner, attachment)
+    assert turn["calculation"] is None
+    assert turn["visual"]["confirmed"] is False
+    payload = confirmation(turn)
+    response = confirm(client, owner, turn, payload)
+    assert response.status_code == 200, response.text
+    result = response.json()
+    assert result["receipt"]["saved"] is False
+    assert result["turn"]["calculation"]["input"]["inventory"] == {"sulfur": 100}
+    assert result["turn"]["calculation"]["visual_usage"]["draft_id"] == turn["visual"]["draft_id"]
+    assert confirm(client, owner, turn, payload).json() == result
+    assert confirm(client, owner, turn, {**payload, "subject": "opponent"}).status_code == 409
+    assert len(model.calls) == 1
+    cached = analyze(client, owner, upload(client, owner))
+    assert cached["visual"]["cache_hit"] is True
+    assert cached["visual"]["observations"][0]["attachment_id"] != attachment["id"]
+    assert len(model.calls) == 1
+
+
+def test_atomic_save_and_revision_conflict(setup):
+    client, application, _, owner = setup
+    states, scope = bind(application, owner)
+    turn = analyze(client, owner, upload(client, owner))
+    payload = confirmation(turn, action="save_to_profile", continue_task=False)
+    result = confirm(client, owner, turn, payload)
+    assert result.status_code == 200, result.text
+    assert states.get(scope)["revision"] == 1
+    assert states.get(scope)["containers"]["backpack"]["items"]["sulfur"]["value"] == 100
+    record = next(iter(states.get(scope)["visual_observations"].values()))
+    assert record["source"] == "image_confirmed"
+    assert record["evidence_refs"][0]["sha256"]
+    assert confirm(client, owner, turn, payload).json() == result.json()
+    assert states.get(scope)["revision"] == 1
+    other = analyze(client, owner, upload(client, owner))
+    states.update(scope, StateUpdate(observation_id=uuid4(), expected_revision=1, observed_at=datetime.now(timezone.utc), changes={"facts": {"technology.workbench": 1}}))
+    assert confirm(client, owner, other, confirmation(other, action="save_to_profile")).status_code == 409
+    draft = application.state.vision.drafts.get(owner, other["visual"]["draft_id"])
+    assert draft["status"] == "pending"
+    assert states.get(scope)["revision"] == 2
+
+
+def test_failed_save_rolls_back_draft_and_state(setup):
+    client, application, _, owner = setup
+    states, scope = bind(application, owner)
+    turn = analyze(client, owner, upload(client, owner))
+    response = confirm(client, owner, turn, confirmation(turn, action="save_to_profile", subject="opponent"))
+    assert response.status_code == 422
+    assert states.get(scope)["revision"] == 0
+    assert application.state.vision.drafts.get(owner, turn["visual"]["draft_id"])["status"] == "pending"
+
+
+def test_partial_stacks_never_patch_aggregate(setup):
+    client, application, model, owner = setup
+    model.coverage = "partial"
+    model.task = "craft"
+    states, scope = bind(application, owner)
+    turn = analyze(client, owner, upload(client, owner))
+    assert confirm(client, owner, turn, confirmation(turn)).status_code == 422
+    result = confirm(client, owner, turn, confirmation(turn, inventory_complete=False, action="save_to_profile"))
+    assert result.status_code == 200, result.text
+    assert result.json()["turn"]["calculation"]["input"]["inventory"] is None
+    assert states.get(scope)["containers"] == {}
+    assert len(states.get(scope)["visual_observations"]) == 1
+
+
+@pytest.mark.parametrize("kind", ["base", "equipment"])
+def test_non_inventory_observations_saved_without_inventing_stats(setup, kind):
+    client, application, model, owner = setup
+    model.kind = kind
+    model.coverage = "partial"
+    states, scope = bind(application, owner)
+    turn = analyze(client, owner, upload(client, owner))
+    result = confirm(client, owner, turn, confirmation(turn, inventory_complete=False, action="save_to_profile", continue_task=False))
+    assert result.status_code == 200, result.text
+    snapshot = states.get(scope)
+    assert snapshot["facts"] == snapshot["containers"] == {}
+    assert next(iter(snapshot["visual_observations"].values()))["value"]["kind"] == kind
+    assert states.get(scope, revision=0)["visual_observations"] == {}
+
+
+@pytest.mark.parametrize("change,code", [
+    ({"subject": "opponent", "action": "save_to_profile"}, "visual_save_scope"),
+    ({"edits": [{"observation_id": "wrong", "accepted": True}]}, "visual_incomplete_review"),
+    ({"edits": [{"observation_id": "item_a", "accepted": True, "quantity": None}]}, "visual_unknown_quantity"),
+    ({"observed_at": (datetime.now(timezone.utc) + timedelta(days=1)).isoformat()}, "future_observation"),
+])
+def test_confirmation_rejects_invalid_assumptions(setup, change, code):
+    client, _, _, owner = setup
+    turn = analyze(client, owner, upload(client, owner))
+    response = confirm(client, owner, turn, confirmation(turn, **change))
+    assert response.status_code == 422, response.text
+    assert response.json()["error"]["code"] == code
+
+
+def test_capture_time_cannot_be_refreshed_and_deleted_image_invalidates_draft(setup):
+    client, application, model, owner = setup
+    model.task = "craft"
+    attachment = upload(client, owner)
+    old = (datetime.now(timezone.utc) - timedelta(hours=2)).isoformat()
+    turn = analyze(client, owner, attachment, image_context={attachment["id"]: {"subject": "self", "captured_at": old}})
+    result = confirm(client, owner, turn, confirmation(turn)).json()
+    assert result["receipt"]["observed_at"] == old
+    assert result["continuation_pending"] is True
+    assert result["error"]["code"] == "visual_inventory_not_current"
+    assert client.delete(attachment["url"]).status_code == 204
+    with pytest.raises(AppError) as error:
+        application.state.vision.drafts.get(owner, turn["visual"]["draft_id"])
+    assert error.value.status == 410
+
+
+def test_one_schema_repair_then_stop(setup):
+    client, _, model, owner = setup
+    model.invalid = 1
+    analyze(client, owner, upload(client, owner))
+    assert len(model.calls) == 2
+    model.invalid = 2
+    attachment = upload(client, owner, png("blue"))
+    response = client.post(f"/api/conversations/{owner}/messages", json={"request_id": str(uuid4()), "attachment_ids": [attachment["id"]]})
+    assert response.status_code == 422
+    assert len(model.calls) == 4
+
+
+def test_probe_gate_and_request_ownership(setup):
+    client, application, _, owner = setup
+    attachment = upload(client, owner)
+    other = client.post("/api/conversations", json={}).json()["id"]
+    body = {"request_id": str(uuid4()), "attachment_ids": [attachment["id"]]}
+    assert client.post(f"/api/conversations/{other}/messages", json=body).status_code == 404
+    vision = application.state.vision
+    vision.drafts.metadata("probe:" + vision.config_id, {"status": "failed"})
+    assert client.get("/api/config").json()["vision"]["enabled"] is False
+    assert client.post(f"/api/conversations/{owner}/messages", json=body).status_code == 503
+
+
+@pytest.mark.parametrize("mode", ["responses", "chat_completions"])
+def test_image_transport(mode):
+    calls = []
+    def handle(request):
+        calls.append(json.loads(request.content))
+        if mode == "responses":
+            return httpx.Response(200, json={"status": "completed", "output": [{"type": "message", "role": "assistant", "content": [{"type": "output_text", "text": "ok"}]}]})
+        return httpx.Response(200, json={"choices": [{"message": {"content": "ok"}, "finish_reason": "stop"}]})
+    async def run():
+        settings = Settings(_env_file=None, api_key="test", api_mode=mode)
+        async with httpx.AsyncClient(transport=httpx.MockTransport(handle)) as client:
+            await CompatibleChatModel(settings, client).complete([ModelMessage(role="user", content=[TextPart(text="hello"),
+                ImagePart(data_url="data:image/png;base64," + base64.b64encode(png()).decode())])])
+    asyncio.run(run())
+    content = calls[0]["input" if mode == "responses" else "messages"][0]["content"]
+    assert content[0]["type"] == ("input_text" if mode == "responses" else "text")
+    assert content[1]["type"] == ("input_image" if mode == "responses" else "image_url")
+
+
+@pytest.mark.parametrize("defect", ["different_containers", "different_images", "duplicate_slots", "unknown_item"])
+def test_aggregate_inventory_rejects_ambiguous_inputs(setup, defect):
+    client, application, _, owner = setup
+    turn = analyze(client, owner, upload(client, owner))
+    draft = application.state.vision.drafts.get(owner, turn["visual"]["draft_id"])
+    payload = draft["payload"]
+    original = payload["extraction"]["observations"][0]
+    second = {**original, "id": "item_b", "slot": "row_1_col_2"}
+    if defect == "different_containers":
+        second["region_kind"] = "storage"
+    elif defect == "different_images":
+        second["attachment_id"] = str(uuid4())
+    elif defect == "duplicate_slots":
+        second["slot"] = original["slot"]
+    else:
+        second["item_id"] = None
+    payload["extraction"]["observations"].append(second)
+    request = VisualConfirmation.model_validate(confirmation(turn, edits=[{"observation_id":"item_a"},{"observation_id":"item_b"}]))
+    with pytest.raises(AppError):
+        VisualDraftStore.accept(payload, request, Calculator().catalog)
+
+
+def test_duplicate_images_deduped_and_conflicting_context_rejected(setup):
+    client, _, model, owner = setup
+    first, second = upload(client, owner), upload(client, owner)
+    turn = analyze(client, owner, first, attachment_ids=[first["id"], second["id"]])
+    assert len(turn["visual"]["attachments"]) == 1
+    assert len(model.calls) == 1
+    response = client.post(f"/api/conversations/{owner}/messages",json={"request_id":str(uuid4()),
+        "attachment_ids":[first["id"],second["id"]],"image_context":{first["id"]:{"subject":"self"},second["id"]:{"subject":"opponent"}}})
+    assert response.status_code == 422
+    assert response.json()["error"]["code"] == "duplicate_image_context"
+
+
+def test_save_success_survives_continuation_failure(setup, monkeypatch):
+    client, application, _, owner = setup
+    states, scope = bind(application, owner)
+    turn = analyze(client, owner, upload(client, owner))
+    original_chat = application.state.runtime.chat
+    async def failure(*args):
+        raise RuntimeError("temporary")
+    monkeypatch.setattr(application.state.runtime, "chat", failure)
+    payload = confirmation(turn, action="save_to_profile")
+    response = confirm(client, owner, turn, payload)
+    assert response.status_code == 200, response.text
+    assert response.json()["receipt"]["saved"] is True
+    assert response.json()["continuation_pending"] is True
+    monkeypatch.setattr(application.state.runtime, "chat", original_chat)
+    replay = confirm(client, owner, turn, payload)
+    assert replay.json()["turn"]
+    assert states.get(scope)["revision"] == 1
+
+
+def test_advice_uses_confirmed_ephemeral_visual_inventory(setup):
+    client, application, model, owner = setup
+    model.task = "craft"
+    turn = analyze(client, owner, upload(client, owner))
+    response = confirm(client, owner, turn, confirmation(turn)).json()
+    visual = response["turn"]["visual"]
+    service = AdviceService(model, None)
+    state = {"request":{"visual":visual},"plan":{"candidates":[{"id":"craft","kind":"craft","goals":{"gunpowder":10},"required_fields":[]}]},"evidence":{"documents":[]}}
+    result = service.evaluate(state)["evaluations"]["craft"]
+    assert result["calculation"]["input"]["inventory"] == {"sulfur":100}
+    assert result["calculation"]["visual_usage"]["confirmation_id"] == response["receipt"]["confirmation_id"]
+    visual["fresh"] = False
+    assert service.evaluate(state)["evaluations"]["craft"]["status"] == "unverified"
+
+
+@pytest.mark.parametrize("kind,region,event", [("base","scene","raided"),("equipment","equipped","death"),("inventory","hotbar","death")])
+def test_visual_observation_cannot_backfill_before_invalidation(setup, kind, region, event):
+    _, application, _, owner = setup
+    states, scope = bind(application, owner)
+    now = datetime.now(timezone.utc)
+    states.update(scope, StateUpdate(observation_id=uuid4(),expected_revision=0,observed_at=now,changes={"event":event}))
+    request = ImageStateUpdate(observation_id=uuid4(),expected_revision=1,observed_at=now-timedelta(minutes=1),visual_draft_id=str(uuid4()),
+        changes={"visual_observations":[{"id":"item_a","attachment_id":str(uuid4()),"kind":kind,"region_kind":region,"label":"test","bbox":[0,0,1,1]}]})
+    with pytest.raises(AppError) as error:
+        states.update(scope, request)
+    assert error.value.code == "older_observation"
+
+
+def test_drafts_persist_after_restart_and_cancel(setup):
+    client, application, model, owner = setup
+    turn = analyze(client, owner, upload(client, owner))
+    settings = application.state.vision.settings
+    with TestClient(create_app(settings,model)) as restarted:
+        path = f"/api/conversations/{owner}/visual-drafts/{turn['visual']['draft_id']}"
+        assert restarted.get(path).json()["status"] == "pending"
+        assert restarted.post(path + "/cancel",json={}).status_code == 204
+        assert restarted.get(path).json()["available"] is False
+        assert confirm(restarted, owner, turn, confirmation(turn)).status_code == 410
+
+
+def test_explicit_empty_complete_inventory_replaces_old_items(setup):
+    client, application, _, owner = setup
+    states, scope = bind(application, owner)
+    states.update(scope,StateUpdate(observation_id=uuid4(),expected_revision=0,observed_at=datetime.now(timezone.utc),
+        changes={"inventory":[{"container_id":"backpack","mode":"replace","complete":True,"items":{"sulfur":500}}]}))
+    turn = analyze(client, owner, upload(client, owner))
+    drafts = application.state.vision.drafts
+    payload = drafts.get(owner,turn["visual"]["draft_id"])["payload"]
+    payload["extraction"]["observations"] = []
+    draft = drafts.create(owner,str(uuid4()),{**payload,"input_hash":"empty_fixture"})
+    request = VisualConfirmation.model_validate(confirmation(turn,edits=[],action="save_to_profile",continue_task=False))
+    receipt = drafts.confirm(owner,draft["id"],request,states,Calculator().catalog)
+    assert receipt["inventory"] == {}
+    container = states.get(scope)["containers"]["backpack"]
+    assert container["items"] == {}
+    assert container["usable_for_exact_calculation"] is True
+
+
+def test_missing_original_file_blocks_confirmation(setup):
+    client, application, _, owner = setup
+    attachment = upload(client, owner)
+    turn = analyze(client, owner, attachment)
+    application.state.attachments.path(owner,attachment["id"]).unlink()
+    assert confirm(client,owner,turn,confirmation(turn)).status_code == 410
+
+
+def test_repaired_schema_receives_business_error(setup, monkeypatch):
+    client, _, model, owner = setup
+    model.task = "craft"
+    original = model.complete
+    captured = []
+    async def mistaken(messages):
+        captured.append(messages)
+        reply = await original(messages)
+        if len(captured) == 1:
+            data = json.loads(reply.content)
+            data["calculation"]["target"] = "gunpowder"
+            return ModelReply(content=json.dumps(data))
+        return reply
+    monkeypatch.setattr(model,"complete",mistaken)
+    analyze(client,owner,upload(client,owner))
+    assert len(captured) == 2
+    assert "Craft requests cannot contain raid parameters" in captured[1][-1].content
+
+
+def test_old_visual_inventory_never_inherits_into_unrelated_calculation(setup, monkeypatch):
+    client, application, model, owner = setup
+    model.task = "craft"
+    turn = analyze(client,owner,upload(client,owner))
+    assert confirm(client,owner,turn,confirmation(turn)).status_code == 200
+    seen = []
+    original = application.state.runtime.graph.ainvoke
+    async def record(state,*args,**kwargs):
+        seen.append(state)
+        return await original(state,*args,**kwargs)
+    monkeypatch.setattr(application.state.runtime.graph,"ainvoke",record)
+    response = client.post(f"/api/conversations/{owner}/messages",json={"request_id":str(uuid4()),
+        "message":'/calc {"operation":"craft","goals":{"gunpowder":20}}'})
+    assert response.status_code == 200
+    assert seen[0]["previous_calculation"]["inventory"] is None
+    assert response.json()["calculation"]["input"]["inventory"] is None
+
+
+def test_explicit_calc_with_new_images_does_not_silently_rewrite_parameters(setup):
+    client, _, model, owner = setup
+    attachment = upload(client,owner)
+    response = client.post(f"/api/conversations/{owner}/messages",json={"request_id":str(uuid4()),
+        "message":'/calc {"operation":"craft","goals":{"gunpowder":20}}',"attachment_ids":[attachment["id"]]})
+    assert response.status_code == 422
+    assert response.json()["error"]["code"] == "visual_command_conflict"
+    assert model.calls == []
+
+
+def test_opponent_candidates_cannot_be_relabelled_as_self(setup):
+    client, application, _, owner = setup
+    turn = analyze(client,owner,upload(client,owner))
+    payload = application.state.vision.drafts.get(owner,turn["visual"]["draft_id"])["payload"]
+    payload["extraction"]["observations"][0]["subject"] = "opponent"
+    with pytest.raises(AppError) as error:
+        VisualDraftStore.accept(payload,VisualConfirmation.model_validate(confirmation(turn)),Calculator().catalog)
+    assert error.value.code == "visual_subject_conflict"
+
+
+def test_vision_subject_candidate_preserved_until_user_confirmation(setup, monkeypatch):
+    client, _, model, owner = setup
+    original = model.complete
+    async def opponent(messages):
+        reply = await original(messages)
+        data = json.loads(reply.content)
+        data["observations"][0]["subject"] = "opponent"
+        return ModelReply(content=json.dumps(data))
+    monkeypatch.setattr(model,"complete",opponent)
+    turn = analyze(client,owner,upload(client,owner))
+    assert turn["visual"]["observations"][0]["subject"] == "opponent"
+    assert turn["visual"]["confirmed"] is False
+    assert confirm(client,owner,turn,confirmation(turn)).status_code == 422
+
+
+@pytest.mark.parametrize("correct",[True,False])
+def test_probe_checks_pixels_not_just_successful_transport(setup, monkeypatch, correct):
+    client, application, _, _ = setup
+    numbers = iter([123456,234567])
+    monkeypatch.setattr("rust_coach.vision.probe.secrets.randbelow",lambda upper:next(numbers))
+    captured = []
+    class ProbeModel:
+        async def complete(self,messages):
+            captured.extend(messages)
+            return ModelReply(content=json.dumps({"codes":["223456","334567"] if correct else ["000000","000000"]}))
+    application.state.vision.model = ProbeModel()
+    response = client.post("/api/vision/probe",json={})
+    assert response.status_code == (200 if correct else 422)
+    assert client.get("/api/config").json()["vision"]["enabled"] is correct
+    parts = captured[0].content
+    assert len([part for part in parts if isinstance(part,ImagePart)]) == 2
+    assert "223456" not in parts[0].text and "334567" not in parts[0].text
+
+
+def test_normalized_crop_uses_image_coordinates_and_removes_exif(setup):
+    client, application, _, owner = setup
+    image = Image.new("RGB",(100,50),"red")
+    exif = Image.Exif()
+    exif[274] = 6
+    exif[270] = "private metadata"
+    output = io.BytesIO()
+    image.save(output,format="JPEG",exif=exif)
+    attachment = upload(client,owner,output.getvalue())
+    raw = application.state.attachments.image(owner,attachment["id"])
+    normalized = Image.open(io.BytesIO(raw))
+    assert normalized.size == (50,100)
+    assert not normalized.getexif()
+    crop = application.state.attachments.image(owner,attachment["id"],[0,0,0.5,0.5])
+    assert Image.open(io.BytesIO(crop)).size == (25,50)

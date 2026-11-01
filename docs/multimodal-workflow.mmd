@@ -1,0 +1,76 @@
+flowchart TD
+    subgraph INPUT[输入层]
+        UI[代码：文本 + 粘贴/拖拽/选择截图<br/>预览、遮盖、指定本人/对手与时点]
+        Upload[代码：上传校验、解码、方向归一化<br/>附件 ID、哈希、图像尺寸、访问归属]
+        Assets[(本地附件文件 + SQLite 元数据)]
+        UI --> Upload --> Assets
+    end
+    subgraph RUNTIME[Runtime 与理解层]
+        Start[代码：请求去重、冻结档案 revision<br/>附件归属、任务预算、视觉能力检查]
+        HasImage{代码：有图片?}
+        Route[代码：结合问题与图像任务提示路由<br/>图像类别不等于业务意图]
+        Start --> HasImage
+    end
+    UI -->|文字 + attachment_ids| Start
+    Assets -->|授权附件引用| Start
+    HasImage -->|无| Route
+    subgraph VISION[视觉子图：从像素到有来源的候选观测]
+        Prepare[代码：按需缩略/裁剪 + 坐标变换<br/>读取缓存，不刷新观测时间]
+        Extract[LLM/VLM：分类、逐格识别、可见关系<br/>输出候选值 + 区域引用 + 未知项]
+        Validate[代码：Schema、实体映射、数量形式<br/>覆盖、重复、冲突、主体与时点检查]
+        Retry{代码：关键区域可复读且预算允许?}
+        Prepare --> Extract --> Validate
+        Validate -->|局部可修复| Retry
+        Retry -->|最多一次局部复读| Prepare
+        Retry -->|否| Gate
+    end
+    HasImage -->|有且能力可用| Prepare
+    HasImage -->|有但能力不可用| Degrade[代码：保留附件与文本<br/>说明不可识别，请转写或稍后重试]
+    Assets --> Prepare
+    Catalog[知识：规范物品/槽位/UI 版本目录] --> Validate
+    Validate -->|合格候选或明确未知| Route
+    Route --> Gate{代码：当前结论需要已确认精确字段?}
+    Gate -->|需要且不足| Draft[代码：持久化确认草稿 + 最小补充项<br/>本次执行 END，释放会话锁]
+    Draft --> DraftDB[(SQLite：草稿 revision / 来源 / 待续任务)]
+    Draft --> UI
+    UI -->|确认、修改或补图| Confirm[代码：确认服务<br/>校验草稿版本、范围、时间与冲突]
+    DraftDB --> Confirm
+    Confirm -->|仅本轮| Ephemeral[代码：冻结本轮已确认输入<br/>不写玩家档案]
+    Confirm -->|明确保存| Commit[代码：幂等事务写观测 + 消费草稿]
+    Commit --> Profiles[(SQLite：PlayerSnapshot / 历史观测)]
+    Ephemeral --> Continue[代码：新请求继续原目标<br/>复核 TTL、revision 与任务预算]
+    Commit --> Continue
+    Continue --> Gate
+    Profiles --> Start
+    subgraph BUSINESS[决策层：复用现有能力]
+        Calc[代码：合成/拆墙计算<br/>只接收满足门槛的参数]
+        Observe[代码：可见观测卡片<br/>数量为图中读数，未确认则不称实际库存]
+        Advice[LLM：规划/条件建议<br/>可见事实、假设、未知分开表达]
+        Rules[知识：数值规则快照 + 来源版本]
+        Research[代码：网页检索/正文快照]
+        Rules --> Calc
+        Research --> Advice
+    end
+    Gate -->|确认充分且任务支持| Calc
+    Gate -->|仅需识别| Observe
+    Gate -->|可作条件分析| Advice
+    Gate -->|缺失或能力不支持| Degrade
+    subgraph OUTPUT[生成与观测层]
+        Final[代码：finalize_response<br/>保护数值/条件/图片区域与知识来源引用]
+        Persist[(SQLite：Turn / 任务与证据引用)]
+        Eval[代码 + 人工评审：识别/归因/计算/建议评测<br/>延迟、调用数、确认率、badcase 回流]
+        Final --> Persist --> UI
+        Persist --> Eval
+    end
+    Calc --> Final
+    Observe --> Final
+    Advice --> Final
+    Degrade --> Final
+    Eval -.改进提示、门槛与样本.-> Extract
+    Eval -.回归.-> Validate
+    classDef deterministic fill:#e5f1ff,stroke:#2563a6,color:#111;
+    classDef generative fill:#fff0da,stroke:#b56918,color:#111;
+    classDef persistence fill:#f1edf9,stroke:#7755a0,color:#111;
+    class UI,Upload,Start,HasImage,Route,Prepare,Validate,Retry,Gate,Draft,Confirm,Ephemeral,Commit,Continue,Calc,Observe,Research,Degrade,Final,Eval deterministic;
+    class Extract,Advice generative;
+    class Assets,Catalog,DraftDB,Profiles,Rules,Persist persistence;

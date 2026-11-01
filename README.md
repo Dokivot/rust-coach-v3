@@ -1,6 +1,6 @@
 # Rust Coach v3
 
-面向 Rust 生存游戏的教练 Agent。当前实现：FastAPI + LangGraph + SQLite 聊天、PC 原版拆建筑与合成计算，以及可持久化的玩家状态档案。支持 OpenAI-compatible Responses 和 Chat Completions 接口，默认使用 Responses。
+面向 Rust 生存游戏的教练 Agent。当前实现：FastAPI + LangGraph + SQLite 聊天、PC 原版拆建筑与合成计算、玩家状态与条件建议，以及背包、基地、装备截图的候选识别和确认。支持 OpenAI-compatible Responses 和 Chat Completions 接口，默认使用 Responses。
 
 ## 本地启动
 
@@ -45,9 +45,10 @@ Responses 模式下，普通聊天、计算、建议和状态解析均使用上�
 - 玩家状态覆盖容器库存、科技、基地、阶段、时间、目标和偏好。支持表单与文本草稿确认、局部更新、观测有效期、事件失效、版本历史和冲突保护。未知不等于零，计算不会扣减真实背包。
 - 已接入按需网页取证与状态建议：规划候选、选择检索主题、调用本地工具、比较取舍、引用正文并保留快照。输入 `/coach 问题` 或 `/search 问题` 使用；无需向量库。详见 [建议链路与实际架构图](docs/advice.md)。
 - 已接入统一人设和会话表达偏好：聊天框上方可选详略、语言与术语；计算数值与关键条件由代码保留，输出附版本和校验记录，修复次数有上限。详见 [实施说明与工作流](docs/persona-implementation.md)、[真实模型与浏览器验证](docs/persona-verification.md)。
+- 已接入截图：展开聊天框上方“截图”，先验证视觉接口，再选择、粘贴或拖入图片；可在发送前裁剪、遮盖并填写主体和实际截图时间。识别卡片支持区域定位、逐项修正、“仅用于本次任务”和“保存到本人档案”。完整当前本人库存经确认后才能用于精确缺口；局部图只算总需求。详见 [截图实施说明](docs/multimodal-implementation.md)。
 - 默认使用无密钥的 Bing 公开结果页；可配置 `COACH_SEARCH_PROVIDER=brave` 与 `COACH_SEARCH_API_KEY`，或设为 `off`。公开网页可能无法访问，届时明确降级；抓取时间不代表游戏版本已核验。
-- 尚无向量检索、跨服长期记忆、图像诊断、战斗伤害计算、持久中断恢复或全局最优策略求解。引用原文匹配不等于事实语义验证，建议中的条件需要玩家核对。
-- 仅适用于本机单用户、单进程开发；一次只运行一个模型请求。没有身份认证、多用户隔离或生产部署能力，请保持绑定 `127.0.0.1`，不要使用多个 workers。
+- 尚无向量检索、跨服长期记忆、完整基地拓扑诊断、战斗伤害计算、原生 Checkpointer 中断恢复或全局最优策略求解。截图确认草稿可持久恢复；引用匹配与人工确认均不等于事实语义验证。
+- 仅适用于本机单用户、单进程开发；聊天任务串行，探测与上传另有限流。没有身份认证、多用户隔离或生产部署能力，请保持绑定 `127.0.0.1`，不要使用多个 workers。
 
 ## 开发与验证
 
@@ -56,6 +57,7 @@ uv run pytest -q
 node --check src/rust_coach/static/app.js
 node --check src/rust_coach/static/calculator.js
 node --check src/rust_coach/static/player-state.js
+node --check src/rust_coach/static/vision.js
 ```
 
 测试使用替代模型及 HTTP MockTransport 验证 LangGraph、HTTP、上下文、持久化及异常处理，同时验证计算阈值、共享资源、批次、库存守恒与来源追溯。不调用付费模型，不代表游戏内规则认证或外部模型连接。Node 仅用于 JavaScript 语法检查。
@@ -66,7 +68,7 @@ node --check src/rust_coach/static/player-state.js
 
 ## 目标架构
 
-- [多模态截图实现方案](docs/multimodal-design.md)：背包、基地、装备截图的输入契约、视觉观测子图、确认/状态门槛、接口改动、成本与验收；附 [数据流架构图](docs/multimodal-workflow.mmd)。这是设计，尚未接入运行时。
+- [多模态截图设计](docs/multimodal-design.md) 保留目标和评测规划；首版实际实现、边界及验证见 [实施说明](docs/multimodal-implementation.md) 与 [实际数据流图](docs/multimodal-implemented.mmd)。
 - [人设与表达一致性设计](docs/persona-design.md)：实施前的调研、协议设计与目标指标；附 [来源审核](docs/persona-source-audit.json) 与 [18 个评测种子案例](docs/persona-eval-seeds.json)。已落地范围、测试覆盖与未解决的语义边界见 [实施说明](docs/persona-implementation.md)。
 
 下面保留早期完整目标设计。当前落地采用有界规划/取证/验证子图，暂不使用向量库，最新实现边界以 [当前建议架构](docs/advice.md) 为准；早期图中的向量检索、中断和持久恢复仍为后续能力。

@@ -4,7 +4,7 @@ from typing import Protocol
 import httpx
 
 from rust_coach.config import Settings
-from rust_coach.contracts import AppError, ModelMessage, ModelReply
+from rust_coach.contracts import AppError, ImagePart, ModelMessage, ModelReply
 
 
 class ChatModel(Protocol):
@@ -24,7 +24,20 @@ class CompatibleChatModel:
             "model": self.settings.model,
             "stream": False,
         }
-        serialized_messages = [message.model_dump() for message in messages]
+        serialized_messages = []
+        for message in messages:
+            if isinstance(message.content, str):
+                serialized_messages.append(message.model_dump())
+                continue
+            parts = []
+            for part in message.content:
+                if isinstance(part, ImagePart):
+                    parts.append({"type": "input_image", "image_url": part.data_url, "detail": part.detail}
+                        if self.settings.api_mode == "responses" else
+                        {"type": "image_url", "image_url": {"url": part.data_url, "detail": part.detail}})
+                else:
+                    parts.append({"type": "input_text" if self.settings.api_mode == "responses" else "text", "text": part.text})
+            serialized_messages.append({"role": message.role, "content": parts})
         if self.settings.api_mode == "responses":
             endpoint = "responses"
             payload["stream"] = self.stream_responses
@@ -69,10 +82,10 @@ class CompatibleChatModel:
                     raise ValueError("Invalid content")
                 if choice.get("finish_reason") in {"tool_calls", "function_call"}:
                     raise ValueError("Tool calls are not enabled")
-                reply = ModelReply(content=content, truncated=choice.get("finish_reason") == "length")
+                reply = ModelReply(content=content, truncated=choice.get("finish_reason") == "length", usage=data.get("usage"))
             if not reply.content.strip() or len(reply.content) > 60000:
                 raise ValueError("Invalid content")
-            return ModelReply(content=reply.content.strip(), truncated=reply.truncated)
+            return ModelReply(content=reply.content.strip(), truncated=reply.truncated, usage=reply.usage)
         except (ValueError, KeyError, IndexError, TypeError, AttributeError) as error:
             raise AppError("model_invalid_response", "模型返回了无法显示的内容，请检查接口是否与 COACH_API_MODE 配置兼容。", 502) from error
 
@@ -151,4 +164,4 @@ class CompatibleChatModel:
                 if not isinstance(text, str):
                     raise ValueError("Invalid content")
                 parts.append(text)
-        return ModelReply(content="".join(parts), truncated=truncated)
+        return ModelReply(content="".join(parts), truncated=truncated, usage=data.get("usage"))

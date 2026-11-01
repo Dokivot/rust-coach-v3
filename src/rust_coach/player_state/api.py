@@ -36,6 +36,8 @@ def player_state_router(calculator, settings):
 
     @router.post("/api/player-state/scopes/{scope_id}/observations")
     async def observe(scope_id: UUID, payload: StateUpdate, request: Request):
+        if payload.changes.visual_observations:
+            raise AppError("visual_confirmation_required", "截图观测请通过识别确认卡片保存。", 422)
         return request.app.state.runtime.player_states.update(str(scope_id), payload)
 
     @router.post("/api/player-state/scopes/{scope_id}/preview")

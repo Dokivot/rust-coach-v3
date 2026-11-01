@@ -1,0 +1,86 @@
+flowchart TD
+    subgraph INPUT[输入层 · 浏览器与 FastAPI]
+        UI[代码：文字/文件/粘贴/拖入<br/>本地裁剪遮盖、主体与实际截图时间]
+        UP[代码：限流、字节/像素/格式校验<br/>EXIF 归一化、PNG 重编码、SHA256]
+        FILES[(私有附件目录 + SQLite 元数据)]
+        UI -->|单文件 multipart| UP --> FILES
+    end
+    subgraph RT[Agent Runtime · 单进程串行聊天]
+        RUN[代码：请求幂等、超时、上下文限长<br/>冻结玩家档案 revision]
+        VI{代码：新附件或草稿引用?}
+        ROUTE[代码：命令/意图路由<br/>视觉 task 是候选提示]
+        RUN --> VI
+        VI -->|无图片| ROUTE
+        VI -->|已有草稿：复核范围与时效| ROUTE
+    end
+    UI -->|ChatRequest：文本与附件 ID| RUN
+    subgraph VISION[LangGraph 视觉子图]
+        PREP[代码 prepare：归属检查、重复图处理、缓存读取]
+        EXTRACT[LLM extract：逐格/局部候选观测<br/>任务、物品、读数、bbox、未知项]
+        CHECK[代码 validate：Schema、图片引用<br/>规范 ID、声明主体]
+        REFINE[LLM refine：歧义数字局部复读<br/>与结构修复共用一次预算]
+        DRAFT[代码 persist：保存草稿与来源<br/>识别成功不自动写玩家状态]
+        PREP -->|缓存未命中| EXTRACT --> CHECK
+        PREP -->|命中| CHECK
+        CHECK -->|关键数量不清且有预算| REFINE --> CHECK
+        CHECK -->|合格或明确未知| DRAFT
+    end
+    VI -->|新图且视觉探测通过| PREP
+    FILES -->|按归属授权读取| PREP
+    DRAFT --> ROUTE
+    DRAFT --> DRAFTDB[(SQLite：visual_drafts / cache / confirmations)]
+    DRAFTDB -->|旧草稿引用| VI
+    subgraph CONFIRM[等待用户与恢复]
+        CARD[代码：返回观测卡片并 END<br/>释放锁与 HTTP 请求]
+        ACCEPT[代码：逐项确认、范围/时间/主体校验<br/>草稿 CAS、玩家 revision、确认幂等]
+        COMMIT[代码：SQLite 同一事务<br/>回执 + 消费草稿 + 可选状态更新]
+        CONTINUE[代码：新 ChatRequest 继续<br/>固定幂等 ID；失败保留已提交回执]
+        CARD --> UI
+        UI -->|修改、排除、确认用途| ACCEPT
+        DRAFTDB --> ACCEPT
+        ACCEPT --> COMMIT --> CONTINUE --> RUN
+        COMMIT --> DRAFTDB
+    end
+    ROUTE -->|未确认的精确计算| CARD
+    subgraph KNOWLEDGE[Knowledge 与 State / Memory]
+        CATALOG[(规范物品与配方/爆炸物规则快照<br/>来源、适用条件、哈希)]
+        WEB[代码：按需网页检索与正文快照]
+        PROFILE[(SQLite 玩家档案与观测历史<br/>TTL、事件失效、visual_observations)]
+        HISTORY[(SQLite Turn / 会话偏好<br/>短期上下文；无跨服记忆推断)]
+    end
+    CATALOG --> CHECK
+    CATALOG --> CALC
+    PROFILE --> RUN
+    HISTORY --> RUN
+    COMMIT -->|仅明确 save_to_profile| PROFILE
+    subgraph DECISION[业务与 Tools]
+        OBSERVE[代码：显示候选观测与未知项]
+        CALC[代码：合成/拆墙计算<br/>完整当前本人库存才可抵扣]
+        PLAN[LLM：规划最多三个候选行动]
+        EVAL[代码：检索、前提核对、独立预算]
+        ADVICE[LLM：选择、步骤、切换条件<br/>图片区域 + 网页依据分开引用]
+        PLAN --> EVAL --> ADVICE
+        WEB --> EVAL
+        EVAL --> CALC
+        CALC -->|工具报告| ADVICE
+    end
+    ROUTE -->|仅识别| OBSERVE
+    ROUTE -->|已确认的支持参数| CALC
+    ROUTE -->|可作条件建议| PLAN
+    subgraph OUTPUT[生成 / 评测 / 可观测性]
+        FINAL[代码：统一人设 finalizer<br/>保护工具数值、来源、图片范围与时效]
+        TEST[代码测试 + 人工核对<br/>回放样例、延迟/token、badcase 记录]
+        FINAL --> HISTORY
+        FINAL --> UI
+        HISTORY -.脱敏评测样本.-> TEST
+        TEST -.回归与提示修订.-> CHECK
+    end
+    OBSERVE --> FINAL
+    CALC --> FINAL
+    ADVICE --> FINAL
+    classDef deterministic fill:#e5f1ff,stroke:#2563a6,color:#111;
+    classDef generative fill:#fff0da,stroke:#b56918,color:#111;
+    classDef persistence fill:#f1edf9,stroke:#7755a0,color:#111;
+    class UI,UP,RUN,VI,ROUTE,PREP,CHECK,DRAFT,CARD,ACCEPT,COMMIT,CONTINUE,WEB,OBSERVE,CALC,EVAL,FINAL,TEST deterministic;
+    class EXTRACT,REFINE,PLAN,ADVICE generative;
+    class FILES,DRAFTDB,CATALOG,PROFILE,HISTORY persistence;

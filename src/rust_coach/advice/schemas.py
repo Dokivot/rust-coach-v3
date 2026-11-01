@@ -54,6 +54,7 @@ class Recommendation(StrictModel):
     completion: Text
     switch_when: Text
     citations: list[Citation] = Field(default_factory=list, max_length=4)
+    visual_citations: list[str] = Field(default_factory=list, max_length=12)
 
 
 class AdviceAnswer(StrictModel):

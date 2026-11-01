@@ -21,9 +21,13 @@ def freshness(record, now):
 
 def metadata(update, ttl):
     observed = update.observed_at.astimezone(timezone.utc)
-    return {"observed_at": observed.isoformat(), "expires_at": (observed + timedelta(minutes=ttl)).isoformat(),
+    result = {"observed_at": observed.isoformat(), "expires_at": (observed + timedelta(minutes=ttl)).isoformat(),
             "observation_id": str(update.observation_id), "source": update.source,
             "verification": "user_reported"}
+    if getattr(update, "visual_draft_id", None):
+        result["visual_draft_id"] = update.visual_draft_id
+        result["evidence_refs"] = update.evidence_refs
+    return result
 
 
 def apply_update(snapshot, update: StateUpdate, now):
@@ -58,7 +62,7 @@ def apply_update(snapshot, update: StateUpdate, now):
                 check_watermark(key)
                 watermarks[key] = update.observed_at.isoformat()
         affected_containers = ["inventory.*"] if changes.event in {"invalidate_all", "raided"} else (
-            ["inventory.backpack", "inventory.equipped"] if changes.event == "death" else [])
+            ["inventory.backpack", "inventory.equipped", "visual.nonbase"] if changes.event == "death" else [])
         for key in affected_containers:
             check_watermark(key)
             watermarks[key] = update.observed_at.isoformat()
@@ -75,6 +79,9 @@ def apply_update(snapshot, update: StateUpdate, now):
                 invalidate(container)
                 for record in container["items"].values():
                     invalidate(record)
+        for record in result.get("visual_observations", {}).values():
+            if changes.event in {"invalidate_all", "raided"} or changes.event == "death" and record["value"]["kind"] != "base":
+                invalidate(record)
         return result
     for key in changes.clear_fields:
         check_watermark(key)
@@ -114,6 +121,22 @@ def apply_update(snapshot, update: StateUpdate, now):
         if len(container["items"]) > 150:
             raise AppError("inventory_limit", "每个容器最多记录 150 种物品。", 422)
         containers[change.container_id] = container
+    if changes.visual_observations:
+        result["schema_version"] = 2
+        visual = result.setdefault("visual_observations", {})
+        for key in list(visual):
+            if freshness(visual[key],now) != "fresh":
+                del visual[key]
+        for observation in changes.visual_observations:
+            if observation.kind != "base":
+                check_watermark("visual.nonbase")
+            check_watermark("base.grade" if observation.kind == "base" else "inventory.equipped" if observation.kind == "equipment" else "inventory." + observation.region_kind)
+            key = str(observation.attachment_id) + ":" + observation.id
+            if key in visual:
+                check_order(visual[key])
+            visual[key] = {"value": observation.model_dump(mode="json"), **metadata(update, 120 if observation.kind == "base" else 30)}
+        if len(visual) > 240:
+            raise AppError("visual_state_limit", "截图观测过多，请先清理旧观测或使用新的清档档案。", 422)
     team = facts.get("session.team_size")
     online = facts.get("session.teammates_online")
     if team and online and freshness(team, now) == freshness(online, now) == "fresh" and online["value"] >= team["value"]:
@@ -133,6 +156,8 @@ def project(snapshot, now):
             record["status"] = freshness(record, now)
         container["usable_for_exact_calculation"] = container["coverage"] == "complete" and container["status"] == "fresh" and all(
             record["status"] == "fresh" for record in container["items"].values())
+    for record in result.get("visual_observations", {}).values():
+        record["status"] = freshness(record, now)
     return result
 
 
@@ -172,6 +197,16 @@ def model_context(snapshot, max_chars=12000):
             del result["containers"][key]
             result["context_truncated"] = True
             break
+    if snapshot.get("visual_observations"):
+        result["visual_observations"] = []
+        for record in snapshot["visual_observations"].values():
+            if record["status"] != "fresh":
+                continue
+            observation = compact(record)
+            if len(json.dumps(result, ensure_ascii=False)) + len(json.dumps(observation, ensure_ascii=False)) > max_chars:
+                result["context_truncated"] = True
+                break
+            result["visual_observations"].append(observation)
     return result
 
 

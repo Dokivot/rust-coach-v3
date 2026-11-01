@@ -56,7 +56,7 @@ class PlayerStateStore:
             snapshot = json.loads(row["snapshot"])
             if revision is not None and revision != snapshot["revision"]:
                 if revision == 0:
-                    snapshot = {**snapshot, "revision": 0, "facts": {}, "containers": {}, "invalidations": {}}
+                    snapshot = {**snapshot, "revision": 0, "facts": {}, "containers": {}, "invalidations": {}, "visual_observations": {}}
                 else:
                     row = connection.execute("SELECT snapshot FROM player_observations WHERE scope_id=? AND revision=?",
                                              (scope_id, revision)).fetchone()
@@ -65,18 +65,23 @@ class PlayerStateStore:
                     snapshot = json.loads(row["snapshot"])
         return project(snapshot, now or datetime.now(timezone.utc))
 
-    def update(self, scope_id, request: StateUpdate, *, now=None):
+    def update(self, scope_id, request: StateUpdate, *, now=None, connection=None):
         now = now or datetime.now(timezone.utc)
         payload = request.model_dump_json()
-        with self.store.connection() as connection:
-            connection.execute("BEGIN IMMEDIATE")
+        if connection is None:
+            with self.store.connection() as transaction:
+                transaction.execute("BEGIN IMMEDIATE")
+                return self.update(scope_id, request, now=now, connection=transaction)
+        if connection is not None:
             row = connection.execute("SELECT revision, snapshot FROM player_scopes WHERE id=?", (scope_id,)).fetchone()
             if not row:
                 raise AppError("scope_not_found", "玩家状态档案不存在。", 404)
             replay = connection.execute("SELECT payload, snapshot FROM player_observations WHERE scope_id=? AND observation_id=?",
                                         (scope_id, str(request.observation_id))).fetchone()
             if replay:
-                if json.loads(replay["payload"]) != json.loads(payload):
+                old_payload, new_payload = json.loads(replay["payload"]), json.loads(payload)
+                old_payload["changes"].setdefault("visual_observations", [])
+                if old_payload != new_payload:
                     raise AppError("observation_conflict", "这条观测标识已经用于其他内容，请重新提交。", 409)
                 return project(json.loads(replay["snapshot"]), now)
             if row["revision"] != request.expected_revision:
@@ -112,6 +117,8 @@ class PlayerStateStore:
     @staticmethod
     def reference(snapshot):
         canonical = {key: snapshot[key] for key in ("scope", "revision", "facts", "containers", "evaluated_at")}
+        if snapshot.get("visual_observations"):
+            canonical["visual_observations"] = snapshot["visual_observations"]
         return {"scope_id": snapshot["scope"]["id"], "revision": snapshot["revision"],
                 "evaluated_at": snapshot["evaluated_at"],
                 "sha256": hashlib.sha256(json.dumps(canonical, sort_keys=True).encode()).hexdigest()}

@@ -1,4 +1,5 @@
 import logging
+import re
 from contextlib import asynccontextmanager
 from pathlib import Path
 from uuid import UUID, uuid4
@@ -22,13 +23,16 @@ from rust_coach.calculations import Calculator, CalculationRequest
 from rust_coach.calculations.presentation import render_calculation
 from rust_coach.player_state.api import player_state_router
 from rust_coach.presentation.contracts import PresentationPreferences, ResponseContext
+from rust_coach.attachments.api import RequestSizeLimit, attachment_router
+from rust_coach.attachments.store import AttachmentStore
+from rust_coach.vision.service import VisionService
 
 
 logger = logging.getLogger("rust_coach")
 STATIC = Path(__file__).parent / "static"
 
 
-def create_app(settings: Settings | None = None, model: ChatModel | None = None) -> FastAPI:
+def create_app(settings: Settings | None = None, model: ChatModel | None = None, vision_model: ChatModel | None = None) -> FastAPI:
     settings = settings or Settings()
     calculator = Calculator()
 
@@ -39,18 +43,24 @@ def create_app(settings: Settings | None = None, model: ChatModel | None = None)
             follow_redirects=False,
         ) as client:
             store = ConversationStore(settings.database_path)
+            attachments = AttachmentStore(store,settings)
+            attachments.cleanup()
+            vision = VisionService(settings,vision_model or model or CompatibleChatModel(settings.for_vision(),client,stream_responses=True),attachments,store)
+            app.state.attachments,app.state.vision = attachments,vision
             app.state.evidence_store = EvidenceStore(store)
             advice_settings = settings.model_copy(update={"max_output_tokens": max(4096, settings.max_output_tokens)})
             advice = AdviceService(model or CompatibleChatModel(advice_settings, client, stream_responses=True),
                 WebResearch(settings, client, app.state.evidence_store), settings.instruction_role)
             app.state.runtime = ChatRuntime(settings, model or CompatibleChatModel(settings, client, stream_responses=True), store,
-                calculation_model=model or CompatibleChatModel(settings, client, stream_responses=True), advice_service=advice)
+                calculation_model=model or CompatibleChatModel(settings, client, stream_responses=True), advice_service=advice,vision_service=vision)
             app.state.state_model = model or CompatibleChatModel(settings, client, stream_responses=True)
             yield
 
     app = FastAPI(title="Rust Coach", version="0.1.0", lifespan=lifespan, docs_url=None, redoc_url=None)
     app.add_middleware(TrustedHostMiddleware, allowed_hosts=["localhost", "127.0.0.1", "[::1]", "testserver"])
+    app.add_middleware(RequestSizeLimit,limit=settings.attachment_max_bytes + 65536)
     app.include_router(player_state_router(calculator, settings))
+    app.include_router(attachment_router(settings))
 
     @app.middleware("http")
     async def local_request_guard(request: Request, call_next):
@@ -58,11 +68,14 @@ def create_app(settings: Settings | None = None, model: ChatModel | None = None)
             origin = request.headers.get("origin")
             if origin and origin.rstrip("/") != str(request.base_url).rstrip("/"):
                 return JSONResponse({"error": {"code": "origin_rejected", "message": "仅接受同源页面请求。"}}, status_code=403)
-            if request.method == "POST" and request.headers.get("content-type", "").split(";")[0] != "application/json":
+            content_type = request.headers.get("content-type", "").split(";")[0]
+            upload_path = bool(re.fullmatch(r"/api/conversations/[a-fA-F0-9-]{36}/attachments",request.url.path))
+            expected_type = "multipart/form-data" if upload_path else "application/json"
+            if request.method == "POST" and content_type != expected_type:
                 return JSONResponse({"error": {"code": "json_required", "message": "请求需要 JSON 格式。"}}, status_code=415)
         response = await call_next(request)
         response.headers["X-Content-Type-Options"] = "nosniff"
-        response.headers["Content-Security-Policy"] = "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; connect-src 'self'; frame-ancestors 'none'"
+        response.headers["Content-Security-Policy"] = "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' blob:; connect-src 'self'; frame-ancestors 'none'"
         response.headers["Cache-Control"] = "no-store"
         return response
 
@@ -86,7 +99,7 @@ def create_app(settings: Settings | None = None, model: ChatModel | None = None)
         return {"status": "ok"}
 
     @app.get("/api/config")
-    async def public_config():
+    async def public_config(request: Request):
         return {
             "model": settings.model,
             "configured": settings.configured,
@@ -97,6 +110,7 @@ def create_app(settings: Settings | None = None, model: ChatModel | None = None)
             "history_turns": settings.history_turns,
             "presentation": {"persona_version": ResponseContext().persona_version,
                              "preferences_schema": PresentationPreferences.model_json_schema()},
+            "vision":request.app.state.vision.capabilities(),
         }
 
     @app.get("/api/evidence/{document_id}")

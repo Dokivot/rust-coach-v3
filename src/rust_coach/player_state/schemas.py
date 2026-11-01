@@ -3,6 +3,7 @@ from typing import Annotated, Literal
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, TypeAdapter, field_validator, model_validator
+from rust_coach.vision.schemas import VisualObservation
 
 
 Identifier = Annotated[str, Field(min_length=1, max_length=80, pattern=r"^[a-zA-Z0-9_.:-]+$")]
@@ -74,6 +75,7 @@ class StateChanges(StrictModel):
     clear_fields: list[str] = Field(default_factory=list, max_length=30)
     invalidate_containers: list[Identifier] = Field(default_factory=list, max_length=20)
     event: Literal["death", "raided", "blueprint_reset", "invalidate_all"] | None = None
+    visual_observations: list[VisualObservation] = Field(default_factory=list, max_length=120)
 
     @field_validator("facts")
     @classmethod
@@ -105,9 +107,9 @@ class StateChanges(StrictModel):
             raise ValueError("Conflicting changes")
         if len(self.invalidate_containers) != len(set(self.invalidate_containers)):
             raise ValueError("Duplicate container invalidation")
-        if self.event and (self.facts or self.inventory or self.clear_fields or self.invalidate_containers):
+        if self.event and (self.facts or self.inventory or self.clear_fields or self.invalidate_containers or self.visual_observations):
             raise ValueError("Submit event separately from observations")
-        if not (self.facts or self.inventory or self.clear_fields or self.invalidate_containers or self.event):
+        if not (self.facts or self.inventory or self.clear_fields or self.invalidate_containers or self.event or self.visual_observations):
             raise ValueError("No state changes")
         return self
 

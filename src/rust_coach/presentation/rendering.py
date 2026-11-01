@@ -7,6 +7,7 @@ from rust_coach.player_state.domain import project
 from rust_coach.player_state.schemas import FIELD_DEFINITIONS
 from rust_coach.presentation.contracts import AnswerBlock, AnswerEnvelope, ProtectedAssertion, ResponseContext
 from rust_coach.presentation.validation import check_envelope, narrative_issues, signature
+from rust_coach.vision.presentation import visual_summary
 
 
 STATUS_TEXT = {
@@ -130,6 +131,10 @@ def finalize_response(state):
                         for key, record in snapshot["facts"].items()) or any(
                         container.get("usable_for_exact_calculation") and not current["containers"][key]["usable_for_exact_calculation"]
                         for key, container in snapshot["containers"].items())
+        visual = state.get("visual") or {}
+        accepted = visual.get("accepted")
+        if accepted and (not visual.get("fresh") or datetime.fromisoformat(accepted["expires_at"]) <= datetime.now(timezone.utc)):
+            stale = True
         payload["delivery_state_stale"] = stale
         assertions.append(ProtectedAssertion(kind="selection", reference="advice", value={
             "candidate_ids": payload["selected_candidates"], "delivery_state_stale": stale}))
@@ -224,6 +229,18 @@ def finalize_response(state):
     else:
         kind = "chat"
         add("chat", state["reply"].content, "narrative")
+    visual = state.get("visual")
+    if visual:
+        if kind == "chat":
+            kind = "visual"
+        payload = {"business":payload,"visual":visual}
+        assertions.append(ProtectedAssertion(kind="observation",reference=visual["draft_id"],value=visual))
+        add("visual_scope",visual_summary(visual,context.language),reference=visual["draft_id"])
+        if advice and advice.get("answer"):
+            for recommendation in (advice["answer"]["recommendation"],advice["answer"].get("alternative")):
+                if recommendation and recommendation.get("visual_citations"):
+                    add("visual_reference." + recommendation["candidate_id"],localized(context,"图片区域依据：","Image region evidence: ") +
+                        ", ".join(recommendation["visual_citations"]),reference=visual["draft_id"])
     envelope = AnswerEnvelope(kind=kind, context=context, protected_payload=payload, blocks=tuple(blocks), assertions=tuple(assertions),
                               checks=tuple(checks), repair_count=repairs, fallback_reason=fallback)
     payload_hash = signature(payload)

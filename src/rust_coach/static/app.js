@@ -76,7 +76,8 @@ function setError(message = "") {
 
 function updateControls() {
   input.disabled = busy || !conversation;
-  sendButton.disabled = busy || (!configured && !canSendLocally()) || !conversation || !input.value.trim();
+  sendButton.disabled = busy || (!configured && !canSendLocally()) || !conversation || (!input.value.trim() && !VisionUI.hasImages());
+  VisionUI.updateControls();
   document.querySelector("#chat-player-scope").disabled = busy || !conversation;
   document.querySelector("#chat-inventory-container").disabled = busy || !playerBinding?.scope_id;
   document.querySelectorAll('.presentation-settings select, #presentation-reset').forEach((control) => { control.disabled = busy || !conversation; });
@@ -116,11 +117,15 @@ function renderConversation() {
   messagesElement.replaceChildren();
   document.querySelector("#welcome").hidden = Boolean(conversation?.turns.length);
   for (const turn of conversation?.turns || []) {
-    addMessage("user", turn.user);
+    addMessage("user", turn.user || (turn.visual ? "已发送截图" : ""));
     const main = turn.presentation?.blocks.filter((block) => block.placement === "main").map((block) => block.text).join("\n\n");
     const article = addMessage("assistant", main ?? turn.assistant, false, turn.truncated);
     if (turn.presentation) renderPresentation(article, turn.presentation);
     if (turn.advice) renderAdviceRecord(article, turn.advice);
+    if (turn.visual) {
+      const latest = !conversation.turns.slice(conversation.turns.indexOf(turn) + 1).some(other => other.visual?.draft_id === turn.visual.draft_id);
+      if (latest) VisionUI.render(article, turn.visual).catch(error => setError(error.message));
+    }
     if (turn.player_state_ref) {
       const note = document.createElement("p");
       note.className = "message-notice";
@@ -224,6 +229,7 @@ function renderAdviceRecord(article, advice) {
 }
 
 async function createConversation() {
+  VisionUI.clear();
   conversation = await api("/api/conversations", { method: "POST", body: "{}" });
   rememberConversation(conversation.id);
   pendingRequest = null;
@@ -235,13 +241,10 @@ async function createConversation() {
 document.querySelector("#chat-form").addEventListener("submit", async (event) => {
   event.preventDefault();
   const message = input.value.trim();
-  if (!message || busy || (!configured && !canSendLocally()) || !conversation) return;
+  if ((!message && !VisionUI.hasImages()) || busy || (!configured && !canSendLocally()) || !conversation) return;
   busy = true;
   setError();
   const player_inventory_container = document.querySelector("#chat-inventory-container").value || null;
-  if (!pendingRequest || pendingRequest.message !== message || pendingRequest.player_inventory_container !== player_inventory_container) {
-    pendingRequest = { request_id: crypto.randomUUID(), message, player_inventory_container };
-  }
   document.querySelector("#welcome").hidden = true;
   addMessage("user", message);
   addMessage("assistant", "正在思考，请稍等…", true);
@@ -249,6 +252,10 @@ document.querySelector("#chat-form").addEventListener("submit", async (event) =>
   updateControls();
   scrollArea.scrollTop = scrollArea.scrollHeight;
   try {
+    const images = await VisionUI.requestFields();
+    if (!pendingRequest || pendingRequest.message !== message || pendingRequest.player_inventory_container !== player_inventory_container) {
+      pendingRequest = {request_id: crypto.randomUUID(), message, player_inventory_container, ...images};
+    }
     const turn = await api(`/api/conversations/${conversation.id}/messages`, {
       method: "POST", body: JSON.stringify(pendingRequest),
     });
@@ -256,6 +263,7 @@ document.querySelector("#chat-form").addEventListener("submit", async (event) =>
       conversation.turns.push(turn);
     }
     pendingRequest = null;
+    VisionUI.clear();
     document.querySelector("#connection-label").textContent = turn.calculation || message === "/state" ? "本地工具链路已处理" : "本次对话连接成功";
   } catch (error) {
     input.value = message;
@@ -321,6 +329,7 @@ document.querySelectorAll('[data-action="delete"]').forEach((button) => button.a
   setError();
   try {
     await api(`/api/conversations/${conversation.id}`, { method: "DELETE" });
+    VisionUI.forgetConversation(conversation);
     conversation = null;
     rememberConversation("");
     await createConversation();
@@ -332,6 +341,14 @@ document.querySelectorAll('[data-action="delete"]').forEach((button) => button.a
 async function initialize() {
   try {
     const config = await api("/api/config");
+    VisionUI.init({api, conversation: () => conversation, busy: () => busy,
+      setBusy: value => { busy = value; updateControls(); }, error: setError,
+      invalidate: () => { pendingRequest = null; }, refreshControls: updateControls,
+      reload: async () => {
+        conversation = await api(`/api/conversations/${conversation.id}`);
+        await refreshPlayerState();
+        renderConversation();
+      }}, config.vision);
     configured = config.configured;
     document.querySelector("#model-name").textContent = config.model;
     document.querySelector("#connection-label").textContent = configured ? "模型已配置 · 未验证连接" : "等待配置密钥";

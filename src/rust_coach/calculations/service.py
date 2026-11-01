@@ -88,7 +88,7 @@ blueprints 表示用户明确确认可制作的配方（包括默认配方）。
                     raise
                 logger.info("calculation_parse_retry reason=invalid_response")
 
-    async def run(self, messages, previous=None, pending_message=None, player_snapshot=None, inventory_container=None):
+    async def run(self, messages, previous=None, pending_message=None, player_snapshot=None, inventory_container=None, visual=None):
         parsed = None
         request = None
         player_usage = None
@@ -101,6 +101,16 @@ blueprints 表示用户明确确认可制作的配方（包括默认配方）。
                 return {"reply": ModelReply(content="暂不能给出可靠计算：" + parsed["unsupported"][:500]),
                         "calculation": {"status": "needs_input", "input": previous, "pending_message": pending}}
             request = CalculationRequest.model_validate(parsed)
+            accepted = (visual or {}).get("accepted")
+            if accepted and inventory_container and any(item["kind"] == "inventory" for item in accepted["observations"]):
+                raise AppError("ambiguous_inventory","同时提供了截图观测与档案库存，请只选一个库存来源。",422)
+            if accepted and accepted["inventory_complete"]:
+                if inventory_container or request.inventory is not None:
+                    raise AppError("ambiguous_inventory","同时提供了截图库存与其他库存来源，请只选一个来源。",422)
+                if not visual["fresh"] or accepted["subject"] != "self":
+                    raise AppError("visual_inventory_not_current","这份截图库存不是已确认的当前本人库存，请重新盘点。",422)
+                supported = self.calculator.catalog.items
+                request = request.model_copy(update={"inventory":{key:value for key,value in accepted["inventory"].items() if key in supported}})
             if inventory_container:
                 if player_snapshot is None:
                     raise AppError("player_scope_required", "请先关联玩家状态档案。", 422)
@@ -120,11 +130,17 @@ blueprints 表示用户明确确认可制作的配方（包括默认配方）。
                                 "excluded_items": sorted(set(inventory) - supported.keys())}
                 request = CalculationRequest.model_validate(request.model_dump() | updates)
             result = self.calculator.calculate(request)
+            if accepted:
+                result["visual_usage"] = {"draft_id":visual["draft_id"],"confirmation_id":accepted["confirmation_id"],
+                    "observed_at":accepted["observed_at"],"complete":accepted["inventory_complete"],"subject":accepted["subject"],
+                    "inventory_used":accepted["inventory_complete"],"excluded_items":sorted(set(accepted["inventory"]) - self.calculator.catalog.items.keys())}
             if player_usage:
                 result["player_state_usage"] = player_usage
             logger.info("calculation id=%s operation=%s snapshot=%s", result["calculation_id"],
                         request.operation, result["provenance"]["snapshot_id"])
             rendered = render_calculation(result, self.calculator.catalog)
+            if accepted and result["visual_usage"]["excluded_items"]:
+                rendered += "\n计算目录未收录、未参与抵扣的图片物品：" + "、".join(result["visual_usage"]["excluded_items"])
             if player_usage:
                 rendered += (f"\n使用玩家档案版本 {player_usage['revision']} 的容器 {inventory_container} 完整盘点；"
                              f"观测于 {player_usage['observed_at']}。其他容器未计入，真实库存没有被扣减。")

@@ -168,7 +168,12 @@ function showSnapshot(snapshot) {
     }
     if (!Object.keys(data.items).length) summaryRow("库存", data.coverage === "complete" ? "已报告为空" : "未知", "");
   }
-  if (!Object.keys(snapshot.facts).length && !Object.keys(snapshot.containers).length) summaryRow("尚未录入", "资源、科技、基地与阶段均未知", "请在下面录入当前观测。");
+  for (const record of Object.values(snapshot.visual_observations || {})) {
+    const observation = record.value;
+    summaryRow(`截图局部 · ${observation.label}`, observation.description + (observation.quantity === null ? "" : ` · 图中读数 ${observation.quantity}`),
+      `${stateStatus[record.status]}；观测 ${new Date(record.observed_at).toLocaleString()}；${record.source}；草稿 ${record.visual_draft_id}`);
+  }
+  if (!Object.keys(snapshot.facts).length && !Object.keys(snapshot.containers).length && !Object.keys(snapshot.visual_observations || {}).length) summaryRow("尚未录入", "资源、科技、基地与阶段均未知", "请在下面录入当前观测。");
   for (const [key, control] of factControls) {
     control.mode.value = "keep";
     const record = snapshot.facts[key];
