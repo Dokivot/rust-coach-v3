@@ -94,11 +94,9 @@ class ChatRuntime:
             try:
                 previous_advice = conversation.turns[-1].advice if conversation.turns and (
                     conversation.turns[-1].player_state_ref or {}).get("scope_id") == scope_id else None
-                previous_visual = conversation.turns[-1].visual if conversation.turns and (
-                    conversation.turns[-1].player_state_ref or {}).get("scope_id") == scope_id else None
                 visual_ref = str(request.visual_draft_id) if request.visual_draft_id else None
-                if not visual_ref and not request.attachment_ids and previous_visual and re.search(r"这张|这些|图里|截图|这套|这面|继续",request.message):
-                    visual_ref = previous_visual.get("draft_id")
+                if not visual_ref and not request.attachment_ids:
+                    visual_ref = self.recent_visual(conversation,request.message,scope_id)
                 timeout = self.settings.advice_timeout_seconds if request.attachment_ids or visual_ref or self.advice_service and is_advice(request.message, previous_advice) else self.settings.request_timeout_seconds
                 async with asyncio.timeout(timeout):
                     previous = conversation.turns[-1].calculation if conversation.turns else None
@@ -138,6 +136,25 @@ class ChatRuntime:
         if not request.attachment_ids and not request.visual_draft_id:
             return None
         return {key:request.model_dump(mode="json")[key] for key in ("attachment_ids","image_context","visual_draft_id")}
+
+    def recent_visual(self, conversation, message, scope_id):
+        if not self.vision_service or message.startswith(("/calc","/state")):
+            return None
+        reset = r"忘掉.*(?:截图|背包)|(?:不用|忽略|不再使用).*(?:截图|库存)|只算总需求|死了|死亡|阵亡|背包丢|被抢|被偷|换服|新开档"
+        if re.search(reset,message):
+            return None
+        for turn in reversed(conversation.turns[-self.settings.history_turns:]):
+            if (turn.player_state_ref or {}).get("scope_id") != scope_id or re.search(reset,turn.user):
+                break
+            if turn.visual:
+                try:
+                    self.vision_service.drafts.get(str(conversation.id),turn.visual["draft_id"])
+                    return turn.visual["draft_id"]
+                except AppError as error:
+                    if error.status not in {404,410}:
+                        raise
+                    break
+        return None
 
     async def confirm_visual(self,conversation_id,draft_id,request):
         if not self.vision_service:

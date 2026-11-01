@@ -30,6 +30,10 @@ EXAMPLES = {
 
 def resolve_context(message, preferences=None, capabilities=(), settings=None):
     preferences = preferences or PresentationPreferences()
+    if re.search(r"详细|计算过程|合成过程|列出步骤|计算依据|来源|公式|明细|breakdown|show.*steps|sources",message,re.I):
+        preferences = preferences.model_copy(update={"verbosity":"detailed"})
+    elif re.search(r"简短|简洁|长话短说|简要|brief|concise",message,re.I):
+        preferences = preferences.model_copy(update={"verbosity":"concise"})
     language = preferences.language
     if language == "auto":
         english_request = re.search(r"用英语|用英文|in English|answer in English", message, re.I)

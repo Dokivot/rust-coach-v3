@@ -14,7 +14,7 @@ from rust_coach.vision.context import visual_input
 STATUS_TEXT = {
     "observation": ("可先观察核对", "Check the conditions first"),
     "conditional": ("条件未全部确认", "Some prerequisites remain unconfirmed"),
-    "inventory_unknown": ("没有选定有效完整库存，不能判断实际缺口", "No complete, current inventory selected; actual shortfall is unknown"),
+    "inventory_unknown": ("库存信息不完整，预算仅计已知材料", "Inventory is incomplete; budgets use only known items"),
     "blocked": ("材料或工作台条件未满足", "Materials or workbench requirements are not met"),
     "unverified": ("缺少足够依据，不能认定可执行", "Insufficient evidence to establish feasibility"),
     "feasible_in_snapshot": ("仅在本次规则与玩家状态快照下可行", "Feasible only under the supplied inventory and rule snapshot"),
@@ -52,6 +52,10 @@ def calculation_summary(calculation, context):
     if calculation["operation"] == "craft":
         label = localized(context, "尚需获取", "Still needed") if result["inventory_known"] else localized(
             context, "总需求（库存未知，不能判断实际缺口）", "Total requirements (inventory unknown, actual shortfall unknown)")
+        partial = result["inventory_known"] and not result.get("inventory_complete",True)
+        if partial:
+            label = localized(context,"抵扣截图可见材料后，尚需" if calculation.get("visual_usage") else "抵扣已知材料后，尚需",
+                "Still needed after using known inventory")
         requirements = result["requirements"]
         lines = [
             localized(context, "制作目标：", "Crafting goal: ") + quantities(result["goals"], catalog, context),
@@ -62,6 +66,15 @@ def calculation_summary(calculation, context):
             localized(context, "材料预算不代表全部前置条件满足；真实库存未扣减。",
                       "A materials budget does not establish all prerequisites; actual inventory is unchanged."),
         ]
+        if result["inventory_known"]:
+            lines.insert(2,localized(context,"已抵扣：","Inventory used: ") + quantities(result["inventory_used"],catalog,context))
+        if partial:
+            lines.insert(3,localized(context,"未展示或读不清的物品未计入，实际缺口可能更少。",
+                "Unseen or unreadable items are excluded; the actual shortfall may be smaller."))
+        visual_usage = calculation.get("visual_usage")
+        if visual_usage and not result["inventory_known"]:
+            excluded = "截图已过期或不是当前本人库存，未用于抵扣。" if not visual_usage.get("fresh",True) or visual_usage.get("subject") != "self" else "截图没有可用于计算的清晰读数，暂列总需求。"
+            lines.insert(2,localized(context,excluded,"The screenshot cannot supply current personal inventory; totals are shown."))
         if requirements["blueprints_to_check"]:
             names = [catalog.items[key]["name"] if context.language == "zh" else key for key in requirements["blueprints_to_check"]]
             lines.append(localized(context, "待核对配方（含默认配方，不等于都要研究）：", "Check recipes (includes defaults, not all require research): ") + "、".join(names))
@@ -92,7 +105,7 @@ def calculation_assertions(calculation):
     if calculation["operation"] == "craft":
         assertions.extend([
             ProtectedAssertion(kind="quantity", reference=reference, value={key: result[key] for key in
-                ("goals", "acquisition", "inventory_known", "inventory_used", "reserved", "batch_leftovers")}),
+                ("goals", "acquisition", "inventory_known", "inventory_complete", "inventory_used", "reserved", "batch_leftovers")}),
             ProtectedAssertion(kind="feasibility", reference=reference, value=result["requirements"]),
         ])
     else:
@@ -236,7 +249,10 @@ def finalize_response(state):
             kind = "visual"
         payload = {"business":payload,"visual":visual}
         assertions.append(ProtectedAssertion(kind="observation",reference=visual["draft_id"],value=visual))
-        add("visual_scope",visual_summary(visual,context.language),reference=visual["draft_id"])
+        add("visual_scope",visual_summary(visual,context.language),reference=visual["draft_id"],
+            placement="main" if state.get("visual_original_question") or state.get("route") == "visual_observe" or calculation or advice else "detail")
+        if blocks[-1].placement == "main":
+            blocks.insert(0,blocks.pop())
         if advice and advice.get("answer"):
             for recommendation in (advice["answer"]["recommendation"],advice["answer"].get("alternative")):
                 if recommendation and recommendation.get("visual_citations"):

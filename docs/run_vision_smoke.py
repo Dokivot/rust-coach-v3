@@ -59,14 +59,22 @@ async def run(args):
                     runtime = ChatRuntime(settings,model,store,advice_service=advice,vision_service=vision)
                     turn = await runtime.chat(owner,request)
                     result.update(status="passed",turn=turn.model_dump(mode="json"))
+                    calculation = turn.calculation or {}
+                    for expected in args.expect_used:
+                        item,quantity = expected.split("=",1)
+                        if calculation.get("result",{}).get("inventory_used",{}).get(item) != int(quantity):
+                            raise ValueError("expected_inventory_not_used:" + item)
+                    if args.expect_used and (turn.presentation or {}).get("blocks",[{}])[0].get("id") != "visual_scope":
+                        raise ValueError("recognition_not_first")
                 else:
                     draft = await vision.analyze(owner,request,None)
                     result.update(status="passed",extraction=draft["payload"]["extraction"],repairs=draft["payload"]["repairs"])
             except Exception as error:
-                result.update(status="failed",error=getattr(error,"code",type(error).__name__))
+                result.update(status="failed",error=getattr(error,"code",str(error) if isinstance(error,ValueError) else type(error).__name__))
             result["responses"] = model.responses
             Path(args.output).write_text(json.dumps(result,ensure_ascii=False,indent=2))
             print(json.dumps({key:value for key,value in result.items() if key not in {"responses","extraction","turn"}},ensure_ascii=False))
+            return result["status"] == "passed"
 
 
 if __name__ == "__main__":
@@ -75,4 +83,8 @@ if __name__ == "__main__":
     parser.add_argument("--question",default="只识别图中可见内容，不做数值推断。")
     parser.add_argument("--output",default="data/vision-eval/result.json")
     parser.add_argument("--workflow",action="store_true",help="Run the complete chat/advice graph, with web search disabled.")
-    asyncio.run(run(parser.parse_args()))
+    parser.add_argument("--expect-used",action="append",default=[],metavar="ITEM=COUNT",help="Assert a craft result deducts this inventory and recognition is presented first; requires --workflow.")
+    args = parser.parse_args()
+    if args.expect_used and not args.workflow:
+        parser.error("--expect-used requires --workflow")
+    raise SystemExit(0 if asyncio.run(run(args)) else 1)

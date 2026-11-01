@@ -627,7 +627,8 @@ def test_automatic_calculation_preserves_unknowns_without_confirmation_gate(setu
     monkeypatch.setattr(model,"complete",incomplete)
     turn = analyze(client,owner,upload(client,owner))
     assert turn["calculation"]["status"] == "calculated"
-    assert turn["calculation"]["input"]["inventory"] is None
+    assert turn["calculation"]["input"]["inventory"] == ({"sulfur":100} if problem == "partial" else None)
+    assert not turn["calculation"]["input"]["inventory_complete"]
     assert "识别结果尚未确认" not in turn["assistant"]
 
 
@@ -704,3 +705,146 @@ def test_noninventory_observations_do_not_imply_empty_inventory(setup,kind):
     turn = analyze(client,owner,upload(client,owner))
     assert not turn["visual"]["automatic"]["inventory_complete"]
     assert turn["calculation"]["input"]["inventory"] is None
+
+
+@pytest.mark.parametrize("intervening",[False,True])
+def test_natural_c4_followup_uses_readable_partial_inventory(setup,monkeypatch,intervening):
+    client, application, model, owner = setup
+    original = model.complete
+    async def inventory_and_calculation(messages):
+        if not any(isinstance(message.content,list) for message in messages):
+            return ModelReply(content=json.dumps({"operation":"craft","goals":{"explosive.timed":1}}))
+        reply = await original(messages)
+        data = json.loads(reply.content)
+        template = data["observations"][0]
+        rows = [("wood",8147),("stones",550),("metal.fragments",946),("charcoal",4),("sulfur",140),("gears",None)]
+        data["observations"] = [{**template,"id":"slot_" + str(index),"item_id":item,"quantity":quantity,
+            "quantity_status":"readable" if quantity is not None else "unknown","slot":"slot_" + str(index)}
+            for index,(item,quantity) in enumerate(rows)]
+        data["inventory_coverage"] = "partial"
+        return ModelReply(content=json.dumps(data))
+    monkeypatch.setattr(model,"complete",inventory_and_calculation)
+    first = analyze(client,owner,upload(client,owner),message="")
+    if intervening:
+        application.state.runtime.store.append(owner,str(uuid4()),"谢谢","随时问我。",False)
+    response = client.post(f"/api/conversations/{owner}/messages",json={"request_id":str(uuid4()),"message":"请问我合成一个C4还差多少资源？"})
+    assert response.status_code == 200,response.text
+    turn = response.json()
+    assert turn["visual"]["draft_id"] == first["visual"]["draft_id"]
+    assert turn["calculation"]["input"]["inventory"] == {"wood":8147,"stones":550,"metal.fragments":946,"charcoal":4,"sulfur":140}
+    assert turn["calculation"]["result"]["inventory_used"] == {"metal.fragments":200,"sulfur":140,"charcoal":4}
+    assert turn["calculation"]["result"]["acquisition"] == {"techparts":2,"lowgradefuel":60,"sulfur":2060,"charcoal":2996,"cloth":5}
+    main = "\n".join(block["text"] for block in turn["presentation"]["blocks"] if block["placement"] == "main")
+    assert "抵扣截图可见材料后" in main and "已抵扣" in main and "实际缺口可能更少" in main
+    assert "库存未知" not in main
+    assert len(model.calls) == 1
+
+
+@pytest.mark.parametrize("boundary",["death","new_scope","cancelled","deleted","explicit_total","expired"])
+def test_recent_screenshot_respects_context_boundaries(setup,monkeypatch,boundary):
+    client, application, model, owner = setup
+    first = analyze(client,owner,upload(client,owner))
+    if boundary == "death":
+        application.state.runtime.store.append(owner,str(uuid4()),"我死了，背包丢了。","先确认当前位置。",False)
+    elif boundary == "new_scope":
+        bind(application,owner)
+    elif boundary == "cancelled":
+        application.state.vision.drafts.cancel(owner,first["visual"]["draft_id"])
+    elif boundary == "deleted":
+        application.state.attachments.delete(owner,first["visual"]["attachments"][0]["id"])
+    elif boundary == "expired":
+        draft = application.state.vision.drafts.get(owner,first["visual"]["draft_id"])
+        old = (datetime.now(timezone.utc)-timedelta(hours=1)).isoformat()
+        for context in draft["payload"]["resolved_context"].values():
+            context["observed_at"] = old
+        with application.state.runtime.store.connection() as connection:
+            connection.execute("UPDATE visual_drafts SET payload=? WHERE id=?",(json.dumps(draft["payload"]),draft["id"]))
+    async def calculate(messages):
+        return ModelReply(content=json.dumps({"operation":"craft","goals":{"explosive.timed":1}}))
+    monkeypatch.setattr(model,"complete",calculate)
+    question = "只算总需求：合成一个C4" if boundary == "explicit_total" else "合成一个C4还差多少资源？"
+    response = client.post(f"/api/conversations/{owner}/messages",json={"request_id":str(uuid4()),"message":question})
+    assert response.status_code == 200,response.text
+    assert response.json()["calculation"]["input"]["inventory"] is None
+
+
+def test_partial_inventory_advice_does_not_claim_complete_budget(setup):
+    client, _, model, owner = setup
+    model.coverage = "partial"
+    turn = analyze(client,owner,upload(client,owner))
+    service = AdviceService(model,None)
+    state = {"request":{"visual":turn["visual"]},"plan":{"candidates":[{"id":"craft","kind":"craft","goals":{"gunpowder":10},"required_fields":[]}]},"evidence":{"documents":[]}}
+    result = service.evaluate(state)["evaluations"]["craft"]
+    assert result["calculation"]["result"]["inventory_used"] == {"sulfur":20}
+    assert result["status"] == "inventory_unknown"
+    assert result["calculation"]["visual_usage"]["complete"] is False
+
+
+@pytest.mark.parametrize("explicit_status",[False,True])
+def test_same_turn_c4_uses_quality_flagged_counts_and_recognition_comes_first(setup,monkeypatch,explicit_status):
+    client, application, model, owner = setup
+    model.task = "craft"
+    original = model.complete
+    async def quality_notes(messages):
+        reply = await original(messages)
+        data = json.loads(reply.content)
+        template = data["observations"][0]
+        data["observations"] = [{**template,"id":item,"item_id":item,"label":label,"quantity":quantity,
+            "slot":"row_1_col_" + str(index),"uncertainty":["图标受低分辨率影响。"],
+            **({"item_status":"identified"} if explicit_status else {})}
+            for index,(item,label,quantity) in enumerate([("charcoal","木炭",4),("sulfur","硫磺",140)],1)]
+        data["inventory_coverage"] = "partial"
+        data["calculation"] = {"operation":"craft","goals":{"explosive.timed":1}}
+        return ModelReply(content=json.dumps(data))
+    monkeypatch.setattr(model,"complete",quality_notes)
+    turn = analyze(client,owner,upload(client,owner),message="我合成C4还差什么？")
+    assert turn["calculation"]["input"]["inventory"] == {"charcoal":4,"sulfur":140}
+    assert turn["calculation"]["result"]["inventory_used"] == {"charcoal":4,"sulfur":140}
+    assert turn["calculation"]["result"]["acquisition"]["charcoal"] == 2996
+    assert turn["calculation"]["result"]["acquisition"]["sulfur"] == 2060
+    assert turn["presentation"]["blocks"][0]["id"] == "visual_scope"
+    assert turn["assistant"].startswith("截图识别结果")
+    assert turn["assistant"].index("• 木炭 × 4") < turn["assistant"].index("制作目标")
+    assert "部分图标有画质提醒" in turn["assistant"]
+    draft = application.state.vision.drafts.get(owner,turn["visual"]["draft_id"])
+    for item in draft["payload"]["extraction"]["observations"]:
+        item.pop("item_status",None)
+    draft["payload"]["automatic"]["inventory"] = {}
+    restored = application.state.vision.evidence(draft)
+    assert restored["automatic"]["inventory"] == {"charcoal":4,"sulfur":140}
+    assert restored["automatic"]["observed_at"] == turn["visual"]["automatic"]["observed_at"]
+    service = AdviceService(model,None)
+    state = {"request":{"visual":restored},"plan":{"candidates":[{"id":"craft","kind":"craft","goals":{"explosive.timed":1},"required_fields":[]}]},"evidence":{"documents":[]}}
+    evaluated = service.evaluate(state)["evaluations"]["craft"]
+    assert evaluated["calculation"]["result"]["inventory_used"] == {"charcoal":4,"sulfur":140}
+
+
+@pytest.mark.parametrize("uncertainty,status",[
+    ("无法可靠确认具体物品。",None),
+    ("图标受低分辨率影响。","ambiguous"),
+    ("", "unknown"),
+])
+def test_unresolved_identity_is_excluded_and_displayed_as_unresolved(setup,monkeypatch,uncertainty,status):
+    client, _, model, owner = setup
+    model.task = "craft"
+    original = model.complete
+    async def ambiguous(messages):
+        reply = await original(messages)
+        data = json.loads(reply.content)
+        data["observations"][0].update(uncertainty=[uncertainty] if uncertainty else [],item_status=status)
+        return ModelReply(content=json.dumps(data))
+    monkeypatch.setattr(model,"complete",ambiguous)
+    turn = analyze(client,owner,upload(client,owner),message="制作10火药还差什么？")
+    assert turn["calculation"]["input"]["inventory"] is None
+    assert "物品身份未确定，未计入" in turn["assistant"]
+
+
+def test_automatic_subject_is_not_presented_as_an_explicit_unknown_owner(setup):
+    client, _, model, owner = setup
+    attachment = upload(client,owner)
+    turn = analyze(client,owner,attachment,image_context={attachment["id"]:{"subject":"unknown"}})
+    parts = next(message.content for message in model.calls[0] if isinstance(message.content,list))
+    context = json.loads(parts[0].text)
+    assert "subject" not in context["images"][0]
+    assert "captured_at" not in context["images"][0]
+    assert turn["visual"]["automatic"]["subject"] == "self"

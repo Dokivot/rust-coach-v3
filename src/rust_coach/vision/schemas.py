@@ -27,6 +27,7 @@ class VisualObservation(StrictModel):
     subject: Subject = "unknown"
     label: Text
     item_id: ItemId | None = None
+    item_status: Literal["identified", "ambiguous", "unknown"] | None = None
     quantity: Quantity | None = None
     quantity_status: Literal["readable", "ambiguous", "absent", "unknown"] = "unknown"
     raw_quantity: str = Field(default="", max_length=40)

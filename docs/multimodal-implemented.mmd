@@ -1,12 +1,12 @@
 flowchart TD
     subgraph INPUT[输入层 · 浏览器与 FastAPI]
-        UI[代码：文字/文件/粘贴/拖入即可发送<br/>首次自动探测；裁剪/主体/时间可选]
+        UI[代码：单一聊天输入框<br/>文字/粘贴/拖入图片、预览与发送]
         UP[代码：限流、字节/像素/格式校验<br/>EXIF 归一化、PNG 重编码、SHA256]
         FILES[(私有附件目录 + SQLite 元数据)]
         UI -->|单文件 multipart| UP --> FILES
     end
     subgraph RT[Agent Runtime · 单进程串行聊天]
-        RUN[代码：请求幂等、超时、上下文限长<br/>冻结玩家档案 revision]
+        RUN[代码：请求幂等、超时、上下文限长<br/>恢复最近图片；范围/失效边界检查]
         VI{代码：新附件或草稿引用?}
         ROUTE[代码：命令/意图路由<br/>视觉 task 是候选提示]
         RUN --> VI
@@ -36,7 +36,7 @@ flowchart TD
         ACCEPT[代码：应用修改或保存档案<br/>范围/主体/时效、草稿 CAS、确认幂等]
         COMMIT[代码：SQLite 同一事务<br/>回执 + 消费草稿 + 可选状态更新]
         CONTINUE[代码：新 ChatRequest 继续<br/>固定幂等 ID；失败保留已提交回执]
-        UI -->|用户主动展开并修改或保存| ACCEPT
+        API[代码：保留可选修改/保存 API] --> ACCEPT
         DRAFTDB --> ACCEPT
         ACCEPT --> COMMIT --> CONTINUE --> RUN
         COMMIT --> DRAFTDB
@@ -54,7 +54,7 @@ flowchart TD
     COMMIT -->|仅明确 save_to_profile| PROFILE
     subgraph DECISION[业务与 Tools]
         OBSERVE[代码：直接显示识别结果与未知项]
-        CALC[代码：合成/拆墙计算<br/>完整当前本人库存才可抵扣]
+        CALC[代码：合成/拆墙计算<br/>抵扣可读材料；局部预算标明范围]
         PLAN[LLM：规划最多三个候选行动]
         EVAL[代码：检索、前提核对、独立预算]
         ADVICE[LLM：选择、步骤、切换条件<br/>图片区域 + 网页依据分开引用]
@@ -80,6 +80,6 @@ flowchart TD
     classDef deterministic fill:#e5f1ff,stroke:#2563a6,color:#111;
     classDef generative fill:#fff0da,stroke:#b56918,color:#111;
     classDef persistence fill:#f1edf9,stroke:#7755a0,color:#111;
-    class UI,UP,RUN,VI,ROUTE,PREP,CHECK,DRAFT,ACCEPT,COMMIT,CONTINUE,WEB,OBSERVE,CALC,EVAL,FINAL,TEST deterministic;
+    class UI,UP,RUN,VI,ROUTE,PREP,CHECK,DRAFT,API,ACCEPT,COMMIT,CONTINUE,WEB,OBSERVE,CALC,EVAL,FINAL,TEST deterministic;
     class EXTRACT,REFINE,PLAN,ADVICE generative;
     class FILES,DRAFTDB,CATALOG,PROFILE,HISTORY persistence;

@@ -15,12 +15,12 @@ from rust_coach.presentation.validation import signature
 from rust_coach.vision.drafts import VisualDraftStore
 from rust_coach.vision.probe import image_part, parse_json, probe_model
 from rust_coach.vision.schemas import VisualExtraction
-from rust_coach.vision.context import automatic_input, resolve_screenshots, visual_input
+from rust_coach.vision.context import automatic_input, item_identity_status, resolve_screenshots, visual_input
 from rust_coach.player_state.domain import model_context
 
 
 logger = logging.getLogger("rust_coach")
-VERSION = "visual-observations-v3"
+VERSION = "visual-observations-v4"
 
 
 class VisionState(TypedDict, total=False):
@@ -133,8 +133,12 @@ quantity 只有数量文字清晰可读才填，否则 null。1k 等缩写若不
 inventory_coverage 仅当一个容器全部边界、格子均在图内且无遮挡时 full_view，否则 partial/unknown。
 特别注意：只显示一行库存、上下边缘贴着图片边界、或看不到面板完整下边界，都不能判断 full_view。工具柜维护面板下面的一行库存裁图必须 partial，不能因这一行显示完整就认为整个工具柜完整。宁可 unknown，不补全范围。
 只用目录中明确对应的规范 item_id；未收录/不确定则 null 并保留 label，不把相似物品强行代替。
+item_status 单独表示物品身份：identified 表示已辨认，ambiguous 表示具体物品仍有歧义，unknown 表示未知。
+画面低分辨率或裁切等一般画质提醒写入 uncertainty，不等同于物品未知；已辨认且数量清晰的物品仍填 identified 与 readable。
+如果确实不能区分物品，必须填 ambiguous/unknown 和 item_id=null，不能一边猜一个物品 ID，一边只在备注里说明无法确认。
 task 根据玩家问题确定：只有图片或识别请求为 observe，合成需求为 craft，拆建筑数量为 raid，其余策略为 advice。
 calculation 仅在 task 为 craft/raid 且用户目标明确时填写目标参数；inventory=null，reserve={}。
+明确要合成某一个物品但未说数量时，默认先按1个计算，并在 unknowns 说明默认数量，不要因此把 calculation 留空。
 craft 只填写 operation 和 goals 以及明确的科技条件，target 必须 null，不填写拆墙字段。raid 的 goals 必须 {}，target 仅填写建筑目录 ID。
 不把视觉数量填入计算库存。工作台/蓝图仅用户明确给出时填写；其他不明条件在 unknowns 中说明。
 若目标墙的材质、硬软面、血量不确定，不要输出默认满血硬面结论，保留 calculation=null 请求确认。
@@ -142,7 +146,8 @@ craft 只填写 operation 和 goals 以及明确的科技条件，target 必须 
 只返回此 Schema JSON：""" + json.dumps(VisualExtraction.model_json_schema(),ensure_ascii=False)
         catalog = {key:value["name"] for key,value in self.calculator.catalog.items.items()}
         context = {"question":request["message"],"images":[{"attachment_id":item["id"],"width":item["width"],"height":item["height"],
-            **request["image_context"].get(item["id"],{})} for item in state["attachments"]],"item_catalog":catalog,
+            **{key:value for key,value in request["image_context"].get(item["id"],{}).items()
+                if value is not None and not (key == "subject" and value == "unknown")}} for item in state["attachments"]],"item_catalog":catalog,
             "recent_user_context":state.get("context_history",[]),
             "player_state":model_context(state["snapshot"]) if state.get("snapshot") else None,
             "targets":{key:value["name"] for key,value in self.calculator.catalog.targets.items()}}
@@ -181,6 +186,7 @@ craft 只填写 operation 和 goals 以及明确的科技条件，target 必须 
             if observation["item_id"] and observation["item_id"] not in self.calculator.catalog.items:
                 issues.append("unknown_item:" + observation["id"])
                 observation["item_id"] = None
+            observation["item_status"] = item_identity_status(observation)
             if observation["quantity_status"] != "readable" and observation["kind"] == "inventory":
                 issues.append("quantity_unknown:" + observation["id"])
             declared = state["request"]["image_context"].get(observation["attachment_id"],{}).get("subject","unknown")
@@ -250,6 +256,8 @@ craft 只填写 operation 和 goals 以及明确的科技条件，target 必须 
     def evidence(self,draft):
         payload = draft["payload"]
         accepted = payload.get("accepted")
+        if payload.get("automatic") and payload.get("resolved_context"):
+            payload["automatic"] = automatic_input(payload["extraction"],payload["resolved_context"])
         resolved = accepted or payload.get("automatic")
         observations = resolved["observations"] if resolved else payload["extraction"]["observations"]
         fresh = bool(resolved and resolved.get("current_assumption",True) and datetime.fromisoformat(resolved["expires_at"]) > datetime.now(timezone.utc))
@@ -270,15 +278,17 @@ craft 只填写 operation 和 goals 以及明确的科技条件，target 必须 
             return {"reply":ModelReply(content="尚未明确可支持的计算目标。请填写目标物品与数量，或使用本地计算器；不会从截图猜测目标。"),"calculation":None}
         request = CalculationRequest.model_validate(raw)
         inventory = None
-        if accepted["inventory_complete"]:
+        if accepted["inventory_complete"] or accepted["inventory"]:
             if not visual["fresh"] or accepted["subject"] != "self":
                 if visual.get("accepted"):
                     raise AppError("visual_inventory_not_current","这份库存不是当前本人库存，不能计算实际缺口。请重新盘点，或只计算总需求。",422)
             else:
                 inventory = {key:value for key,value in accepted["inventory"].items() if key in self.calculator.catalog.items}
-        calculation = self.calculator.calculate(request.model_copy(update={"inventory":inventory}))
+        calculation = self.calculator.calculate(request.model_copy(update={"inventory":inventory,
+            "inventory_complete":accepted["inventory_complete"]}))
         calculation["visual_usage"] = {"draft_id":visual["draft_id"],"confirmation_id":accepted["confirmation_id"],
             "observed_at":accepted["observed_at"],"complete":accepted["inventory_complete"],"subject":accepted["subject"],
+            "fresh":visual["fresh"],
             "excluded_items":sorted(set(accepted["inventory"]) - self.calculator.catalog.items.keys()),
             "inventory_used":inventory is not None,"source":accepted.get("source","image_confirmed"),
             "attachment_hashes":[item["sha256"] for item in visual["attachments"]]}

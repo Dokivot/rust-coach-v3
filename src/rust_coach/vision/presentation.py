@@ -1,5 +1,5 @@
 from datetime import datetime, timezone
-from rust_coach.vision.context import visual_input
+from rust_coach.vision.context import item_identity_status, visual_input
 
 
 def visual_summary(visual,language="zh"):
@@ -20,9 +20,12 @@ def visual_summary(visual,language="zh"):
         lines = [("Screenshot recognition · " if english else "截图识别结果 · ") + scope]
         if accepted["inventory_complete"] and fresh and accepted["subject"] == "self":
             lines.append("Calculations use the recognized inventory counts." if english else "计算直接采用图中识别的库存读数。")
-        elif any(item["kind"] == "inventory" for item in visual["observations"]):
-            lines.append("Only visible items are known; missing slots are not treated as zero." if english else "仅掌握可见物品，未展示或读不清的库存不按零处理。")
-        lines.append("Tell me directly if any recognition is wrong." if english else "如有识别错误，直接告诉我即可，无需逐项确认。")
+        elif fresh and accepted["subject"] == "self" and any(item["kind"] == "inventory" for item in visual["observations"]):
+            lines.append("Identified items with readable counts are used; unknown items are excluded." if english else "按已辨认物品和清晰数量计算；无法辨认的物品不计入。")
+        included = set(accepted.get("included_observations",[]))
+        if fresh and accepted["subject"] == "self" and any(item["id"] in included and item["uncertainty"] for item in visual["observations"]):
+            lines.append("Some icons have image-quality warnings; calculations use the recognized identities and counts." if english else
+                "部分图标有画质提醒，本次按下列识别结果计算。")
     elif accepted:
         heading = "User-confirmed screenshot observations" if english else "玩家已确认截图观测"
         state = ("Current under the declared observation time" if fresh else "Historical/expired; not current inventory") if english else (
@@ -33,16 +36,22 @@ def visual_summary(visual,language="zh"):
                 "Used for this task only; profile unchanged." if english else "仅用于本轮，未写入玩家档案。")]
     else:
         lines = ["Previous screenshot recognition." if english else "历史截图识别结果。"]
-    lines.append("A partial view does not establish the whole base or loadout. No combat damage calculator is available." if english else
-        "局部画面不证明完整基地或装备状态；当前没有战斗伤害计算器。")
+    if any(item["kind"] in {"base","equipment"} for item in visual["observations"]):
+        lines.append("Only visible structures and equipment are known." if english else "仅能判断可见的结构和装备。")
     for item in visual["observations"][:12]:
         quantity = str(item["quantity"]) if item["quantity"] is not None else ("unknown" if english else "未知")
-        details = item["label"] + (" · " + item["description"] if item["description"] else "")
+        details = item["label"]
         if item["kind"] == "inventory":
-            details += (" · visible count: " if english else " · 图中读数：") + quantity
-        lines.append(f"[{item['id']}] {details}")
+            details += " × " + quantity
+            if not visual.get("accepted") and item_identity_status(item) != "identified":
+                details += " (identity unclear; excluded)" if english else "（物品身份未确定，未计入）"
+            elif accepted and not visual.get("accepted") and "included_observations" in accepted and item["id"] not in accepted["included_observations"]:
+                details += " (count or slot unresolved; excluded)" if english else "（数量或槽位范围未确定，未计入）"
+        elif item["description"]:
+            details += " · " + item["description"]
+        lines.append("• " + details)
     if len(visual["observations"]) > 12:
-        lines.append("See recognition details for all detected slots." if english else "其余格子可展开识别详情查看。")
+        lines.append("Other detected items are retained for follow-up questions." if english else "其余已识别物品也会保留用于后续提问。")
     if visual["unknowns"]:
         lines.append(("Unknown: " if english else "尚不明确：") + "；".join(visual["unknowns"]))
     return "\n".join(lines)

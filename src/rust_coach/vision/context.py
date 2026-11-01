@@ -7,6 +7,17 @@ def visual_input(visual):
     return (visual or {}).get("accepted") or (visual or {}).get("automatic")
 
 
+def item_identity_status(observation):
+    if observation.get("item_id") is None:
+        return "unknown"
+    if observation.get("item_status"):
+        return observation["item_status"]
+    notes = "；".join(observation.get("uncertainty",[]))
+    if re.search(r"无法|不能确认|不能确定|不确定|存疑|可能是|难以辨认|ambiguous|uncertain|cannot identify|could be",notes,re.I):
+        return "ambiguous"
+    return "identified"
+
+
 def resolve_screenshots(extraction, request, attachments):
     inferred = {item["attachment_id"]: item for item in extraction.get("screenshot_context", [])}
     contexts = {}
@@ -53,17 +64,26 @@ def automatic_input(extraction, contexts):
     complete = (extraction["inventory_coverage"] == "full_view" and len(contexts) == 1 and len(regions) <= 1
         and (bool(inventory_rows) or not observations)
         and all(item["region_kind"] in {"backpack", "hotbar", "storage", "tool_cupboard"}
-            and item["item_id"] is not None and item["quantity"] is not None and item["slot"] for item in inventory_rows)
+            and item_identity_status(item) == "identified" and item["quantity"] is not None and item["slot"] for item in inventory_rows)
         and len(slots) == len(set(slots)) and not any(item["uncertainty"] for item in inventory_rows))
     inventory = Counter()
-    if complete:
+    included_observations = []
+    if len(contexts) == 1 and len(regions) <= 1:
+        slot_counts = Counter(slots)
         for item in inventory_rows:
-            inventory[item["item_id"]] += item["quantity"]
+            if (item["region_kind"] in {"backpack","hotbar","storage","tool_cupboard"}
+                    and item_identity_status(item) == "identified" and item["quantity"] is not None
+                    and item["quantity_status"] == "readable" and item["slot"]
+                    and slot_counts[item["slot"]] == 1):
+                inventory[item["item_id"]] += item["quantity"]
+                included_observations.append(item["id"])
         if any(value > 1_000_000 for value in inventory.values()):
             complete, inventory = False, Counter()
+            included_observations = []
     return {"source": "image_inferred", "confirmation_id": None, "observations": observations,
         "subject": subject, "observed_at": observed_at.isoformat(),
         "expires_at": (observed_at + timedelta(minutes=30)).isoformat(), "current_assumption": current,
         "inventory": dict(inventory), "inventory_complete": complete,
+        "included_observations": included_observations,
         "container_id": inventory_rows[0]["region_kind"] if inventory_rows else "backpack",
         "calculation": extraction.get("calculation"), "saved": False, "state_revision": None}

@@ -1,31 +1,6 @@
-.vision-composer { margin: 8px 0; color: var(--muted, #a8aaa7); font-size: 13px; }
-.vision-composer summary { cursor: pointer; }
-.composer-area { max-height: 65vh; overflow-y: auto; }
-.vision-composer button, .visual-card button, .vision-editor button { background: #252a27; color: #edf0eb; border: 1px solid #4c554d; border-radius: 6px; padding: 7px 11px; cursor: pointer; }
-.vision-composer button:disabled, .visual-card button:disabled { opacity: .45; cursor: default; }
-.vision-pending { display: flex; gap: 10px; overflow-x: auto; margin-top: 8px; }
-.vision-pending-card { flex: 0 0 190px; border: 1px solid #3c453d; border-radius: 8px; padding: 8px; }
-.vision-pending-card img { width: 100%; height: 95px; object-fit: contain; background: #141715; }
-.vision-pending-card label, .visual-card label { display: block; margin: 8px 0; font-size: 12px; }
-.vision-pending-card input, .vision-pending-card select, .visual-card input:not([type=checkbox]), .visual-card select, .visual-card textarea { background: #171c19; color: #eef1eb; border: 1px solid #4c554d; border-radius: 4px; padding: 6px; max-width: 100%; }
-.vision-pending-card input { width: 100%; }
-.visual-card { border: 1px solid #55694f; border-radius: 10px; padding: 14px; margin-top: 14px; background: #1b211d; }
-.visual-card h3 { margin: 0 0 8px; font-size: 15px; }
-.visual-card p { font-size: 12px; line-height: 1.6; }
-.visual-card fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
-.visual-images { display: flex; gap: 8px; flex-wrap: wrap; }
-.visual-image { width: min(100%, 420px); }
-.visual-image canvas { width: 100%; background: #121613; cursor: zoom-in; }
-.visual-image p { margin: 3px 0; overflow-wrap: anywhere; }
-.visual-row { border-top: 1px solid #374238; padding: 8px 0; display: grid; grid-template-columns: 1fr 1fr; gap: 4px 10px; }
-.visual-row .visual-row-title, .visual-row .visual-description { grid-column: 1 / -1; }
-.visual-row label { margin: 2px 0; }
-.visual-row input:not([type=checkbox]) { width: 100%; }
-.visual-card textarea { width: 100%; min-height: 110px; font-family: monospace; }
-.vision-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
-.vision-editor { width: min(900px, 94vw); max-height: 94vh; overflow-y: auto; background: #1b211d; color: #ecf1e9; border: 1px solid #66745f; border-radius: 12px; }
-.vision-editor::backdrop { background: #000b; }
-.vision-editor canvas { display: block; max-width: 100%; max-height: 66vh; margin: auto; cursor: crosshair; touch-action: none; }
-.vision-error { color: #f2ba8a; white-space: pre-wrap; }
-.vision-drop { outline: 2px dashed #a6bd8a; }
-@media (max-width: 600px) { .visual-row { grid-template-columns: 1fr; } }
+.vision-pending { display: flex; gap: 10px; overflow-x: auto; margin-bottom: 14px; }
+.vision-pending-card { position: relative; flex: 0 0 112px; }
+.vision-pending-card img { width: 112px; height: 84px; object-fit: contain; background: #141715; border: 1px solid #3c453d; border-radius: 8px; }
+.vision-pending-card button { position: absolute; right: 4px; top: 4px; width: 22px; height: 22px; border: 0; border-radius: 50%; background: #111d; color: #eee; }
+.message-image { display: block; max-width: min(360px, calc(100% - 36px)); max-height: 220px; margin: 12px 0 0 36px; border-radius: 8px; object-fit: contain; }
+.vision-drop { outline: 2px dashed #a6bd8a; border-radius: 16px; }

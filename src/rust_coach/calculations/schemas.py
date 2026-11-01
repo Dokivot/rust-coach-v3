@@ -14,6 +14,7 @@ class CalculationRequest(BaseModel):
     ruleset: Literal["pc_vanilla"] = "pc_vanilla"
     goals: dict[str, PositiveQuantity] = Field(default_factory=dict, max_length=20)
     inventory: dict[str, Quantity] | None = Field(default=None, max_length=100)
+    inventory_complete: bool = Field(default=True, strict=True)
     reserve: dict[str, Quantity] = Field(default_factory=dict, max_length=100)
     target: str | None = Field(default=None, max_length=100)
     hp: Annotated[int, Field(strict=True, ge=1, le=2000)] | None = None

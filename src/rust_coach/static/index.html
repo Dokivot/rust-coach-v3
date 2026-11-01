@@ -4,97 +4,46 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="dark">
-  <title>Rust Coach · 聊天工作台</title>
+  <title>Rust Coach</title>
   <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="/static/styles.css">
   <link rel="stylesheet" href="/static/vision.css">
   <script src="/static/vision.js" defer></script>
   <script src="/static/app.js" defer></script>
 </head>
-<body>
-  <aside class="sidebar">
-    <a class="brand" href="/" aria-label="Rust Coach 首页"><span class="brand-mark">R</span><span>RUST<span class="brand-light"> COACH</span></span></a>
-    <span class="edition">LOCAL WORKSPACE · 0.1</span>
-    <button id="new-chat" data-action="new" class="new-chat" type="button"><span>＋</span> 新建对话</button>
-    <div class="side-label">工作台</div>
-    <div class="nav-active"><span class="nav-icon">◈</span> 对话 <span class="tag">可用</span></div>
-    <a class="nav-active" href="/calculator">拆家与合成计算 <span class="tag">可用</span></a>
-    <a class="nav-active" href="/player-state">玩家状态 <span class="tag">可用</span></a>
-    <div class="side-label roadmap-label">教练能力</div>
-    <div class="roadmap-item"><span>按需网页取证</span><span>已接入</span></div>
-    <div class="roadmap-item"><span>状态与目标权衡</span><span>已接入</span></div>
-    <div class="roadmap-item"><span>证据与计算追溯</span><span>已接入</span></div>
-    <p class="side-note">计算器按固定 PC 原版资料快照运行，可查看公式、配方和来源，无需模型密钥。</p>
-    <div class="sidebar-bottom"><span class="local-dot"></span> 本地对话记录 <button id="delete-chat" data-action="delete" class="text-button" type="button">删除当前会话</button></div>
-  </aside>
+<body class="chat-page">
   <main class="workspace">
-    <header class="topbar"><div><span class="breadcrumb">工作台</span><span class="slash">/</span> 对话</div><div class="connection"><span id="connection-dot" class="status-dot"></span><span id="connection-label">检查配置中</span></div></header>
-    <nav class="mobile-actions" aria-label="会话操作"><button data-action="new" type="button">＋ 新建对话</button><button data-action="delete" type="button">删除当前会话</button></nav>
+    <header class="chat-header">
+      <span class="brand"><span class="brand-mark">R</span> RUST COACH</span>
+      <button id="new-chat" type="button">新对话</button>
+    </header>
     <div id="setup" class="setup" hidden>
-      <strong>还差一步：连接模型</strong>
-      <p>在项目根目录的 <code>.env</code> 中填写 <code>COACH_API_KEY</code>，然后重启服务并刷新页面。</p>
-      <p class="setup-detail">已预设你的服务地址与模型。密钥只在服务端读取，不需要输入到网页。</p>
+      <strong>连接模型后即可开始</strong>
+      <p>请在项目的 .env 中配置模型密钥，然后重启服务。</p>
     </div>
     <section id="scroll-area" class="scroll-area" aria-label="对话区域">
       <div id="welcome" class="welcome">
-        <div class="eyebrow"><span></span> YOUR NEXT MOVE STARTS HERE</div>
-        <h1>先聊聊，<br>你的下一步。</h1>
-        <p class="intro">我是 Rust Coach。告诉我目标和现有材料，<br class="desktop-break">一起算清拆墙所需爆炸物、合成路径与资源缺口。</p>
-        <div class="suggestions">
-          <button type="button" class="suggestion" data-prompt="现在该冲科技还是先加固基地？请结合我的状态比较取舍，缺少条件时告诉我要检查什么。"><span class="suggestion-number">01</span><strong>下一步做什么</strong><span>结合状态，比较行动与取舍 <b>↗</b></span></button>
-          <button type="button" class="suggestion" data-prompt="拆一面满血石墙硬面需要多少 C4？"><span class="suggestion-number">02</span><strong>拆墙计算</strong><span>数量、公式与资源路径 <b>↗</b></span></button>
-          <button type="button" class="suggestion" data-prompt="合成 2 个 C4，我已有 10 个炸药材料和 1000 硫磺，其他库存为零，还缺什么？"><span class="suggestion-number">03</span><strong>资源缺口</strong><span>抵扣已有材料，展开配方 <b>↗</b></span></button>
-        </div>
-        <div class="scope-note"><span>i</span> <a href="/calculator">打开本地计算器 →</a> · 输入 /coach 请求建议，/search 重新取证。网页版本适用性需核对；尚无战斗伤害计算。</div>
+        <div class="eyebrow">RUST COACH</div>
+        <h1>你的下一步，<br>一起算清楚。</h1>
+        <p class="intro">告诉我你想做什么，或直接粘贴背包截图。<br>我会记住本次对话里的图片，帮你算材料、看基地、做选择。</p>
       </div>
       <div id="messages" class="messages" role="log" aria-live="polite" aria-relevant="additions"></div>
     </section>
     <footer class="composer-area">
       <div id="error" class="error" role="alert" hidden></div>
-      <div class="player-context-bar">
-        <label>玩家档案<select id="chat-player-scope"><option value="">不关联状态</option></select></label>
-        <label>计算使用的容器<select id="chat-inventory-container"><option value="">仅用消息中的库存</option></select></label>
-        <a href="/player-state">录入 / 更新状态 →</a>
-      </div>
-      <p id="chat-state-note" class="chat-state-note">尚未关联玩家状态。</p>
-      <details class="vision-composer">
-        <summary>截图 · 背包 / 基地 / 装备 <span id="vision-status">检查中</span></summary>
-        <p class="chat-state-note">添加图片即可发送，无需填写时间或逐项确认。默认按你当前的情况分析；旧图、他人或参考图可直接在消息中说明。图片会发送至模型服务，可按需裁剪或遮盖。</p>
-        <button id="vision-probe" type="button">验证截图接口</button>
-        <button id="vision-add" type="button">添加截图</button>
-        <input id="vision-files" class="sr-only" type="file" accept="image/png,image/jpeg,image/webp" multiple>
-        <span class="chat-state-note">也可粘贴或拖入图片</span>
-        <div id="vision-pending" class="vision-pending"></div>
-      </details>
-      <details class="presentation-settings">
-        <summary>教练表达 · <span id="presentation-label">标准</span></summary>
-        <div class="player-context-bar">
-          <label for="presentation-verbosity">详略<select id="presentation-verbosity"><option value="concise">简洁</option><option value="standard" selected>标准</option><option value="detailed">详细</option></select></label>
-          <label for="presentation-language">语言<select id="presentation-language"><option value="auto">跟随本轮问题</option><option value="zh">中文</option><option value="en">English</option></select></label>
-          <label for="presentation-terminology">术语<select id="presentation-terminology"><option value="plain">易懂解释</option><option value="game_terms">游戏简称</option></select></label>
-          <button id="presentation-reset" type="button" class="text-button">恢复默认</button>
-        </div>
-        <p class="chat-state-note">仅影响本会话之后的表达；不改变风险偏好、数值和关键条件。计算原始报告保留中文。</p>
-      </details>
       <form id="chat-form" class="composer">
+        <div id="vision-pending" class="vision-pending" aria-label="待发送图片" hidden></div>
         <label class="sr-only" for="message-input">发送消息</label>
-        <textarea id="message-input" name="message" rows="2" maxlength="6000" placeholder="想聊些什么？" disabled></textarea>
-        <div class="composer-bottom"><div class="model-chip"><span class="model-symbol">✳</span><span id="model-name">加载模型配置…</span></div><div class="send-controls"><span id="input-count">0 / 6000</span><button id="send" class="send-button" type="submit" aria-label="发送消息" disabled>↑</button></div></div>
+        <textarea id="message-input" name="message" rows="2" maxlength="6000" placeholder="问点什么，或粘贴一张截图…" disabled></textarea>
+        <div class="composer-bottom">
+          <button id="vision-add" class="attach-button" type="button" aria-label="添加图片" title="添加图片">＋</button>
+          <input id="vision-files" class="sr-only" type="file" accept="image/png,image/jpeg,image/webp" multiple>
+          <span id="send-status" class="composer-hint" aria-live="polite"></span>
+          <button id="send" class="send-button" type="submit" aria-label="发送消息" disabled>↑</button>
+        </div>
       </form>
-      <div class="footer-note"><a href="/calculator">本地计算器（无需密钥）</a><span id="context-note">记录保存在此设备，回复来自模型服务</span></div>
+      <p class="chat-hint">可粘贴或拖入图片 · Enter 发送，Shift + Enter 换行</p>
     </footer>
   </main>
-  <dialog id="vision-editor" class="vision-editor">
-    <h2>发送前检查图片</h2>
-    <p>拖动选择矩形区域，可裁剪或遮盖。此步骤仅在浏览器本地处理。</p>
-    <canvas id="vision-edit-canvas" aria-label="图片编辑画布"></canvas>
-    <div class="vision-actions">
-      <button id="vision-crop" type="button">裁剪所选区域</button>
-      <button id="vision-redact" type="button">遮盖所选区域</button>
-      <button id="vision-reset" type="button">还原</button>
-      <button id="vision-editor-cancel" type="button">取消</button>
-      <button id="vision-editor-use" type="button">使用此图</button>
-    </div>
-  </dialog>
 </body>
 </html>

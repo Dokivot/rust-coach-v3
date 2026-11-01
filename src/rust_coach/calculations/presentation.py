@@ -12,6 +12,8 @@ def render_calculation(calculation, catalog: RuleCatalog):
 
     def craft_lines(plan):
         label = "尚需获取" if plan["inventory_known"] else "总需求（未提供库存，不能判断实际缺口）"
+        if plan["inventory_known"] and not plan.get("inventory_complete",True):
+            label = "抵扣截图可见材料后，尚需" if calculation.get("visual_usage") else "抵扣已知材料后，尚需"
         lines = [f"{label}：{quantities(plan['acquisition'])}",
                  f"已抵扣库存：{quantities(plan['inventory_used'])}",
                  f"保留未使用：{quantities(plan['reserved'])}",
@@ -50,7 +52,8 @@ def render_calculation(calculation, catalog: RuleCatalog):
         lines.append("制作目标：" + quantities(result["goals"]))
         lines.extend(craft_lines(result))
     if request["inventory"] is not None:
-        lines.append("库存按本次填写清单抵扣；未列出的物品按 0 处理，不会修改你的实际背包。")
+        lines.append("只抵扣已读清的可见材料；未展示或读不清的物品未计入，实际缺口可能更少。" if not request.get("inventory_complete",True) else
+            "库存按本次填写清单抵扣；未列出的物品按 0 处理，不会修改你的实际背包。")
     lines.append("火药配方：" + ("普通工作台（每批 10）" if request["gunpowder_recipe"] == "workbench" else "混合台（每批 10）") + "。")
     lines.append("获取边界：组件、木材、矿产等直接列为待获取；低级燃料" +
                  ("展开为动物脂肪和布。" if request["expand_fuel"] or "lowgradefuel" in request["goals"] else "直接列为待获取，不推算回收、采集或冶炼路线。"))

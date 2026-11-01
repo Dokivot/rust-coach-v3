@@ -84,6 +84,18 @@ def test_plain_chat_numeric_claim_is_guarded():
     assert not narrative_issues("C4是可在计算器里选择的物品。")
 
 
+def test_details_and_sources_are_accessible_through_conversation():
+    saved = PresentationPreferences()
+    context = resolve_context("请详细列出计算过程和来源",saved)
+    assert context.preferences.verbosity == "detailed"
+    assert saved.verbosity == "standard"
+    state = calculation_state()
+    state["response_context"] = context.model_dump()
+    output = finalize_response(state)
+    report = next(block for block in output["presentation"]["blocks"] if block["id"] == "original_report")
+    assert report["placement"] == "main" and "来源：" in report["text"]
+
+
 def test_protected_values_and_scope_preserved_across_all_styles():
     results = [finalize_response(calculation_state(verbosity, language)) for verbosity in ("concise", "standard", "detailed") for language in ("zh", "en")]
     assert len({result["presentation"]["protected_payload_hash"] for result in results}) == 1

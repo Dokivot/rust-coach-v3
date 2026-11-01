@@ -75,6 +75,7 @@ class Calculator:
             tech = "declared_available" if all(step["item"] in request.blueprints for step in steps) else "check_required"
         unknown_blueprints = [step["item"] for step in steps if request.blueprints is None or step["item"] not in request.blueprints]
         return {"goals": dict(goals), "acquisition": acquired, "inventory_known": request.inventory is not None,
+                "inventory_complete": request.inventory is not None and request.inventory_complete,
                 "inventory_used": consumed, "inventory_remaining": {key: value for key, value in available.items() if value},
                 "reserved": request.reserve, "batch_leftovers": leftovers, "steps": steps,
                 "requirements": {"workbench": bench, "workbench_status": (

@@ -43,7 +43,9 @@ operation 必须是 raid 或 craft。只提取用户明确提供的信息，数�
 pending_message 是尚未解决的用户请求，若存在则结合本条补充理解；旧 previous_request 可能属于更早的任务，不要覆盖新的目标。
 不确定的目标或物品保留用户原文作为 ID，交给验证器拒绝；不要擅自替换成近似物品。
 不明确的套装不可猜物品，goals 留空；不明确的炸药种类不能当作 C4。C4=explosive.timed，炸药材料=explosives。
+目标明确为单个物品但未说数量时，先按制作1个解析；不要仅因省略数量返回 unsupported。
 未提供库存用 null；明确零库存用 {}；仅部分库存也只填已提供的项。count 默认 1、side 默认 hard、hp 默认 null。
+inventory_complete 表示是否提供完整库存；明确只有部分材料时为 false。消息未提供库存时保留 null，系统会自动接入本会话截图，不要求用户重复填写。
 selected_inventory_container 非空表示用户已在界面选择档案库存，计算工具会读取并验证它；不要因为消息未列库存而返回 unsupported。
 该字段不包含库存数量；不要猜测或复制档案库存到 inventory。仅当消息明确给出物品数量时才提取到 inventory，交给工具处理来源冲突。
 几面墙的 hp 指每面当前生命值。不要将总血量填成每面血量。受损但不知血量、不同血量的多面墙不能计算。
@@ -109,7 +111,7 @@ blueprints 表示用户明确确认可制作的配方（包括默认配方）。
                 inventory_container = None
             if accepted and not automatic and inventory_container and any(item["kind"] == "inventory" for item in accepted["observations"]):
                 raise AppError("ambiguous_inventory","同时提供了截图观测与档案库存，请只选一个库存来源。",422)
-            if accepted and accepted["inventory_complete"]:
+            if accepted and (accepted["inventory_complete"] or accepted["inventory"]):
                 if not automatic and (inventory_container or request.inventory is not None):
                     raise AppError("ambiguous_inventory","同时提供了截图库存与其他库存来源，请只选一个来源。",422)
                 if not visual["fresh"] or accepted["subject"] != "self":
@@ -117,7 +119,8 @@ blueprints 表示用户明确确认可制作的配方（包括默认配方）。
                         raise AppError("visual_inventory_not_current","这份截图库存不是当前本人库存，请重新盘点。",422)
                 elif request.inventory is None:
                     supported = self.calculator.catalog.items
-                    request = request.model_copy(update={"inventory":{key:value for key,value in accepted["inventory"].items() if key in supported}})
+                    request = request.model_copy(update={"inventory":{key:value for key,value in accepted["inventory"].items() if key in supported},
+                        "inventory_complete":accepted["inventory_complete"]})
                     visual_inventory_used = True
             if inventory_container:
                 if player_snapshot is None:
@@ -141,6 +144,7 @@ blueprints 表示用户明确确认可制作的配方（包括默认配方）。
             if accepted:
                 result["visual_usage"] = {"draft_id":visual["draft_id"],"confirmation_id":accepted["confirmation_id"],
                     "observed_at":accepted["observed_at"],"complete":accepted["inventory_complete"],"subject":accepted["subject"],
+                    "fresh":visual["fresh"],
                     "inventory_used":visual_inventory_used,"source":accepted.get("source","image_confirmed"),
                     "excluded_items":sorted(set(accepted["inventory"]) - self.calculator.catalog.items.keys())}
             if player_usage:
