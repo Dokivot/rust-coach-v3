@@ -8,6 +8,42 @@ let conversation = null;
 let configured = false;
 let busy = false;
 let pendingRequest = null;
+let playerBinding = null;
+
+function canSendLocally() {
+  return input.value.trim() === "/state" || input.value.trim().startsWith("/calc ");
+}
+
+function chatOption(value, text) {
+  const option = document.createElement("option");
+  option.value = value;
+  option.textContent = text;
+  return option;
+}
+
+async function refreshPlayerState() {
+  if (!conversation) return;
+  const [scopes, binding] = await Promise.all([
+    api("/api/player-state/scopes"), api(`/api/conversations/${conversation.id}/player-state`),
+  ]);
+  const scopeInput = document.querySelector("#chat-player-scope");
+  const containerInput = document.querySelector("#chat-inventory-container");
+  const oldContainer = playerBinding?.scope_id === binding.scope_id ? containerInput.value : "";
+  playerBinding = binding;
+  scopeInput.replaceChildren(chatOption("", "不关联状态"));
+  for (const scope of scopes) scopeInput.append(chatOption(scope.id, `${scope.label} · ${scope.server_id} / ${scope.wipe_id}`));
+  scopeInput.value = binding.scope_id || "";
+  containerInput.replaceChildren(chatOption("", "仅用消息中的库存"));
+  for (const [id, container] of Object.entries(binding.snapshot?.containers || {})) {
+    const option = chatOption(id, `${id} · ${container.usable_for_exact_calculation ? "完整盘点" : "需重新盘点"}`);
+    option.disabled = !container.usable_for_exact_calculation;
+    containerInput.append(option);
+    if (id === oldContainer && !option.disabled) containerInput.value = id;
+  }
+  document.querySelector("#chat-state-note").textContent = binding.snapshot ?
+    `读取档案版本 ${binding.snapshot.revision} 的有效观测。库存只在选择容器后用于计算；不会自动保存聊天陈述或扣减库存。输入 /state 查看。` :
+    "尚未关联玩家状态。可以先录入档案；新对话默认不继承旧档案。";
+}
 
 function rememberConversation(identifier) {
   try { localStorage.setItem(storageKey, identifier); } catch {}
@@ -39,8 +75,10 @@ function setError(message = "") {
 }
 
 function updateControls() {
-  input.disabled = busy || !configured || !conversation;
-  sendButton.disabled = busy || !configured || !conversation || !input.value.trim();
+  input.disabled = busy || !conversation;
+  sendButton.disabled = busy || (!configured && !canSendLocally()) || !conversation || !input.value.trim();
+  document.querySelector("#chat-player-scope").disabled = busy || !conversation;
+  document.querySelector("#chat-inventory-container").disabled = busy || !playerBinding?.scope_id;
   document.querySelectorAll('[data-action="new"]').forEach((button) => { button.disabled = busy; });
   document.querySelectorAll('[data-action="delete"]').forEach((button) => { button.disabled = busy || !conversation; });
   document.querySelector("#input-count").textContent = `${input.value.length} / 6000`;
@@ -78,9 +116,55 @@ function renderConversation() {
   document.querySelector("#welcome").hidden = Boolean(conversation?.turns.length);
   for (const turn of conversation?.turns || []) {
     addMessage("user", turn.user);
-    addMessage("assistant", turn.assistant, false, turn.truncated);
+    const article = addMessage("assistant", turn.assistant, false, turn.truncated);
+    if (turn.advice) renderAdviceRecord(article, turn.advice);
+    if (turn.player_state_ref) {
+      const note = document.createElement("p");
+      note.className = "message-notice";
+      note.textContent = `本轮使用玩家状态版本 ${turn.player_state_ref.revision}；后续更新不会改写这条历史回复。`;
+      article.append(note);
+    }
   }
   scrollArea.scrollTop = scrollArea.scrollHeight;
+}
+
+function renderAdviceRecord(article, advice) {
+  const details = document.createElement("details");
+  details.className = "advice-record";
+  const summary = document.createElement("summary");
+  summary.textContent = `取证与决策记录 · ${advice.evidence.documents.length} 份正文 · ${advice.evidence.cache_hit ? "缓存" : "本轮取证/工具"} · ${(advice.elapsed_ms / 1000).toFixed(1)} 秒`;
+  details.append(summary);
+  const note = document.createElement("p");
+  note.textContent = "建议按条件成立。网页原文匹配不等于事实已验证；所有候选预算分别计算，不能直接相加执行。";
+  details.append(note);
+  for (const documentRecord of advice.evidence.documents) {
+    const source = document.createElement("p");
+    const link = document.createElement("a");
+    link.href = documentRecord.url;
+    link.target = "_blank";
+    link.rel = "noopener noreferrer";
+    link.textContent = documentRecord.title;
+    const snapshot = document.createElement("a");
+    snapshot.href = `/api/evidence/${encodeURIComponent(documentRecord.id)}`;
+    snapshot.target = "_blank";
+    snapshot.rel = "noopener";
+    snapshot.textContent = "查看留存快照";
+    source.append(link, document.createTextNode(` · 抓取于 ${documentRecord.fetched_at} · 版本未核验 · `), snapshot);
+    details.append(source);
+  }
+  for (const recommendation of [advice.answer?.recommendation, advice.answer?.alternative]) {
+    for (const citation of recommendation?.citations || []) {
+      const quote = document.createElement("blockquote");
+      const source = advice.evidence.documents.find((documentRecord) => documentRecord.id === citation.document_id);
+      quote.textContent = `${recommendation.candidate_id} 的依据原文（${source?.title || citation.document_id}）：${citation.quote}`;
+      details.append(quote);
+    }
+  }
+  const audit = document.createElement("pre");
+  audit.textContent = JSON.stringify({status: advice.status, plan: advice.plan, events: advice.evidence.events,
+    queries: advice.evidence.queries, repairs: advice.repairs, workflow: advice.workflow}, null, 2);
+  details.append(audit);
+  article.append(details);
 }
 
 async function createConversation() {
@@ -88,16 +172,18 @@ async function createConversation() {
   rememberConversation(conversation.id);
   pendingRequest = null;
   renderConversation();
+  await refreshPlayerState();
 }
 
 document.querySelector("#chat-form").addEventListener("submit", async (event) => {
   event.preventDefault();
   const message = input.value.trim();
-  if (!message || busy || !configured || !conversation) return;
+  if (!message || busy || (!configured && !canSendLocally()) || !conversation) return;
   busy = true;
   setError();
-  if (!pendingRequest || pendingRequest.message !== message) {
-    pendingRequest = { request_id: crypto.randomUUID(), message };
+  const player_inventory_container = document.querySelector("#chat-inventory-container").value || null;
+  if (!pendingRequest || pendingRequest.message !== message || pendingRequest.player_inventory_container !== player_inventory_container) {
+    pendingRequest = { request_id: crypto.randomUUID(), message, player_inventory_container };
   }
   document.querySelector("#welcome").hidden = true;
   addMessage("user", message);
@@ -113,7 +199,7 @@ document.querySelector("#chat-form").addEventListener("submit", async (event) =>
       conversation.turns.push(turn);
     }
     pendingRequest = null;
-    document.querySelector("#connection-label").textContent = turn.calculation ? "本地计算链路已处理" : "本次对话连接成功";
+    document.querySelector("#connection-label").textContent = turn.calculation || message === "/state" ? "本地工具链路已处理" : "本次对话连接成功";
   } catch (error) {
     input.value = message;
     setError(error.message || "连接中断，请重试。失败的消息不会加入对话历史。");
@@ -126,6 +212,22 @@ document.querySelector("#chat-form").addEventListener("submit", async (event) =>
 });
 
 input.addEventListener("input", updateControls);
+document.querySelector("#chat-player-scope").addEventListener("change", async (event) => {
+  if (!conversation || busy) return;
+  busy = true;
+  updateControls();
+  try {
+    await api(`/api/conversations/${conversation.id}/player-state`, {method: "POST", body: JSON.stringify({scope_id: event.target.value || null})});
+    pendingRequest = null;
+    await refreshPlayerState();
+    setError();
+  } catch (error) { setError(error.message); }
+  finally { busy = false; updateControls(); }
+});
+window.addEventListener("focus", async () => {
+  if (busy || !conversation) return;
+  try { await refreshPlayerState(); updateControls(); } catch (error) { setError(error.message); }
+});
 input.addEventListener("keydown", (event) => {
   if (event.key === "Enter" && !event.shiftKey && !event.isComposing) {
     event.preventDefault();
@@ -184,6 +286,7 @@ async function initialize() {
       catch (error) { if (![404, 422].includes(error.status)) throw error; }
     }
     if (!conversation) await createConversation();
+    else await refreshPlayerState();
     renderConversation();
   } catch (error) {
     document.querySelector("#connection-label").textContent = "服务连接失败";

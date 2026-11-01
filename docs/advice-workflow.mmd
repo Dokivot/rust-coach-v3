@@ -1,0 +1,20 @@
+flowchart TD
+    input[确定性：API / 幂等 / 冻结状态] --> route{确定性：请求路由}
+    route -->|计算| calc[确定性：已有计算器 / 规则快照]
+    route -->|策略或知识| plan[LLM：规划候选 / 主题]
+    plan --> gate{确定性：Schema / 证据需要}
+    gate -->|需要正文| web[确定性：公开查询 / 白名单抓取 / TTL]
+    web <-->|快照与哈希| archive[(SQLite 证据)]
+    gate -->|仅观察或本地工具| tools[确定性：状态有效期 / 候选预算 / 前置条件]
+    web --> tools
+    tools --> compose[LLM：权衡 / 下一步 / 切换条件 / 引用]
+    compose --> verify{确定性：引用原文 / 数值限制 / 结构}
+    verify -->|仅一次修复| compose
+    verify -->|通过或降级| render[确定性：报告组装 / 澄清 / 条件提示]
+    render --> store[(SQLite 对话 / 状态引用 / 审计)]
+    calc --> store
+    store --> ui[确定性：纯文本回答 / 来源 / 快照链接]
+    ui -->|补充新信息| input
+    profile[(SQLite 玩家观测 / TTL / 版本)] --> input
+    web -.检索事件.-> metrics[日志 / 延迟 / badcase 回归]
+    verify -.校验与修复.-> metrics

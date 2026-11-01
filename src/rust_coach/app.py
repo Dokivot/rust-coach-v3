@@ -12,11 +12,15 @@ from starlette.middleware.trustedhost import TrustedHostMiddleware
 
 from rust_coach.config import Settings
 from rust_coach.contracts import AppError, ChatRequest, Conversation, Turn
+from rust_coach.advice.service import AdviceService
+from rust_coach.knowledge.store import EvidenceStore
+from rust_coach.knowledge.web import WebResearch
 from rust_coach.llm import ChatModel, CompatibleChatModel
 from rust_coach.persistence import ConversationStore
 from rust_coach.runtime import ChatRuntime
 from rust_coach.calculations import Calculator, CalculationRequest
 from rust_coach.calculations.presentation import render_calculation
+from rust_coach.player_state.api import player_state_router
 
 
 logger = logging.getLogger("rust_coach")
@@ -34,12 +38,18 @@ def create_app(settings: Settings | None = None, model: ChatModel | None = None)
             follow_redirects=False,
         ) as client:
             store = ConversationStore(settings.database_path)
+            app.state.evidence_store = EvidenceStore(store)
+            advice_settings = settings.model_copy(update={"max_output_tokens": max(4096, settings.max_output_tokens)})
+            advice = AdviceService(model or CompatibleChatModel(advice_settings, client, stream_responses=True),
+                WebResearch(settings, client, app.state.evidence_store), settings.instruction_role)
             app.state.runtime = ChatRuntime(settings, model or CompatibleChatModel(settings, client), store,
-                calculation_model=model or CompatibleChatModel(settings, client, stream_responses=True))
+                calculation_model=model or CompatibleChatModel(settings, client, stream_responses=True), advice_service=advice)
+            app.state.state_model = model or CompatibleChatModel(settings, client, stream_responses=True)
             yield
 
     app = FastAPI(title="Rust Coach", version="0.1.0", lifespan=lifespan, docs_url=None, redoc_url=None)
     app.add_middleware(TrustedHostMiddleware, allowed_hosts=["localhost", "127.0.0.1", "[::1]", "testserver"])
+    app.include_router(player_state_router(calculator, settings))
 
     @app.middleware("http")
     async def local_request_guard(request: Request, call_next):
@@ -79,10 +89,19 @@ def create_app(settings: Settings | None = None, model: ChatModel | None = None)
         return {
             "model": settings.model,
             "configured": settings.configured,
-            "capabilities": {"chat": settings.configured, "knowledge": False,
-                             "web_search": False, "decision": False, "calculators": True},
+            "capabilities": {"chat": settings.configured, "knowledge": settings.search_provider != "off",
+                             "web_search": settings.search_provider != "off", "decision": settings.configured,
+                             "calculators": True, "player_state": True},
+            "search_provider": settings.search_provider,
             "history_turns": settings.history_turns,
         }
+
+    @app.get("/api/evidence/{document_id}")
+    async def get_evidence(document_id: str, request: Request):
+        document = request.app.state.evidence_store.get(document_id)
+        if document is None:
+            raise AppError("evidence_not_found", "证据快照不存在。", 404)
+        return document
 
     @app.get("/api/calculations/catalog")
     async def calculation_catalog():
@@ -119,6 +138,10 @@ def create_app(settings: Settings | None = None, model: ChatModel | None = None)
     @app.get("/calculator")
     async def calculator_page():
         return FileResponse(STATIC / "calculator.html")
+
+    @app.get("/player-state")
+    async def player_state_page():
+        return FileResponse(STATIC / "player-state.html")
 
     app.mount("/static", StaticFiles(directory=STATIC), name="static")
     return app

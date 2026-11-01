@@ -26,6 +26,10 @@ class ConversationStore:
             columns = {row["name"] for row in connection.execute("PRAGMA table_info(turns)")}
             if "calculation" not in columns:
                 connection.execute("ALTER TABLE turns ADD COLUMN calculation TEXT")
+            if "player_state_ref" not in columns:
+                connection.execute("ALTER TABLE turns ADD COLUMN player_state_ref TEXT")
+            if "advice" not in columns:
+                connection.execute("ALTER TABLE turns ADD COLUMN advice TEXT")
 
     @contextmanager
     def connection(self):
@@ -50,23 +54,28 @@ class ConversationStore:
             if not exists:
                 raise AppError("conversation_not_found", "会话不存在，请创建新对话。", 404)
             rows = connection.execute(
-                "SELECT request_id, user, assistant, created_at, truncated, calculation FROM turns "
+                "SELECT request_id, user, assistant, created_at, truncated, calculation, player_state_ref, advice FROM turns "
                 "WHERE conversation_id = ? ORDER BY sequence", (conversation_id,)
             ).fetchall()
         return Conversation(id=conversation_id, turns=[Turn(**(dict(row) | {
             "calculation": json.loads(row["calculation"]) if row["calculation"] else None,
+            "player_state_ref": json.loads(row["player_state_ref"]) if row["player_state_ref"] else None,
+            "advice": json.loads(row["advice"]) if row["advice"] else None,
         })) for row in rows])
 
     def append(self, conversation_id: str, request_id: str, user: str, assistant: str, truncated: bool,
-               calculation: dict | None = None) -> Turn:
+               calculation: dict | None = None, player_state_ref: dict | None = None, advice: dict | None = None) -> Turn:
         turn = Turn(request_id=request_id, user=user, assistant=assistant,
-                    created_at=datetime.now(timezone.utc).isoformat(), truncated=truncated, calculation=calculation)
+                    created_at=datetime.now(timezone.utc).isoformat(), truncated=truncated, calculation=calculation,
+                    player_state_ref=player_state_ref, advice=advice)
         with self.connection() as connection:
             connection.execute(
-                "INSERT INTO turns(conversation_id, request_id, user, assistant, created_at, truncated, calculation) "
-                "VALUES (?, ?, ?, ?, ?, ?, ?)",
+                "INSERT INTO turns(conversation_id, request_id, user, assistant, created_at, truncated, calculation, player_state_ref, advice) "
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
                 (conversation_id, request_id, user, assistant, turn.created_at, truncated,
-                 json.dumps(calculation, ensure_ascii=False) if calculation else None),
+                 json.dumps(calculation, ensure_ascii=False) if calculation else None,
+                 json.dumps(player_state_ref, ensure_ascii=False) if player_state_ref else None,
+                 json.dumps(advice, ensure_ascii=False) if advice else None),
             )
         return turn
 

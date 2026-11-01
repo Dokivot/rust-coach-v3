@@ -1,0 +1,12 @@
+.calculator-shell textarea { width: 100%; box-sizing: border-box; border: 1px solid #444953; border-radius: 8px; padding: 12px; background: #101216; color: #eee; font: 14px/1.7 ui-monospace, monospace; resize: vertical; }
+.state-actions { display: flex; align-items: end; flex-wrap: wrap; gap: 12px; margin: 18px 0; }
+.state-notice { background: #20382d; color: #c5ead5; padding: 14px; border-radius: 10px; }
+.state-fact { border-bottom: 1px solid #30333a; padding: 16px 0; }
+.state-fact .check-label { margin: 6px 0; }
+.state-fact-row { display: grid; grid-template-columns: minmax(0, 1fr) 140px; gap: 14px; }
+.state-summary { display: grid; grid-template-columns: minmax(160px, 1fr) minmax(0, 2fr); gap: 10px; font-size: 14px; line-height: 1.8; border-bottom: 1px solid #30333a; padding: 10px 0; overflow-wrap: anywhere; }
+.state-summary small { display: block; color: #a0a7b3; }
+.state-status { color: #d5b68d; }
+.calculator-shell details { margin: 14px 0; }
+.calculator-shell button:disabled { opacity: 0.45; cursor: wait; }
+@media (max-width: 600px) { .state-summary, .state-fact-row { grid-template-columns: 1fr; } }

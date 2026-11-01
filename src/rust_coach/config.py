@@ -24,6 +24,11 @@ class Settings(BaseSettings):
     instruction_role: Literal["system", "developer"] = "system"
     history_turns: int = Field(default=12, ge=1, le=50)
     context_char_limit: int = Field(default=24000, ge=6000, le=100000)
+    search_provider: Literal["bing", "brave", "off"] = "bing"
+    search_api_key: SecretStr = SecretStr("")
+    evidence_ttl_hours: int = Field(default=6, ge=1, le=72)
+    evidence_timeout_seconds: float = Field(default=25, ge=1, le=60)
+    advice_timeout_seconds: float = Field(default=180, ge=10, le=300)
 
     @field_validator("base_url")
     @classmethod

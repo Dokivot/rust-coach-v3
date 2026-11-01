@@ -17,10 +17,11 @@
     <div class="side-label">工作台</div>
     <div class="nav-active"><span class="nav-icon">◈</span> 对话 <span class="tag">可用</span></div>
     <a class="nav-active" href="/calculator">拆家与合成计算 <span class="tag">可用</span></a>
-    <div class="side-label roadmap-label">后续能力</div>
-    <div class="roadmap-item"><span>游戏知识库</span><span class="muted-dot"></span></div>
-    <div class="roadmap-item"><span>实时资料检索</span><span class="muted-dot"></span></div>
-    <div class="roadmap-item"><span>决策与任务规划</span><span class="muted-dot"></span></div>
+    <a class="nav-active" href="/player-state">玩家状态 <span class="tag">可用</span></a>
+    <div class="side-label roadmap-label">教练能力</div>
+    <div class="roadmap-item"><span>按需网页取证</span><span>已接入</span></div>
+    <div class="roadmap-item"><span>状态与目标权衡</span><span>已接入</span></div>
+    <div class="roadmap-item"><span>证据与计算追溯</span><span>已接入</span></div>
     <p class="side-note">计算器按固定 PC 原版资料快照运行，可查看公式、配方和来源，无需模型密钥。</p>
     <div class="sidebar-bottom"><span class="local-dot"></span> 本地对话记录 <button id="delete-chat" data-action="delete" class="text-button" type="button">删除当前会话</button></div>
   </aside>
@@ -38,16 +39,22 @@
         <h1>先聊聊，<br>你的下一步。</h1>
         <p class="intro">我是 Rust Coach。告诉我目标和现有材料，<br class="desktop-break">一起算清拆墙所需爆炸物、合成路径与资源缺口。</p>
         <div class="suggestions">
-          <button type="button" class="suggestion" data-prompt="你好，介绍一下你目前可以做什么。"><span class="suggestion-number">01</span><strong>认识一下</strong><span>了解当前可以聊什么 <b>↗</b></span></button>
+          <button type="button" class="suggestion" data-prompt="现在该冲科技还是先加固基地？请结合我的状态比较取舍，缺少条件时告诉我要检查什么。"><span class="suggestion-number">01</span><strong>下一步做什么</strong><span>结合状态，比较行动与取舍 <b>↗</b></span></button>
           <button type="button" class="suggestion" data-prompt="拆一面满血石墙硬面需要多少 C4？"><span class="suggestion-number">02</span><strong>拆墙计算</strong><span>数量、公式与资源路径 <b>↗</b></span></button>
           <button type="button" class="suggestion" data-prompt="合成 2 个 C4，我已有 10 个炸药材料和 1000 硫磺，其他库存为零，还缺什么？"><span class="suggestion-number">03</span><strong>资源缺口</strong><span>抵扣已有材料，展开配方 <b>↗</b></span></button>
         </div>
-        <div class="scope-note"><span>i</span> <a href="/calculator">打开本地计算器 →</a> · PC 原版规则快照；尚无实时资料检索或战斗伤害计算。</div>
+        <div class="scope-note"><span>i</span> <a href="/calculator">打开本地计算器 →</a> · 输入 /coach 请求建议，/search 重新取证。网页版本适用性需核对；尚无战斗伤害计算。</div>
       </div>
       <div id="messages" class="messages" role="log" aria-live="polite" aria-relevant="additions"></div>
     </section>
     <footer class="composer-area">
       <div id="error" class="error" role="alert" hidden></div>
+      <div class="player-context-bar">
+        <label>玩家档案<select id="chat-player-scope"><option value="">不关联状态</option></select></label>
+        <label>计算使用的容器<select id="chat-inventory-container"><option value="">仅用消息中的库存</option></select></label>
+        <a href="/player-state">录入 / 更新状态 →</a>
+      </div>
+      <p id="chat-state-note" class="chat-state-note">尚未关联玩家状态。</p>
       <form id="chat-form" class="composer">
         <label class="sr-only" for="message-input">发送消息</label>
         <textarea id="message-input" name="message" rows="2" maxlength="6000" placeholder="想聊些什么？" disabled></textarea>

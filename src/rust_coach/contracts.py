@@ -19,6 +19,7 @@ class ChatRequest(BaseModel):
 
     request_id: UUID
     message: str = Field(min_length=1, max_length=6000)
+    player_inventory_container: str | None = Field(default=None, min_length=1, max_length=80, pattern=r"^[a-zA-Z0-9_.:-]+$")
 
     @field_validator("message")
     @classmethod
@@ -36,6 +37,8 @@ class Turn(BaseModel):
     created_at: str
     truncated: bool = False
     calculation: dict | None = None
+    player_state_ref: dict | None = None
+    advice: dict | None = None
 
 
 class Conversation(BaseModel):

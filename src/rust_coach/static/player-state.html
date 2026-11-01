@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>Rust Coach · 玩家状态</title>
+  <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/static/styles.css">
+  <link rel="stylesheet" href="/static/calculator.css">
+  <link rel="stylesheet" href="/static/player-state.css">
+  <script src="/static/player-state.js" defer></script>
+</head>
+<body class="calculator-layout">
+  <main class="calculator-shell">
+    <a href="/" class="back-link">← 返回教练对话</a>
+    <div class="eyebrow">PLAYER CONTEXT · PC VANILLA</div>
+    <h1>让教练了解你的处境。</h1>
+    <p class="calculator-intro">按服务器与清档周期记录资源、科技、基地、阶段和目标。未填写的信息保持未知；观测有时间和来源，过期后需要重新确认。</p>
+    <p class="calculator-note">记录保存在本机，不自动读取游戏。关联对话后，有效状态会作为上下文发送至你配置的模型服务。当前还没有决策规划或截图识别。</p>
+    <p id="state-error" class="error" role="alert" hidden></p>
+    <p id="state-notice" class="state-notice" role="status" hidden></p>
+    <section class="calculator-card">
+      <h2>选择本轮状态档案</h2>
+      <label>服务器 / 清档周期<select id="scope-select"><option value="">请选择或新建档案</option></select></label>
+      <div class="state-actions">
+        <button id="refresh-state" type="button" class="secondary-button">刷新状态</button>
+        <button id="bind-state" type="button" class="secondary-button">关联到当前对话</button>
+        <button id="unbind-state" type="button" class="secondary-button">解除当前对话关联</button>
+      </div>
+      <p id="binding-note" class="calculator-note">加载对话关联…</p>
+      <details>
+        <summary>新建档案 / 换服 / 新一轮清档</summary>
+        <form id="scope-form">
+          <div class="field-grid">
+            <label>显示名称<input id="scope-label" maxlength="100" placeholder="我的官服单人档" required></label>
+            <label>服务器标识<input id="server-id" maxlength="80" placeholder="例如 asia-official-1" required></label>
+            <label>清档周期标识<input id="wipe-id" maxlength="80" placeholder="例如 2026-11-01" required></label>
+          </div>
+          <p class="calculator-note">新档案从未知状态开始，不继承旧服、旧清档的库存或蓝图。蓝图未清档时也请显式重新录入。</p>
+          <button class="calculate-button" type="submit">创建空白档案</button>
+        </form>
+      </details>
+    </section>
+    <div id="scope-workspace" hidden>
+      <section class="calculator-card">
+        <h2>当前观测</h2>
+        <p id="snapshot-meta" class="calculator-note"></p>
+        <div id="snapshot-summary"></div>
+        <details><summary>完整状态与来源 JSON</summary><pre id="snapshot-json"></pre></details>
+        <details><summary>查看历史版本</summary>
+          <form id="history-form" class="state-actions">
+            <label>版本号<input id="history-revision" type="number" min="0" step="1" value="0" required></label>
+            <button type="submit" class="secondary-button">只读查看</button>
+          </form>
+          <pre id="history-json"></pre>
+        </details>
+      </section>
+      <section class="calculator-card">
+        <h2>资源与容器</h2>
+        <form id="inventory-form">
+          <div class="field-grid">
+            <label>容器 ID<input id="container-id" value="backpack" list="containers" pattern="[a-zA-Z0-9_.:\-]+" maxlength="80" required></label>
+            <datalist id="containers"><option value="backpack">背包</option><option value="storage">基地储物箱</option><option value="tool_cupboard">工具柜</option><option value="equipped">身上装备</option></datalist>
+            <label>录入方式<select id="inventory-mode"><option value="patch">局部更新：只知道这些物品的当前数量</option><option value="replace">完整盘点：这是该容器的全部库存</option></select></label>
+          </div>
+          <p class="calculator-note">backpack 为随身背包，equipped 为装备；其他容器可自定义 ID。数量填写“现在一共多少”，不是增减量。局部更新保留其他旧记录，未列物品不视为零；完整盘点空清单代表空容器。</p>
+          <div id="state-inventory-rows"></div>
+          <datalist id="item-ids"></datalist>
+          <div class="state-actions">
+            <button id="add-state-item" type="button" class="secondary-button">＋ 添加物品</button>
+            <button type="submit" class="calculate-button">保存库存观测</button>
+          </div>
+        </form>
+      </section>
+      <section class="calculator-card">
+        <h2>科技、基地与当前计划</h2>
+        <p class="calculator-note">将要修改的字段设为“本次更新”再保存。其他字段的值和观测时间不变。“清除”会将旧观测标为失效，历史仍可追溯。阶段由你自报，系统不会凭工作台等级猜测。</p>
+        <form id="facts-form">
+          <div id="fact-fields"></div>
+          <button type="submit" class="calculate-button">保存选中的字段</button>
+        </form>
+      </section>
+      <section class="calculator-card">
+        <h2>用文字更新状态</h2>
+        <p class="calculator-note">例如：“背包现在有 1000 硫磺，还有其他材料没盘点；我有二级工作台，准备再玩 30 分钟。”模型只生成草稿，核对后才保存。需要已配置模型密钥。</p>
+        <form id="preview-form">
+          <label>当前状态描述<textarea id="state-description" maxlength="6000" rows="3" required></textarea></label>
+          <button type="submit" class="secondary-button">解析为待确认草稿</button>
+        </form>
+        <section id="draft-panel" hidden>
+          <h3>请核对以下变更</h3>
+          <pre id="draft-summary"></pre>
+          <details><summary>编辑草稿 JSON（字段、数量、范围）</summary><label>待确认变更<textarea id="draft-json" rows="10"></textarea></label></details>
+          <p class="calculator-note">草稿绑定解析时的状态版本；如果其他页面已更新档案，保存会被拒绝，请刷新并重新核对。</p>
+          <button id="confirm-draft" type="button" class="calculate-button">确认这些变更并保存</button>
+          <button id="cancel-draft" type="button" class="secondary-button">取消草稿</button>
+        </section>
+      </section>
+      <section class="calculator-card">
+        <h2>发生了状态变化？</h2>
+        <p class="calculator-note">这些操作把相关记录标为待确认，不把库存改成零。死亡会失效背包、装备和会话状态；被袭击会失效所有容器、基地与会话状态；蓝图清档仅失效已记录的蓝图列表。</p>
+        <div class="state-actions">
+          <button type="button" data-event="death" class="secondary-button">刚刚死亡</button>
+          <button type="button" data-event="raided" class="secondary-button">基地被袭击</button>
+          <button type="button" data-event="blueprint_reset" class="secondary-button">蓝图已清档</button>
+          <button type="button" data-event="invalidate_all" class="secondary-button">全部需要重新确认</button>
+        </div>
+      </section>
+    </div>
+  </main>
+</body>
+</html>
