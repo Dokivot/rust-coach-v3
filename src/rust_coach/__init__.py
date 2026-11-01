@@ -1,0 +1,1 @@
+"""Rust Coach chat scaffold."""

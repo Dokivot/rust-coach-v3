@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>Rust Coach · 聊天工作台</title>
+  <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/static/styles.css">
+  <script src="/static/app.js" defer></script>
+</head>
+<body>
+  <aside class="sidebar">
+    <a class="brand" href="/" aria-label="Rust Coach 首页"><span class="brand-mark">R</span><span>RUST<span class="brand-light"> COACH</span></span></a>
+    <span class="edition">LOCAL WORKSPACE · 0.1</span>
+    <button id="new-chat" data-action="new" class="new-chat" type="button"><span>＋</span> 新建对话</button>
+    <div class="side-label">工作台</div>
+    <div class="nav-active"><span class="nav-icon">◈</span> 对话 <span class="tag">可用</span></div>
+    <div class="side-label roadmap-label">后续能力</div>
+    <div class="roadmap-item"><span>游戏知识库</span><span class="muted-dot"></span></div>
+    <div class="roadmap-item"><span>实时资料检索</span><span class="muted-dot"></span></div>
+    <div class="roadmap-item"><span>决策与任务规划</span><span class="muted-dot"></span></div>
+    <div class="roadmap-item"><span>拆家与合成计算</span><span class="muted-dot"></span></div>
+    <p class="side-note">这些能力将在知识与工具接入后开放。当前先从一段对话开始。</p>
+    <div class="sidebar-bottom"><span class="local-dot"></span> 本地对话记录 <button id="delete-chat" data-action="delete" class="text-button" type="button">删除当前会话</button></div>
+  </aside>
+  <main class="workspace">
+    <header class="topbar"><div><span class="breadcrumb">工作台</span><span class="slash">/</span> 对话</div><div class="connection"><span id="connection-dot" class="status-dot"></span><span id="connection-label">检查配置中</span></div></header>
+    <nav class="mobile-actions" aria-label="会话操作"><button data-action="new" type="button">＋ 新建对话</button><button data-action="delete" type="button">删除当前会话</button></nav>
+    <div id="setup" class="setup" hidden>
+      <strong>还差一步：连接模型</strong>
+      <p>在项目根目录的 <code>.env</code> 中填写 <code>COACH_API_KEY</code>，然后重启服务并刷新页面。</p>
+      <p class="setup-detail">已预设你的服务地址与模型。密钥只在服务端读取，不需要输入到网页。</p>
+    </div>
+    <section id="scroll-area" class="scroll-area" aria-label="对话区域">
+      <div id="welcome" class="welcome">
+        <div class="eyebrow"><span></span> YOUR NEXT MOVE STARTS HERE</div>
+        <h1>先聊聊，<br>你的下一步。</h1>
+        <p class="intro">我是 Rust Coach。这里是教练 Agent 的第一块拼图：<br class="desktop-break">一个可以交流想法、整理问题的对话空间。</p>
+        <div class="suggestions">
+          <button type="button" class="suggestion" data-prompt="你好，介绍一下你目前可以做什么。"><span class="suggestion-number">01</span><strong>认识一下</strong><span>了解当前可以聊什么 <b>↗</b></span></button>
+          <button type="button" class="suggestion" data-prompt="帮我整理一份描述游戏经历的提纲，先不要给出游戏决策。"><span class="suggestion-number">02</span><strong>整理想法</strong><span>把一个想法说得更清楚 <b>↗</b></span></button>
+          <button type="button" class="suggestion" data-prompt="我想记录今天的游戏经历，可以从哪些问题开始？"><span class="suggestion-number">03</span><strong>开启交流</strong><span>从今天的经历聊起 <b>↗</b></span></button>
+        </div>
+        <div class="scope-note"><span>i</span> 当前为基础 LLM 对话，尚未接入游戏知识库、实时搜索或计算工具。</div>
+      </div>
+      <div id="messages" class="messages" role="log" aria-live="polite" aria-relevant="additions"></div>
+    </section>
+    <footer class="composer-area">
+      <div id="error" class="error" role="alert" hidden></div>
+      <form id="chat-form" class="composer">
+        <label class="sr-only" for="message-input">发送消息</label>
+        <textarea id="message-input" name="message" rows="2" maxlength="6000" placeholder="想聊些什么？" disabled></textarea>
+        <div class="composer-bottom"><div class="model-chip"><span class="model-symbol">✳</span><span id="model-name">加载模型配置…</span></div><div class="send-controls"><span id="input-count">0 / 6000</span><button id="send" class="send-button" type="submit" aria-label="发送消息" disabled>↑</button></div></div>
+      </form>
+      <div class="footer-note"><span>Enter 发送 · Shift + Enter 换行</span><span id="context-note">记录保存在此设备，回复来自模型服务</span></div>
+    </footer>
+  </main>
+</body>
+</html>
