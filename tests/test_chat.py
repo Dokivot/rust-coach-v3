@@ -71,6 +71,61 @@ def test_failure_not_saved_and_same_request_can_retry(settings):
         assert send(client, identifier, "你好", request_id).status_code == 200
 
 
+@pytest.mark.parametrize("api_mode,terminal", [
+    ("responses", "completed"),
+    ("responses", "incomplete"),
+    ("chat_completions", "completed"),
+])
+def test_chat_provider_transport_and_persistence(settings, monkeypatch, api_mode, terminal):
+    settings.api_mode = api_mode
+    calls = []
+
+    def handler(request):
+        payload = json.loads(request.content)
+        calls.append(payload)
+        if api_mode == "chat_completions":
+            assert request.url.path == "/v1/chat/completions"
+            assert payload["stream"] is False
+            return httpx.Response(200, json={"choices": [
+                {"message": {"content": "你好！"}, "finish_reason": "stop"},
+            ]})
+        assert request.url.path == "/v1/responses"
+        assert payload["store"] is False
+        if not payload["stream"]:
+            return httpx.Response(200, json={"status": "completed", "output": []})
+        events = [
+            {"type": "response.output_item.added", "output_index": 0,
+             "item": {"id": "message", "type": "message", "role": "assistant"}},
+            {"type": "response.output_text.delta", "item_id": "message", "content_index": 0, "delta": "你好"},
+            {"type": "response.output_text.delta", "item_id": "message", "content_index": 0, "delta": "！"},
+            {"type": f"response.{terminal}", "response": {
+                "status": terminal, "output": [],
+                "incomplete_details": {"reason": "max_output_tokens"} if terminal == "incomplete" else None,
+            }},
+        ]
+        body = "".join("data: " + json.dumps(event, ensure_ascii=False) + "\n\n" for event in events)
+        return httpx.Response(200, content=body, headers={"Content-Type": "text/event-stream"})
+
+    async_client = httpx.AsyncClient
+    monkeypatch.setattr("rust_coach.app.httpx.AsyncClient", lambda **kwargs: async_client(
+        **kwargs, transport=httpx.MockTransport(handler)))
+    with TestClient(create_app(settings)) as client:
+        identifier = client.post("/api/conversations", json={}).json()["id"]
+        request_id = str(uuid4())
+        response = send(client, identifier, "你好", request_id)
+        assert response.status_code == 200
+        turn = response.json()
+        assert turn["assistant"] == "你好！"
+        assert turn["truncated"] is (terminal == "incomplete")
+        assert send(client, identifier, "你好", request_id).json() == turn
+        assert len(calls) == 1
+        assert client.get(f"/api/conversations/{identifier}").json()["turns"] == [turn]
+        assert send(client, identifier, "继续").status_code == 200
+        messages = calls[-1]["input" if api_mode == "responses" else "messages"]
+        assert [message["role"] for message in messages] == ["system", "user", "assistant", "user"]
+        assert messages[2]["content"] == "你好！"
+
+
 def test_configuration_validation_and_local_guard(settings):
     with TestClient(create_app(settings, RecordingModel())) as client:
         response = client.get("/api/config")

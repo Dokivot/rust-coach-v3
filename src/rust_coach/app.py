@@ -42,7 +42,7 @@ def create_app(settings: Settings | None = None, model: ChatModel | None = None)
             advice_settings = settings.model_copy(update={"max_output_tokens": max(4096, settings.max_output_tokens)})
             advice = AdviceService(model or CompatibleChatModel(advice_settings, client, stream_responses=True),
                 WebResearch(settings, client, app.state.evidence_store), settings.instruction_role)
-            app.state.runtime = ChatRuntime(settings, model or CompatibleChatModel(settings, client), store,
+            app.state.runtime = ChatRuntime(settings, model or CompatibleChatModel(settings, client, stream_responses=True), store,
                 calculation_model=model or CompatibleChatModel(settings, client, stream_responses=True), advice_service=advice)
             app.state.state_model = model or CompatibleChatModel(settings, client, stream_responses=True)
             yield

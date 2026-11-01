@@ -31,11 +31,13 @@ COACH_API_KEY=在本地填写你的密钥
 
 `COACH_API_MODE=responses` 调用 `/v1/responses`，使用 `input` 和 `max_output_tokens`，并设置 `store=false`，每轮从本地历史重建上下文。已有 `.env` 未设置该项时也默认使用 Responses。`COACH_BASE_URL` 仍填写包含 `/v1` 的服务基础地址，不要追加 `/responses` 或 `/chat/completions`。实现依据 [OpenAI 官方迁移文档](https://developers.openai.com/api/docs/guides/migrate-to-responses)。
 
+Responses 模式下，普通聊天、计算、建议和状态解析均使用上游流式传输（`stream=true`），从文本分片收集回复，兼容结束事件中 `output=[]` 的服务。浏览器仍在回复收集完成后一次显示全文。
+
 如果服务仅支持旧接口，设置 `COACH_API_MODE=chat_completions`，即可调用 `/v1/chat/completions`。此模式默认使用 `max_completion_tokens`；如服务不支持，在 `.env` 设置 `COACH_OUTPUT_TOKEN_PARAMETER=max_tokens`。该配置只影响 Chat Completions，Responses 始终使用 `max_output_tokens`。两种模式均可通过 `COACH_MAX_OUTPUT_TOKENS` 设置输出上限，通过 `COACH_INSTRUCTION_ROLE=system` 或 `developer` 配置指令消息角色。
 
 ## 首版边界
 
-- 支持普通多轮对话、新建/删除当前会话、刷新恢复当前会话、错误提示和重复请求去重；回复完整返回后显示，尚未采用流式输出。
+- 支持普通多轮对话、新建/删除当前会话、刷新恢复当前会话、错误提示和重复请求去重；回复完整返回后显示，浏览器尚未采用逐字流式展示。
 - 图通过条件边分流普通聊天与计算；模型只解析计算参数，Schema 校验后调用本地引擎，固定模板输出公式、批次、缺口和来源。
 - SQLite 将完整成功轮次存入 `data/coach.sqlite3`，每次请求最多使用最近 12 轮、约 24000 字符上下文；每个会话最多 100 轮。新建会话会保留旧记录，但首版没有历史会话列表。
 - 计算支持 8 类墙门、5 种爆炸物、60 个制作配方及已有成品/中间材料抵扣；支持多轮补充和重启恢复。支持范围、算法和 API 示例见 [计算实施说明](docs/calculations.md)。
@@ -62,6 +64,8 @@ node --check src/rust_coach/static/player-state.js
 模块说明和后续接入路径见 [首版实施说明](docs/scaffold.md)。API 的机器可读定义位于 `/openapi.json`，首版不加载依赖外部 CDN 的交互文档页。
 
 ## 目标架构
+
+- [人设与表达一致性设计](docs/persona-design.md)：官方实践调研、当前代码缺口、角色与表达契约、事实保护、LangGraph 接入、分阶段实施和验收指标；附 [来源审核](docs/persona-source-audit.json) 与 [18 个评测种子案例](docs/persona-eval-seeds.json)。这是设计提案，尚未接入运行时。
 
 下面保留早期完整目标设计。当前落地采用有界规划/取证/验证子图，暂不使用向量库，最新实现边界以 [当前建议架构](docs/advice.md) 为准；早期图中的向量检索、中断和持久恢复仍为后续能力。
 
