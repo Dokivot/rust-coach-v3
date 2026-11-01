@@ -76,7 +76,7 @@ def test_configuration_validation_and_local_guard(settings):
         response = client.get("/api/config")
         assert response.json()["configured"] is True
         assert "test-secret" not in response.text
-        assert response.json()["capabilities"]["calculators"] is False
+        assert response.json()["capabilities"]["calculators"] is True
         assert client.get("/").status_code == 200
         assert client.get("/static/app.js").status_code == 200
         assert "script-src 'self'" in response.headers["content-security-policy"]

@@ -7,19 +7,21 @@ from rust_coach.persistence import ConversationStore
 from rust_coach.workflows import build_chat_graph
 
 
-SYSTEM_PROMPT = """你是 Rust Coach 的初版聊天助手，使用清楚、友好的中文回应，也可以跟随用户的语言。
-当前只有普通 LLM 对话功能，没有游戏知识库、联网搜索、计算工具、玩家状态解析或决策引擎。
-可以正常闲聊、解释一般概念、帮助整理问题。不得声称已经查资料、运行工具或读取玩家状态。
-涉及 Rust 的精确爆炸物数量、合成缺口、装备伤害或个性化行动决策时，说明对应能力尚未接入，
-可以帮助用户整理待核实的问题，但不要编造数字、引用或假装给出经过验证的决策建议。
-一般问候和普通话题不用反复重复能力说明。"""
+SYSTEM_PROMPT = """你是 Rust Coach，使用清楚、友好的中文回应，也可以跟随用户的语言。
+应用已接入 PC 原版拆墙/门爆炸物数量、合成路径与库存缺口的本地确定性计算器。
+计算通过单独链路执行，界面有无需模型密钥的本地计算器，也支持 /calc JSON。
+你当前处于普通对话节点，没有计算结果授权；不得自己心算、猜测游戏数值、改写历史计算或编造来源。
+遇到需要计算的新问题请让用户在本地计算器填写，或明确物品、数量、血量、库存后重新提出计算请求。
+尚未接入联网知识检索、战斗伤害、玩家状态决策或图像识别，不得假装拥有这些能力。
+可以正常闲聊、解释一般概念、帮助整理问题。一般问候不用反复重复能力说明。"""
 
 
 class ChatRuntime:
-    def __init__(self, settings: Settings, model: ChatModel, store: ConversationStore):
+    def __init__(self, settings: Settings, model: ChatModel, store: ConversationStore,
+                 calculation_model: ChatModel | None = None):
         self.settings = settings
         self.store = store
-        self.graph = build_chat_graph(model)
+        self.graph = build_chat_graph(model, settings.instruction_role, calculation_model)
         self.lock = asyncio.Lock()
 
     async def chat(self, conversation_id: str, request: ChatRequest) -> Turn:
@@ -47,12 +49,15 @@ class ChatRuntime:
                         *history, ModelMessage(role="user", content=request.message)]
             try:
                 async with asyncio.timeout(self.settings.request_timeout_seconds):
-                    result = await self.graph.ainvoke({"messages": messages}, {"recursion_limit": 4})
+                    previous = conversation.turns[-1].calculation if conversation.turns else None
+                    result = await self.graph.ainvoke({"messages": messages,
+                        "previous_calculation": previous.get("input") if previous else None,
+                        "pending_message": previous.get("pending_message") if previous else None}, {"recursion_limit": 8})
             except TimeoutError as error:
                 raise AppError("model_timeout", "模型响应超时，请稍后重试。", 504) from error
             reply = result["reply"]
             return self.store.append(conversation_id, str(request.request_id), request.message,
-                                     reply.content, reply.truncated)
+                                     reply.content, reply.truncated, result.get("calculation"))
 
     async def delete(self, conversation_id: str) -> None:
         if self.lock.locked():

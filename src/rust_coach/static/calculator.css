@@ -1,0 +1,27 @@
+.calculator-layout { display: block; height: auto; min-height: 100vh; overflow: auto; }
+.calculator-shell { max-width: 1040px; padding: 32px 24px 80px; margin: 0 auto; }
+.back-link { display: inline-block; margin-bottom: 32px; color: #a8b0bd; }
+.calculator-shell h1 { font-size: clamp(28px, 5vw, 44px); margin: 12px 0; }
+.calculator-intro { color: #b0b6bf; line-height: 1.8; }
+.calculator-note { color: #a0a7b3; font-size: 13px; line-height: 1.8; overflow-wrap: anywhere; }
+.calculator-card { padding: 24px; margin: 20px 0; border: 1px solid #30333a; border-radius: 16px; background: #181a1f; }
+.calculator-card h2 { font-size: 18px; margin: 0 0 20px; }
+.calculator-shell fieldset { border: 0; padding: 0; margin: 24px 0; min-width: 0; }
+.calculator-shell label { display: flex; flex-direction: column; gap: 9px; font-size: 14px; }
+.calculator-shell input, .calculator-shell select { border: 1px solid #444953; border-radius: 8px; padding: 10px; background: #101216; color: #eee; width: 100%; min-width: 0; font: inherit; }
+.calculator-shell .check-label { flex-direction: row; align-items: center; margin: 16px 0; line-height: 1.6; }
+.calculator-shell input[type="checkbox"] { width: 18px; height: 18px; flex: 0 0 18px; }
+.field-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; margin: 18px 0; }
+.item-row { display: grid; grid-template-columns: minmax(0, 3fr) minmax(70px, 1fr) auto; gap: 10px; align-items: end; margin-bottom: 16px; }
+.item-row.inventory-row { grid-template-columns: minmax(0, 3fr) minmax(60px, 1fr) minmax(60px, 1fr) auto; }
+.secondary-button, .remove-row { padding: 10px; border: 1px solid #444953; background: #22252d; border-radius: 8px; color: #e3e7ed; cursor: pointer; }
+.calculate-button { padding: 14px 24px; border: 0; background: #e0a46b; border-radius: 10px; color: #171410; font-weight: 700; cursor: pointer; }
+.calculator-shell pre { white-space: pre-wrap; overflow-wrap: anywhere; font: 14px/1.9 ui-monospace, monospace; }
+.calculator-shell summary { color: #e0a46b; cursor: pointer; }
+@media (max-width: 600px) {
+  .calculator-shell { padding: 24px 16px 60px; }
+  .calculator-card { padding: 18px 14px; }
+  .field-grid { grid-template-columns: 1fr; }
+  .item-row, .item-row.inventory-row { grid-template-columns: 1fr 1fr; }
+  .item-row label:first-child { grid-column: 1 / -1; }
+}

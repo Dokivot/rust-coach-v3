@@ -192,3 +192,78 @@ async def test_extension_placeholders_never_return_fabricated_results():
         await extensions.advise(DecisionInput(goal="下一步")),
     ]
     assert all(result.status == "unavailable" for result in results)
+
+
+def stream_events(text='{"operation":"craft"}', terminal="completed"):
+    events = [
+        {"type": "response.created", "response": {"status": "in_progress"}},
+        {"type": "response.output_item.added", "output_index": 0,
+         "item": {"id": "reasoning", "type": "reasoning"}},
+        {"type": "response.output_item.added", "output_index": 1,
+         "item": {"id": "message", "type": "message", "role": "assistant"}},
+        {"type": "response.output_text.delta", "item_id": "message", "content_index": 0, "delta": text[:8]},
+        {"type": "response.output_text.delta", "item_id": "message", "content_index": 0, "delta": text[8:]},
+        {"type": "response.output_text.done", "item_id": "message", "text": text},
+    ]
+    if terminal:
+        events.append({"type": f"response.{terminal}", "response": {
+            "status": terminal, "output": [],
+            "incomplete_details": {"reason": "max_output_tokens"} if terminal == "incomplete" else None,
+        }})
+    return events
+
+
+def encode_events(events):
+    return ("".join("event: " + event["type"] + "\r\ndata: " + json.dumps(event, ensure_ascii=False) + "\r\n\r\n"
+                    for event in events) + "data: [DONE]\r\n\r\n").encode()
+
+
+@pytest.mark.parametrize("terminal,truncated", [("completed", False), ("incomplete", True)])
+async def test_responses_sse_recovers_text_with_empty_terminal_output(terminal, truncated):
+    def handler(request):
+        payload = json.loads(request.content)
+        assert payload["stream"] is True
+        assert payload["store"] is False
+        assert request.url.path == "/v1/responses"
+        return httpx.Response(200, content=encode_events(stream_events(terminal=terminal)),
+                              headers={"Content-Type": "text/event-stream"})
+
+    settings = Settings(_env_file=None, api_key="test-secret", api_mode="responses")
+    async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
+        result = await CompatibleChatModel(settings, client, stream_responses=True).complete([])
+    assert result.content == '{"operation":"craft"}'
+    assert result.truncated is truncated
+
+
+@pytest.mark.parametrize("case,code", [
+    ("no_terminal", "model_invalid_response"),
+    ("failed", "model_request_failed"),
+    ("tool_call", "model_invalid_response"),
+    ("unregistered_delta", "model_invalid_response"),
+    ("bad_delta", "model_invalid_response"),
+    ("invalid_json", "model_invalid_response"),
+    ("empty", "model_invalid_response"),
+    ("too_large", "model_response_too_large"),
+])
+async def test_responses_sse_rejects_invalid_partial_and_tool_output(case, code):
+    events = stream_events(terminal=None if case == "no_terminal" else "failed" if case == "failed" else "completed")
+    if case == "tool_call":
+        events[2]["item"]["type"] = "function_call"
+    if case == "unregistered_delta":
+        events[3]["item_id"] = "unknown"
+    if case == "bad_delta":
+        events[3]["delta"] = 123
+    if case == "empty":
+        events = stream_events(text="")
+    raw = encode_events(events)
+    if case == "invalid_json":
+        raw = b"data: private provider failure\n\n"
+    if case == "too_large":
+        raw = b"x" * 2_000_001
+    transport = httpx.MockTransport(lambda request: httpx.Response(200, content=raw))
+    settings = Settings(_env_file=None, api_key="test-secret", api_mode="responses")
+    async with httpx.AsyncClient(transport=transport) as client:
+        with pytest.raises(AppError) as caught:
+            await CompatibleChatModel(settings, client, stream_responses=True).complete([])
+    assert caught.value.code == code
+    assert "private" not in caught.value.message

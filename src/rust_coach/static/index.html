@@ -16,12 +16,12 @@
     <button id="new-chat" data-action="new" class="new-chat" type="button"><span>＋</span> 新建对话</button>
     <div class="side-label">工作台</div>
     <div class="nav-active"><span class="nav-icon">◈</span> 对话 <span class="tag">可用</span></div>
+    <a class="nav-active" href="/calculator">拆家与合成计算 <span class="tag">可用</span></a>
     <div class="side-label roadmap-label">后续能力</div>
     <div class="roadmap-item"><span>游戏知识库</span><span class="muted-dot"></span></div>
     <div class="roadmap-item"><span>实时资料检索</span><span class="muted-dot"></span></div>
     <div class="roadmap-item"><span>决策与任务规划</span><span class="muted-dot"></span></div>
-    <div class="roadmap-item"><span>拆家与合成计算</span><span class="muted-dot"></span></div>
-    <p class="side-note">这些能力将在知识与工具接入后开放。当前先从一段对话开始。</p>
+    <p class="side-note">计算器按固定 PC 原版资料快照运行，可查看公式、配方和来源，无需模型密钥。</p>
     <div class="sidebar-bottom"><span class="local-dot"></span> 本地对话记录 <button id="delete-chat" data-action="delete" class="text-button" type="button">删除当前会话</button></div>
   </aside>
   <main class="workspace">
@@ -36,13 +36,13 @@
       <div id="welcome" class="welcome">
         <div class="eyebrow"><span></span> YOUR NEXT MOVE STARTS HERE</div>
         <h1>先聊聊，<br>你的下一步。</h1>
-        <p class="intro">我是 Rust Coach。这里是教练 Agent 的第一块拼图：<br class="desktop-break">一个可以交流想法、整理问题的对话空间。</p>
+        <p class="intro">我是 Rust Coach。告诉我目标和现有材料，<br class="desktop-break">一起算清拆墙所需爆炸物、合成路径与资源缺口。</p>
         <div class="suggestions">
           <button type="button" class="suggestion" data-prompt="你好，介绍一下你目前可以做什么。"><span class="suggestion-number">01</span><strong>认识一下</strong><span>了解当前可以聊什么 <b>↗</b></span></button>
-          <button type="button" class="suggestion" data-prompt="帮我整理一份描述游戏经历的提纲，先不要给出游戏决策。"><span class="suggestion-number">02</span><strong>整理想法</strong><span>把一个想法说得更清楚 <b>↗</b></span></button>
-          <button type="button" class="suggestion" data-prompt="我想记录今天的游戏经历，可以从哪些问题开始？"><span class="suggestion-number">03</span><strong>开启交流</strong><span>从今天的经历聊起 <b>↗</b></span></button>
+          <button type="button" class="suggestion" data-prompt="拆一面满血石墙硬面需要多少 C4？"><span class="suggestion-number">02</span><strong>拆墙计算</strong><span>数量、公式与资源路径 <b>↗</b></span></button>
+          <button type="button" class="suggestion" data-prompt="合成 2 个 C4，我已有 10 个炸药材料和 1000 硫磺，其他库存为零，还缺什么？"><span class="suggestion-number">03</span><strong>资源缺口</strong><span>抵扣已有材料，展开配方 <b>↗</b></span></button>
         </div>
-        <div class="scope-note"><span>i</span> 当前为基础 LLM 对话，尚未接入游戏知识库、实时搜索或计算工具。</div>
+        <div class="scope-note"><span>i</span> <a href="/calculator">打开本地计算器 →</a> · PC 原版规则快照；尚无实时资料检索或战斗伤害计算。</div>
       </div>
       <div id="messages" class="messages" role="log" aria-live="polite" aria-relevant="additions"></div>
     </section>
@@ -53,7 +53,7 @@
         <textarea id="message-input" name="message" rows="2" maxlength="6000" placeholder="想聊些什么？" disabled></textarea>
         <div class="composer-bottom"><div class="model-chip"><span class="model-symbol">✳</span><span id="model-name">加载模型配置…</span></div><div class="send-controls"><span id="input-count">0 / 6000</span><button id="send" class="send-button" type="submit" aria-label="发送消息" disabled>↑</button></div></div>
       </form>
-      <div class="footer-note"><span>Enter 发送 · Shift + Enter 换行</span><span id="context-note">记录保存在此设备，回复来自模型服务</span></div>
+      <div class="footer-note"><a href="/calculator">本地计算器（无需密钥）</a><span id="context-note">记录保存在此设备，回复来自模型服务</span></div>
     </footer>
   </main>
 </body>

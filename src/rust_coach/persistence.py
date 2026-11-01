@@ -1,3 +1,4 @@
+import json
 import sqlite3
 from contextlib import contextmanager
 from datetime import datetime, timezone
@@ -22,6 +23,9 @@ class ConversationStore:
                 "UNIQUE(conversation_id, request_id));"
                 "CREATE INDEX IF NOT EXISTS turns_conversation ON turns(conversation_id, sequence);"
             )
+            columns = {row["name"] for row in connection.execute("PRAGMA table_info(turns)")}
+            if "calculation" not in columns:
+                connection.execute("ALTER TABLE turns ADD COLUMN calculation TEXT")
 
     @contextmanager
     def connection(self):
@@ -46,19 +50,23 @@ class ConversationStore:
             if not exists:
                 raise AppError("conversation_not_found", "会话不存在，请创建新对话。", 404)
             rows = connection.execute(
-                "SELECT request_id, user, assistant, created_at, truncated FROM turns "
+                "SELECT request_id, user, assistant, created_at, truncated, calculation FROM turns "
                 "WHERE conversation_id = ? ORDER BY sequence", (conversation_id,)
             ).fetchall()
-        return Conversation(id=conversation_id, turns=[Turn(**dict(row)) for row in rows])
+        return Conversation(id=conversation_id, turns=[Turn(**(dict(row) | {
+            "calculation": json.loads(row["calculation"]) if row["calculation"] else None,
+        })) for row in rows])
 
-    def append(self, conversation_id: str, request_id: str, user: str, assistant: str, truncated: bool) -> Turn:
+    def append(self, conversation_id: str, request_id: str, user: str, assistant: str, truncated: bool,
+               calculation: dict | None = None) -> Turn:
         turn = Turn(request_id=request_id, user=user, assistant=assistant,
-                    created_at=datetime.now(timezone.utc).isoformat(), truncated=truncated)
+                    created_at=datetime.now(timezone.utc).isoformat(), truncated=truncated, calculation=calculation)
         with self.connection() as connection:
             connection.execute(
-                "INSERT INTO turns(conversation_id, request_id, user, assistant, created_at, truncated) "
-                "VALUES (?, ?, ?, ?, ?, ?)",
-                (conversation_id, request_id, user, assistant, turn.created_at, truncated),
+                "INSERT INTO turns(conversation_id, request_id, user, assistant, created_at, truncated, calculation) "
+                "VALUES (?, ?, ?, ?, ?, ?, ?)",
+                (conversation_id, request_id, user, assistant, turn.created_at, truncated,
+                 json.dumps(calculation, ensure_ascii=False) if calculation else None),
             )
         return turn
 

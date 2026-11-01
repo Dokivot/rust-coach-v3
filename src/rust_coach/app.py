@@ -15,6 +15,8 @@ from rust_coach.contracts import AppError, ChatRequest, Conversation, Turn
 from rust_coach.llm import ChatModel, CompatibleChatModel
 from rust_coach.persistence import ConversationStore
 from rust_coach.runtime import ChatRuntime
+from rust_coach.calculations import Calculator, CalculationRequest
+from rust_coach.calculations.presentation import render_calculation
 
 
 logger = logging.getLogger("rust_coach")
@@ -23,6 +25,7 @@ STATIC = Path(__file__).parent / "static"
 
 def create_app(settings: Settings | None = None, model: ChatModel | None = None) -> FastAPI:
     settings = settings or Settings()
+    calculator = Calculator()
 
     @asynccontextmanager
     async def lifespan(app: FastAPI):
@@ -31,7 +34,8 @@ def create_app(settings: Settings | None = None, model: ChatModel | None = None)
             follow_redirects=False,
         ) as client:
             store = ConversationStore(settings.database_path)
-            app.state.runtime = ChatRuntime(settings, model or CompatibleChatModel(settings, client), store)
+            app.state.runtime = ChatRuntime(settings, model or CompatibleChatModel(settings, client), store,
+                calculation_model=model or CompatibleChatModel(settings, client, stream_responses=True))
             yield
 
     app = FastAPI(title="Rust Coach", version="0.1.0", lifespan=lifespan, docs_url=None, redoc_url=None)
@@ -58,7 +62,7 @@ def create_app(settings: Settings | None = None, model: ChatModel | None = None)
 
     @app.exception_handler(RequestValidationError)
     async def validation_handler(request: Request, error: RequestValidationError):
-        return JSONResponse({"error": {"code": "invalid_input", "message": "消息不能为空且最多 6000 字；请检查会话和请求标识。"}}, status_code=422)
+        return JSONResponse({"error": {"code": "invalid_input", "message": "输入格式不正确：请检查必填项、整数数量、支持的规则集和请求标识。消息最多 6000 字。"}}, status_code=422)
 
     @app.exception_handler(Exception)
     async def unexpected_handler(request: Request, error: Exception):
@@ -76,9 +80,20 @@ def create_app(settings: Settings | None = None, model: ChatModel | None = None)
             "model": settings.model,
             "configured": settings.configured,
             "capabilities": {"chat": settings.configured, "knowledge": False,
-                             "web_search": False, "decision": False, "calculators": False},
+                             "web_search": False, "decision": False, "calculators": True},
             "history_turns": settings.history_turns,
         }
+
+    @app.get("/api/calculations/catalog")
+    async def calculation_catalog():
+        return calculator.catalog.public()
+
+    @app.post("/api/calculations")
+    async def calculate(payload: CalculationRequest):
+        result = calculator.calculate(payload)
+        logger.info("calculation id=%s operation=%s snapshot=%s", result["calculation_id"],
+                    payload.operation, result["provenance"]["snapshot_id"])
+        return {**result, "text": render_calculation(result, calculator.catalog)}
 
     @app.post("/api/conversations", response_model=Conversation, status_code=201)
     async def create_conversation(request: Request):
@@ -100,6 +115,10 @@ def create_app(settings: Settings | None = None, model: ChatModel | None = None)
     @app.get("/")
     async def index():
         return FileResponse(STATIC / "index.html")
+
+    @app.get("/calculator")
+    async def calculator_page():
+        return FileResponse(STATIC / "calculator.html")
 
     app.mount("/static", StaticFiles(directory=STATIC), name="static")
     return app

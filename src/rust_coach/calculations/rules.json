@@ -1,0 +1,1539 @@
+{
+  "snapshot_id": "rustdata-pc-vanilla-2026-11-01",
+  "retrieved_at": "2026-11-01",
+  "ruleset": "pc_vanilla",
+  "game_build": null,
+  "verification": "third_party_snapshot_not_ingame_verified",
+  "provider": "RustData",
+  "source_url": "https://rust-data.com/zh/tools/raid-calculator",
+  "source_versions": [
+    "v4:3:66a9a92f0d54f50e"
+  ],
+  "recipes": {
+    "spear.stone": {
+      "batch": 1,
+      "lines": {
+        "spear.wooden": 1,
+        "stones": 20
+      },
+      "bench": 0
+    },
+    "pickaxe": {
+      "batch": 1,
+      "lines": {
+        "wood": 100,
+        "metal.fragments": 125
+      },
+      "bench": 1
+    },
+    "ammo.rocket.basic": {
+      "batch": 1,
+      "lines": {
+        "metalpipe": 2,
+        "gunpowder": 150,
+        "explosives": 10
+      },
+      "bench": 3
+    },
+    "chainsaw": {
+      "batch": 1,
+      "lines": {
+        "metal.refined": 5,
+        "gears": 2,
+        "metalblade": 6
+      },
+      "bench": 3
+    },
+    "catapult": {
+      "batch": 1,
+      "lines": {
+        "wood": 500,
+        "metal.refined": 20,
+        "rope": 1,
+        "gears": 1
+      },
+      "bench": 3
+    },
+    "grenade.beancan": {
+      "batch": 1,
+      "lines": {
+        "gunpowder": 60,
+        "metal.fragments": 20
+      },
+      "bench": 1
+    },
+    "batteringram": {
+      "batch": 1,
+      "lines": {
+        "wood": 500,
+        "sheetmetal": 2,
+        "tarp": 1,
+        "metal.refined": 100
+      },
+      "bench": 2
+    },
+    "explosive.satchel": {
+      "batch": 1,
+      "lines": {
+        "grenade.beancan": 4,
+        "stash.small": 1,
+        "rope": 1
+      },
+      "bench": 1
+    },
+    "mace": {
+      "batch": 1,
+      "lines": {
+        "wood": 100,
+        "metal.fragments": 50
+      },
+      "bench": 1
+    },
+    "lowgradefuel": {
+      "batch": 4,
+      "lines": {
+        "fat.animal": 3,
+        "cloth": 1
+      },
+      "bench": 0
+    },
+    "hmlmg": {
+      "batch": 1,
+      "lines": {
+        "metal.refined": 30,
+        "riflebody": 1,
+        "metalspring": 3,
+        "gears": 2
+      },
+      "bench": 3
+    },
+    "hammer.salvaged": {
+      "batch": 1,
+      "lines": {
+        "metalpipe": 1,
+        "metal.fragments": 50
+      },
+      "bench": 3
+    },
+    "revolver.hc": {
+      "batch": 1,
+      "lines": {
+        "metalpipe": 4,
+        "metalspring": 1,
+        "gears": 1,
+        "metal.refined": 6
+      },
+      "bench": 3
+    },
+    "explosives": {
+      "batch": 1,
+      "lines": {
+        "gunpowder": 50,
+        "lowgradefuel": 3,
+        "sulfur": 10,
+        "metal.fragments": 10
+      },
+      "bench": 3
+    },
+    "rifle.ak": {
+      "batch": 1,
+      "lines": {
+        "metal.refined": 50,
+        "wood": 200,
+        "riflebody": 1,
+        "metalspring": 4
+      },
+      "bench": 3
+    },
+    "ammo.rocket.hv": {
+      "batch": 1,
+      "lines": {
+        "metalpipe": 1,
+        "gunpowder": 100
+      },
+      "bench": 3
+    },
+    "submarine.torpedo.straight": {
+      "batch": 5,
+      "lines": {
+        "metalpipe": 1,
+        "gunpowder": 30
+      },
+      "bench": 3
+    },
+    "stonehatchet": {
+      "batch": 1,
+      "lines": {
+        "wood": 200,
+        "stones": 100
+      },
+      "bench": 0
+    },
+    "axe.salvaged": {
+      "batch": 1,
+      "lines": {
+        "metalpipe": 1,
+        "metalblade": 5
+      },
+      "bench": 3
+    },
+    "flashlight.held": {
+      "batch": 1,
+      "lines": {
+        "metal.fragments": 30
+      },
+      "bench": 1
+    },
+    "gunpowder": {
+      "batch": 10,
+      "lines": {
+        "charcoal": 30,
+        "sulfur": 20
+      },
+      "bench": 1
+    },
+    "spear.wooden": {
+      "batch": 1,
+      "lines": {
+        "wood": 300
+      },
+      "bench": 0
+    },
+    "rock": {
+      "batch": 1,
+      "lines": {
+        "stones": 10
+      },
+      "bench": 0
+    },
+    "catapult.ammo.bee": {
+      "batch": 1,
+      "lines": {
+        "grenade.bee": 2,
+        "wood": 200
+      },
+      "bench": 2
+    },
+    "explosive.timed": {
+      "batch": 1,
+      "lines": {
+        "explosives": 20,
+        "cloth": 5,
+        "techparts": 2
+      },
+      "bench": 3
+    },
+    "ammo.rifle.explosive": {
+      "batch": 2,
+      "lines": {
+        "metal.fragments": 10,
+        "gunpowder": 20,
+        "sulfur": 10
+      },
+      "bench": 3
+    },
+    "knife.bone": {
+      "batch": 1,
+      "lines": {
+        "bone.fragments": 30
+      },
+      "bench": 0
+    },
+    "longsword": {
+      "batch": 1,
+      "lines": {
+        "metalblade": 2,
+        "metal.fragments": 100
+      },
+      "bench": 2
+    },
+    "icepick.salvaged": {
+      "batch": 1,
+      "lines": {
+        "metalpipe": 1,
+        "metalblade": 5
+      },
+      "bench": 3
+    },
+    "grenade.flashbang": {
+      "batch": 1,
+      "lines": {
+        "gunpowder": 25,
+        "metal.fragments": 50
+      },
+      "bench": 2
+    },
+    "salvaged.sword": {
+      "batch": 1,
+      "lines": {
+        "metal.fragments": 15,
+        "metalblade": 1
+      },
+      "bench": 2
+    },
+    "paddle": {
+      "batch": 1,
+      "lines": {
+        "metal.fragments": 15,
+        "metalblade": 1,
+        "wood": 200
+      },
+      "bench": 2
+    },
+    "salvaged.cleaver": {
+      "batch": 1,
+      "lines": {
+        "metal.fragments": 50,
+        "roadsigns": 1
+      },
+      "bench": 3
+    },
+    "rifle.semiauto": {
+      "batch": 1,
+      "lines": {
+        "semibody": 1,
+        "metalspring": 1,
+        "metal.fragments": 450,
+        "metal.refined": 4
+      },
+      "bench": 3
+    },
+    "boomerang": {
+      "batch": 1,
+      "lines": {
+        "wood": 300
+      },
+      "bench": 0
+    },
+    "rocket.launcher": {
+      "batch": 1,
+      "lines": {
+        "metal.refined": 40,
+        "metalpipe": 4
+      },
+      "bench": 3
+    },
+    "grenade.bee": {
+      "batch": 1,
+      "lines": {
+        "nucleus": 1,
+        "cloth": 30
+      },
+      "bench": 1
+    },
+    "torch": {
+      "batch": 1,
+      "lines": {
+        "wood": 30,
+        "cloth": 1,
+        "lowgradefuel": 1
+      },
+      "bench": 0
+    },
+    "knife.combat": {
+      "batch": 1,
+      "lines": {
+        "metal.fragments": 25,
+        "metal.refined": 1
+      },
+      "bench": 1
+    },
+    "bone.club": {
+      "batch": 1,
+      "lines": {
+        "bone.fragments": 20
+      },
+      "bench": 0
+    },
+    "stone.pickaxe": {
+      "batch": 1,
+      "lines": {
+        "wood": 200,
+        "stones": 100
+      },
+      "bench": 0
+    },
+    "knife.skinning": {
+      "batch": 1,
+      "lines": {
+        "metal.fragments": 75
+      },
+      "bench": 1
+    },
+    "ammo.mortar.basic": {
+      "batch": 2,
+      "lines": {
+        "metalpipe": 1,
+        "gunpowder": 300
+      },
+      "bench": 3
+    },
+    "rifle.bolt": {
+      "batch": 1,
+      "lines": {
+        "metal.refined": 20,
+        "riflebody": 1,
+        "metalpipe": 3,
+        "metalspring": 1
+      },
+      "bench": 3
+    },
+    "ammo.mortar.fragment": {
+      "batch": 3,
+      "lines": {
+        "metalpipe": 1,
+        "gunpowder": 150
+      },
+      "bench": 3
+    },
+    "catapult.ammo.boulder": {
+      "batch": 1,
+      "lines": {
+        "stones": 200
+      },
+      "bench": 2
+    },
+    "catapult.ammo.explosive": {
+      "batch": 1,
+      "lines": {
+        "propanetank": 1,
+        "gunpowder": 450,
+        "lowgradefuel": 20
+      },
+      "bench": 2
+    },
+    "rifle.sks": {
+      "batch": 1,
+      "lines": {
+        "semibody": 1,
+        "metalspring": 2,
+        "metal.fragments": 200,
+        "metal.refined": 12
+      },
+      "bench": 3
+    },
+    "cannonball": {
+      "batch": 2,
+      "lines": {
+        "metal.fragments": 50,
+        "gunpowder": 15
+      },
+      "bench": 1
+    },
+    "machete": {
+      "batch": 1,
+      "lines": {
+        "wood": 100,
+        "metal.fragments": 40
+      },
+      "bench": 0
+    },
+    "stash.small": {
+      "batch": 1,
+      "lines": {
+        "cloth": 10
+      },
+      "bench": 0
+    },
+    "grenade.f1": {
+      "batch": 1,
+      "lines": {
+        "gunpowder": 30,
+        "metal.fragments": 25
+      },
+      "bench": 2
+    },
+    "ammo.rocket.seeker": {
+      "batch": 2,
+      "lines": {
+        "metalpipe": 2,
+        "gunpowder": 100,
+        "techparts": 1
+      },
+      "bench": 3
+    },
+    "hatchet": {
+      "batch": 1,
+      "lines": {
+        "wood": 100,
+        "metal.fragments": 75
+      },
+      "bench": 1
+    },
+    "metal.facemask": {
+      "batch": 1,
+      "lines": {
+        "leather": 50,
+        "metal.refined": 15,
+        "sewingkit": 6
+      },
+      "bench": 3
+    },
+    "metal.plate.torso": {
+      "batch": 1,
+      "lines": {
+        "leather": 50,
+        "metal.refined": 18,
+        "sewingkit": 8
+      },
+      "bench": 3
+    },
+    "hoodie": {
+      "batch": 1,
+      "lines": {
+        "cloth": 40,
+        "sewingkit": 1
+      },
+      "bench": 2
+    },
+    "pants": {
+      "batch": 1,
+      "lines": {
+        "cloth": 40,
+        "sewingkit": 1
+      },
+      "bench": 1
+    },
+    "shoes.boots": {
+      "batch": 1,
+      "lines": {
+        "leather": 20,
+        "metal.fragments": 15,
+        "sewingkit": 1
+      },
+      "bench": 2
+    },
+    "roadsign.kilt": {
+      "batch": 1,
+      "lines": {
+        "leather": 10,
+        "roadsigns": 1,
+        "sewingkit": 2
+      },
+      "bench": 2
+    }
+  },
+  "mix": {
+    "batch": 10,
+    "lines": {
+      "sulfur": 20,
+      "charcoal": 20
+    }
+  },
+  "items": {
+    "explosive.timed": {
+      "name": "定时炸弹",
+      "url": "https://rust-data.com/zh/items/explosive-timed"
+    },
+    "explosives": {
+      "name": "炸药",
+      "url": "https://rust-data.com/zh/items/explosives"
+    },
+    "cloth": {
+      "name": "布",
+      "url": "https://rust-data.com/zh/items/cloth"
+    },
+    "techparts": {
+      "name": "电子零件",
+      "url": "https://rust-data.com/zh/items/techparts"
+    },
+    "ammo.rocket.basic": {
+      "name": "火箭弹",
+      "url": "https://rust-data.com/zh/items/ammo-rocket-basic"
+    },
+    "rocket.launcher": {
+      "name": "火箭发射器",
+      "url": "https://rust-data.com/zh/items/rocket-launcher"
+    },
+    "metalpipe": {
+      "name": "金属管",
+      "url": "https://rust-data.com/zh/items/metalpipe"
+    },
+    "sulfur": {
+      "name": "硫磺",
+      "url": "https://rust-data.com/zh/items/sulfur"
+    },
+    "charcoal": {
+      "name": "木炭",
+      "url": "https://rust-data.com/zh/items/charcoal"
+    },
+    "catapult.ammo.explosive": {
+      "name": "爆炸弹",
+      "url": "https://rust-data.com/zh/items/catapult-ammo-explosive"
+    },
+    "propanetank": {
+      "name": "空煤气罐",
+      "url": "https://rust-data.com/zh/items/propanetank"
+    },
+    "lowgradefuel": {
+      "name": "低品质燃油",
+      "url": "https://rust-data.com/zh/items/lowgradefuel"
+    },
+    "explosive.satchel": {
+      "name": "豆罐炸药包",
+      "url": "https://rust-data.com/zh/items/explosive-satchel"
+    },
+    "grenade.beancan": {
+      "name": "豆罐雷",
+      "url": "https://rust-data.com/zh/items/grenade-beancan"
+    },
+    "stash.small": {
+      "name": "小藏匿",
+      "url": "https://rust-data.com/zh/items/stash-small"
+    },
+    "rope": {
+      "name": "绳子",
+      "url": "https://rust-data.com/zh/items/rope"
+    },
+    "ammo.mortar.basic": {
+      "name": "迫击炮弹",
+      "url": "https://rust-data.com/zh/items/ammo-mortar-basic"
+    },
+    "ammo.rocket.hv": {
+      "name": "高速火箭弹",
+      "url": "https://rust-data.com/zh/items/ammo-rocket-hv"
+    },
+    "metal.fragments": {
+      "name": "金属碎片",
+      "url": "https://rust-data.com/zh/items/metal-fragments"
+    },
+    "submarine.torpedo.straight": {
+      "name": "鱼雷",
+      "url": "https://rust-data.com/zh/items/submarine-torpedo-straight"
+    },
+    "ammo.rocket.seeker": {
+      "name": "跟踪导弹",
+      "url": "https://rust-data.com/zh/items/ammo-rocket-seeker"
+    },
+    "grenade.f1": {
+      "name": "F1破片手榴弹",
+      "url": "https://rust-data.com/zh/items/grenade-f1"
+    },
+    "cannonball": {
+      "name": "加农炮弹",
+      "url": "https://rust-data.com/zh/items/cannonball"
+    },
+    "grenade.flashbang": {
+      "name": "闪光弹",
+      "url": "https://rust-data.com/zh/items/grenade-flashbang"
+    },
+    "ammo.mortar.fragment": {
+      "name": "破片迫击炮弹",
+      "url": "https://rust-data.com/zh/items/ammo-mortar-fragment"
+    },
+    "catapult.ammo.boulder": {
+      "name": "散射弹",
+      "url": "https://rust-data.com/zh/items/catapult-ammo-boulder"
+    },
+    "stones": {
+      "name": "石头",
+      "url": "https://rust-data.com/zh/items/stones"
+    },
+    "catapult.ammo.bee": {
+      "name": "蜜蜂弹",
+      "url": "https://rust-data.com/zh/items/catapult-ammo-bee"
+    },
+    "grenade.bee": {
+      "name": "蜜蜂手榴弹",
+      "url": "https://rust-data.com/zh/items/grenade-bee"
+    },
+    "wood": {
+      "name": "木头",
+      "url": "https://rust-data.com/zh/items/wood"
+    },
+    "nucleus": {
+      "name": "蜂巢蜂核",
+      "url": "https://rust-data.com/zh/items/nucleus"
+    },
+    "rifle.l96": {
+      "name": "L96狙击步枪",
+      "url": "https://rust-data.com/zh/items/rifle-l96"
+    },
+    "ammo.rifle.explosive": {
+      "name": "5.56毫米高爆弹药",
+      "url": "https://rust-data.com/zh/items/ammo-rifle-explosive"
+    },
+    "rifle.bolt": {
+      "name": "栓动步枪",
+      "url": "https://rust-data.com/zh/items/rifle-bolt"
+    },
+    "lmg.m249": {
+      "name": "M249",
+      "url": "https://rust-data.com/zh/items/lmg-m249"
+    },
+    "revolver.hc": {
+      "name": "大口径左轮手枪",
+      "url": "https://rust-data.com/zh/items/revolver-hc"
+    },
+    "hmlmg": {
+      "name": "自制轻机枪",
+      "url": "https://rust-data.com/zh/items/hmlmg"
+    },
+    "rifle.ak": {
+      "name": "AK-47突击步枪",
+      "url": "https://rust-data.com/zh/items/rifle-ak"
+    },
+    "rifle.m39": {
+      "name": "M39步枪",
+      "url": "https://rust-data.com/zh/items/rifle-m39"
+    },
+    "rifle.lr300": {
+      "name": "LR-300突击步枪",
+      "url": "https://rust-data.com/zh/items/rifle-lr300"
+    },
+    "rifle.sks": {
+      "name": "SKS",
+      "url": "https://rust-data.com/zh/items/rifle-sks"
+    },
+    "rifle.semiauto": {
+      "name": "半自动步枪",
+      "url": "https://rust-data.com/zh/items/rifle-semiauto"
+    },
+    "minigun": {
+      "name": "加特林",
+      "url": "https://rust-data.com/zh/items/minigun"
+    },
+    "m16a2": {
+      "name": "M16A2",
+      "url": "https://rust-data.com/zh/items/m16a2"
+    },
+    "jackhammer": {
+      "name": "电镐",
+      "url": "https://rust-data.com/zh/items/jackhammer"
+    },
+    "knife.combat": {
+      "name": "匕首",
+      "url": "https://rust-data.com/zh/items/knife-combat"
+    },
+    "metal.refined": {
+      "name": "高级金属",
+      "url": "https://rust-data.com/zh/items/metal-refined"
+    },
+    "pitchfork": {
+      "name": "干草叉",
+      "url": "https://rust-data.com/zh/items/pitchfork"
+    },
+    "chainsaw": {
+      "name": "电锯",
+      "url": "https://rust-data.com/zh/items/chainsaw"
+    },
+    "gears": {
+      "name": "齿轮",
+      "url": "https://rust-data.com/zh/items/gears"
+    },
+    "metalblade": {
+      "name": "金属刀刃",
+      "url": "https://rust-data.com/zh/items/metalblade"
+    },
+    "spear.stone": {
+      "name": "石矛",
+      "url": "https://rust-data.com/zh/items/spear-stone"
+    },
+    "spear.wooden": {
+      "name": "木矛",
+      "url": "https://rust-data.com/zh/items/spear-wooden"
+    },
+    "icepick.salvaged": {
+      "name": "废料十字镐",
+      "url": "https://rust-data.com/zh/items/icepick-salvaged"
+    },
+    "vampire.stake": {
+      "name": "吸血鬼尖刺",
+      "url": "https://rust-data.com/zh/items/vampire-stake"
+    },
+    "salvaged.sword": {
+      "name": "废料剑",
+      "url": "https://rust-data.com/zh/items/salvaged-sword"
+    },
+    "hammer.salvaged": {
+      "name": "废料锤",
+      "url": "https://rust-data.com/zh/items/hammer-salvaged"
+    },
+    "knife.bone": {
+      "name": "骨刃",
+      "url": "https://rust-data.com/zh/items/knife-bone"
+    },
+    "bone.fragments": {
+      "name": "骨头碎片",
+      "url": "https://rust-data.com/zh/items/bone-fragments"
+    },
+    "pickaxe": {
+      "name": "铁镐",
+      "url": "https://rust-data.com/zh/items/pickaxe"
+    },
+    "axe.salvaged": {
+      "name": "圆斧",
+      "url": "https://rust-data.com/zh/items/axe-salvaged"
+    },
+    "longsword": {
+      "name": "长剑",
+      "url": "https://rust-data.com/zh/items/longsword"
+    },
+    "stone.pickaxe": {
+      "name": "石镐",
+      "url": "https://rust-data.com/zh/items/stone-pickaxe"
+    },
+    "machete": {
+      "name": "大砍刀",
+      "url": "https://rust-data.com/zh/items/machete"
+    },
+    "sickle": {
+      "name": "镰刀",
+      "url": "https://rust-data.com/zh/items/sickle"
+    },
+    "salvaged.cleaver": {
+      "name": "废料切肉刀",
+      "url": "https://rust-data.com/zh/items/salvaged-cleaver"
+    },
+    "roadsigns": {
+      "name": "路标",
+      "url": "https://rust-data.com/zh/items/roadsigns"
+    },
+    "mace": {
+      "name": "狼牙锤",
+      "url": "https://rust-data.com/zh/items/mace"
+    },
+    "knife.skinning": {
+      "name": "剥皮刀",
+      "url": "https://rust-data.com/zh/items/knife-skinning"
+    },
+    "knife.butcher": {
+      "name": "屠宰刀",
+      "url": "https://rust-data.com/zh/items/knife-butcher"
+    },
+    "hatchet": {
+      "name": "铁斧",
+      "url": "https://rust-data.com/zh/items/hatchet"
+    },
+    "paddle": {
+      "name": "桨",
+      "url": "https://rust-data.com/zh/items/paddle"
+    },
+    "snowball": {
+      "name": "雪球",
+      "url": "https://rust-data.com/zh/items/snowball"
+    },
+    "boomerang": {
+      "name": "回旋镖",
+      "url": "https://rust-data.com/zh/items/boomerang"
+    },
+    "candycaneclub": {
+      "name": "糖果棒",
+      "url": "https://rust-data.com/zh/items/candycaneclub"
+    },
+    "bone.club": {
+      "name": "骨棒",
+      "url": "https://rust-data.com/zh/items/bone-club"
+    },
+    "stonehatchet": {
+      "name": "石斧",
+      "url": "https://rust-data.com/zh/items/stonehatchet"
+    },
+    "flashlight.held": {
+      "name": "手电筒",
+      "url": "https://rust-data.com/zh/items/flashlight-held"
+    },
+    "cakefiveyear": {
+      "name": "生日蛋糕",
+      "url": "https://rust-data.com/zh/items/cakefiveyear"
+    },
+    "shovel": {
+      "name": "铲子",
+      "url": "https://rust-data.com/zh/items/shovel"
+    },
+    "rock": {
+      "name": "岩石",
+      "url": "https://rust-data.com/zh/items/rock"
+    },
+    "torch": {
+      "name": "火把",
+      "url": "https://rust-data.com/zh/items/torch"
+    },
+    "catapult": {
+      "name": "投石车",
+      "url": "https://rust-data.com/zh/items/catapult"
+    },
+    "batteringram": {
+      "name": "攻城锤",
+      "url": "https://rust-data.com/zh/items/batteringram"
+    },
+    "gunpowder": {
+      "name": "火药",
+      "url": "https://rust-data.com/zh/items/gunpowder"
+    },
+    "fat.animal": {
+      "name": "动物脂肪",
+      "url": "https://rust-data.com/zh/items/fat-animal"
+    },
+    "riflebody": {
+      "name": "步枪枪体",
+      "url": "https://rust-data.com/zh/items/riflebody"
+    },
+    "metalspring": {
+      "name": "金属弹簧",
+      "url": "https://rust-data.com/zh/items/metalspring"
+    },
+    "semibody": {
+      "name": "半自动枪体",
+      "url": "https://rust-data.com/zh/items/semibody"
+    },
+    "sheetmetal": {
+      "name": "金属板",
+      "url": "https://rust-data.com/zh/items/sheetmetal"
+    },
+    "tarp": {
+      "name": "篷布",
+      "url": "https://rust-data.com/zh/items/tarp"
+    },
+    "metal.facemask": {
+      "name": "金属面罩",
+      "url": "https://rust-data.com/zh/items/metal-facemask"
+    },
+    "leather": {
+      "name": "皮革",
+      "url": "https://rust-data.com/zh/items/leather"
+    },
+    "sewingkit": {
+      "name": "针线包",
+      "url": "https://rust-data.com/zh/items/sewingkit"
+    },
+    "metal.plate.torso": {
+      "name": "金属胸甲",
+      "url": "https://rust-data.com/zh/items/metal-plate-torso"
+    },
+    "hoodie": {
+      "name": "连帽衫",
+      "url": "https://rust-data.com/zh/items/hoodie"
+    },
+    "pants": {
+      "name": "裤子",
+      "url": "https://rust-data.com/zh/items/pants"
+    },
+    "shoes.boots": {
+      "name": "靴子",
+      "url": "https://rust-data.com/zh/items/shoes-boots"
+    },
+    "roadsign.kilt": {
+      "name": "路标护裙",
+      "url": "https://rust-data.com/zh/items/roadsign-kilt"
+    }
+  },
+  "targets": {
+    "building:base-wall:wood": {
+      "name": "墙壁 · 木质",
+      "hp": 250,
+      "url": "https://rust-data.com/zh/construction/building-core/wall/wood?grade=wood",
+      "source_hash": "d12f67fc6473340e40165aeda6521af962770460d186ee5c4858d2965c7fd5f1",
+      "methods": {
+        "explosive.timed": {
+          "mode": "stuck",
+          "sides": {
+            "soft": {
+              "damage": "495",
+              "reference_count": 1
+            },
+            "hard": {
+              "damage": "495",
+              "reference_count": 1
+            }
+          }
+        },
+        "ammo.rocket.basic": {
+          "mode": "projectile",
+          "sides": {
+            "soft": {
+              "damage": "249",
+              "reference_count": 2
+            },
+            "hard": {
+              "damage": "247.65",
+              "reference_count": 2
+            }
+          }
+        },
+        "explosive.satchel": {
+          "mode": "stuck",
+          "sides": {
+            "soft": {
+              "damage": "91.5",
+              "reference_count": 3
+            },
+            "hard": {
+              "damage": "91.5",
+              "reference_count": 3
+            }
+          }
+        },
+        "ammo.rocket.hv": {
+          "mode": "projectile",
+          "sides": {
+            "soft": {
+              "damage": "31.500000000000004",
+              "reference_count": 8
+            },
+            "hard": {
+              "damage": "29.25",
+              "reference_count": 9
+            }
+          }
+        },
+        "grenade.beancan": {
+          "mode": "stuck",
+          "sides": {
+            "soft": {
+              "damage": "19.5",
+              "reference_count": 13
+            },
+            "hard": {
+              "damage": "19.5",
+              "reference_count": 13
+            }
+          }
+        }
+      }
+    },
+    "building:base-wall:stone": {
+      "name": "墙壁 · 石质",
+      "hp": 500,
+      "url": "https://rust-data.com/zh/construction/building-core/wall/wood?grade=stone",
+      "source_hash": "5565c7146da7530861d28cfe40d6a8957ace99c52d6e1786301d5e84ad452064",
+      "methods": {
+        "explosive.timed": {
+          "mode": "stuck",
+          "sides": {
+            "soft": {
+              "damage": "275",
+              "reference_count": 2
+            },
+            "hard": {
+              "damage": "275",
+              "reference_count": 2
+            }
+          }
+        },
+        "ammo.rocket.basic": {
+          "mode": "projectile",
+          "sides": {
+            "soft": {
+              "damage": "139",
+              "reference_count": 4
+            },
+            "hard": {
+              "damage": "137.65",
+              "reference_count": 4
+            }
+          }
+        },
+        "explosive.satchel": {
+          "mode": "stuck",
+          "sides": {
+            "soft": {
+              "damage": "51.500000000000014",
+              "reference_count": 10
+            },
+            "hard": {
+              "damage": "51.500000000000014",
+              "reference_count": 10
+            }
+          }
+        },
+        "ammo.rocket.hv": {
+          "mode": "projectile",
+          "sides": {
+            "soft": {
+              "damage": "16.5",
+              "reference_count": 31
+            },
+            "hard": {
+              "damage": "15.75",
+              "reference_count": 32
+            }
+          }
+        },
+        "grenade.beancan": {
+          "mode": "stuck",
+          "sides": {
+            "soft": {
+              "damage": "11.000000000000004",
+              "reference_count": 46
+            },
+            "hard": {
+              "damage": "11.000000000000004",
+              "reference_count": 46
+            }
+          }
+        }
+      }
+    },
+    "building:base-wall:metal": {
+      "name": "墙壁 · 铁质",
+      "hp": 1000,
+      "url": "https://rust-data.com/zh/construction/building-core/wall/wood?grade=metal",
+      "source_hash": "0e48aa2747f32f9c4785f98ef56156ce1bbee28f431a294d4fc9cf5a7779d6e4",
+      "methods": {
+        "explosive.timed": {
+          "mode": "stuck",
+          "sides": {
+            "soft": {
+              "damage": "275",
+              "reference_count": 4
+            },
+            "hard": {
+              "damage": "275",
+              "reference_count": 4
+            }
+          }
+        },
+        "ammo.rocket.basic": {
+          "mode": "projectile",
+          "sides": {
+            "soft": {
+              "damage": "138.25",
+              "reference_count": 8
+            },
+            "hard": {
+              "damage": "137.575",
+              "reference_count": 8
+            }
+          }
+        },
+        "explosive.satchel": {
+          "mode": "stuck",
+          "sides": {
+            "soft": {
+              "damage": "43.50000000000001",
+              "reference_count": 23
+            },
+            "hard": {
+              "damage": "43.50000000000001",
+              "reference_count": 23
+            }
+          }
+        },
+        "ammo.rocket.hv": {
+          "mode": "projectile",
+          "sides": {
+            "soft": {
+              "damage": "15.014999999999999",
+              "reference_count": 67
+            },
+            "hard": {
+              "damage": "15.007499999999999",
+              "reference_count": 67
+            }
+          }
+        },
+        "grenade.beancan": {
+          "mode": "stuck",
+          "sides": {
+            "soft": {
+              "damage": "9.000000000000002",
+              "reference_count": 112
+            },
+            "hard": {
+              "damage": "9.000000000000002",
+              "reference_count": 112
+            }
+          }
+        }
+      }
+    },
+    "building:base-wall:toptier": {
+      "name": "墙壁 · 钢质",
+      "hp": 2000,
+      "url": "https://rust-data.com/zh/construction/building-core/wall/wood?grade=toptier",
+      "source_hash": "a98630edafa865aaeff3c2a0f8e97ed5176e11d359f89c90cd8538d076043cf0",
+      "methods": {
+        "explosive.timed": {
+          "mode": "stuck",
+          "sides": {
+            "soft": {
+              "damage": "275",
+              "reference_count": 8
+            },
+            "hard": {
+              "damage": "275",
+              "reference_count": 8
+            }
+          }
+        },
+        "ammo.rocket.basic": {
+          "mode": "projectile",
+          "sides": {
+            "soft": {
+              "damage": "138.25",
+              "reference_count": 15
+            },
+            "hard": {
+              "damage": "137.575",
+              "reference_count": 15
+            }
+          }
+        },
+        "explosive.satchel": {
+          "mode": "stuck",
+          "sides": {
+            "soft": {
+              "damage": "43.50000000000001",
+              "reference_count": 46
+            },
+            "hard": {
+              "damage": "43.50000000000001",
+              "reference_count": 46
+            }
+          }
+        },
+        "ammo.rocket.hv": {
+          "mode": "projectile",
+          "sides": {
+            "soft": {
+              "damage": "15.014999999999999",
+              "reference_count": 134
+            },
+            "hard": {
+              "damage": "15.007499999999999",
+              "reference_count": 134
+            }
+          }
+        },
+        "grenade.beancan": {
+          "mode": "stuck",
+          "sides": {
+            "soft": {
+              "damage": "9.000000000000002",
+              "reference_count": 223
+            },
+            "hard": {
+              "damage": "9.000000000000002",
+              "reference_count": 223
+            }
+          }
+        }
+      }
+    },
+    "item:door.hinged.wood": {
+      "name": "木头门",
+      "hp": 200,
+      "url": "https://rust-data.com/zh/items/door-hinged-wood",
+      "source_hash": "d908642463435f1fd030086232764e970254a12fd9ca45fd9d28435d3025ec7c",
+      "methods": {
+        "explosive.timed": {
+          "mode": "stuck",
+          "sides": {
+            "soft": {
+              "damage": "1100",
+              "reference_count": 1
+            },
+            "hard": {
+              "damage": "1100",
+              "reference_count": 1
+            }
+          }
+        },
+        "ammo.rocket.basic": {
+          "mode": "projectile",
+          "sides": {
+            "soft": {
+              "damage": "550.375",
+              "reference_count": 1
+            },
+            "hard": {
+              "damage": "550.375",
+              "reference_count": 1
+            }
+          }
+        },
+        "explosive.satchel": {
+          "mode": "stuck",
+          "sides": {
+            "soft": {
+              "damage": "170.00000000000003",
+              "reference_count": 2
+            },
+            "hard": {
+              "damage": "170.00000000000003",
+              "reference_count": 2
+            }
+          }
+        },
+        "ammo.rocket.hv": {
+          "mode": "projectile",
+          "sides": {
+            "soft": {
+              "damage": "63.75",
+              "reference_count": 4
+            },
+            "hard": {
+              "damage": "63.75",
+              "reference_count": 4
+            }
+          }
+        },
+        "grenade.beancan": {
+          "mode": "stuck",
+          "sides": {
+            "soft": {
+              "damage": "35.00000000000001",
+              "reference_count": 6
+            },
+            "hard": {
+              "damage": "35.00000000000001",
+              "reference_count": 6
+            }
+          }
+        }
+      }
+    },
+    "item:door.hinged.metal": {
+      "name": "金属门",
+      "hp": 250,
+      "url": "https://rust-data.com/zh/items/door-hinged-metal",
+      "source_hash": "f5a829e7baa067b4143368e49bda5774a0ad81db00969c279a4d557c273e9687",
+      "methods": {
+        "explosive.timed": {
+          "mode": "stuck",
+          "sides": {
+            "soft": {
+              "damage": "440",
+              "reference_count": 1
+            },
+            "hard": {
+              "damage": "440",
+              "reference_count": 1
+            }
+          }
+        },
+        "ammo.rocket.basic": {
+          "mode": "projectile",
+          "sides": {
+            "soft": {
+              "damage": "220.375",
+              "reference_count": 2
+            },
+            "hard": {
+              "damage": "220.375",
+              "reference_count": 2
+            }
+          }
+        },
+        "explosive.satchel": {
+          "mode": "stuck",
+          "sides": {
+            "soft": {
+              "damage": "70.00000000000001",
+              "reference_count": 4
+            },
+            "hard": {
+              "damage": "70.00000000000001",
+              "reference_count": 4
+            }
+          }
+        },
+        "ammo.rocket.hv": {
+          "mode": "projectile",
+          "sides": {
+            "soft": {
+              "damage": "24",
+              "reference_count": 11
+            },
+            "hard": {
+              "damage": "24",
+              "reference_count": 11
+            }
+          }
+        },
+        "grenade.beancan": {
+          "mode": "stuck",
+          "sides": {
+            "soft": {
+              "damage": "14.500000000000002",
+              "reference_count": 18
+            },
+            "hard": {
+              "damage": "14.500000000000002",
+              "reference_count": 18
+            }
+          }
+        }
+      }
+    },
+    "item:door.hinged.toptier": {
+      "name": "钢铁门",
+      "hp": 1000,
+      "url": "https://rust-data.com/zh/items/door-hinged-toptier",
+      "source_hash": "e4a3f5e7e0aabc8aae230b6b1bfa2011a56852e4a54e1acc773ddb48ec9d66f3",
+      "methods": {
+        "explosive.timed": {
+          "mode": "stuck",
+          "sides": {
+            "soft": {
+              "damage": "440",
+              "reference_count": 3
+            },
+            "hard": {
+              "damage": "440",
+              "reference_count": 3
+            }
+          }
+        },
+        "ammo.rocket.basic": {
+          "mode": "projectile",
+          "sides": {
+            "soft": {
+              "damage": "220.375",
+              "reference_count": 5
+            },
+            "hard": {
+              "damage": "220.375",
+              "reference_count": 5
+            }
+          }
+        },
+        "explosive.satchel": {
+          "mode": "stuck",
+          "sides": {
+            "soft": {
+              "damage": "70.00000000000001",
+              "reference_count": 15
+            },
+            "hard": {
+              "damage": "70.00000000000001",
+              "reference_count": 15
+            }
+          }
+        },
+        "ammo.rocket.hv": {
+          "mode": "projectile",
+          "sides": {
+            "soft": {
+              "damage": "24",
+              "reference_count": 42
+            },
+            "hard": {
+              "damage": "24",
+              "reference_count": 42
+            }
+          }
+        },
+        "grenade.beancan": {
+          "mode": "stuck",
+          "sides": {
+            "soft": {
+              "damage": "14.500000000000002",
+              "reference_count": 69
+            },
+            "hard": {
+              "damage": "14.500000000000002",
+              "reference_count": 69
+            }
+          }
+        }
+      }
+    },
+    "item:wall.frame.garagedoor": {
+      "name": "卷帘门",
+      "hp": 600,
+      "url": "https://rust-data.com/zh/items/wall-frame-garagedoor",
+      "source_hash": "17bb0f55011b917aa7fd34af9c266fbcc65fa7b9281484970e6aaf4e72c4ab77",
+      "methods": {
+        "explosive.timed": {
+          "mode": "stuck",
+          "sides": {
+            "soft": {
+              "damage": "440",
+              "reference_count": 2
+            },
+            "hard": {
+              "damage": "440",
+              "reference_count": 2
+            }
+          }
+        },
+        "ammo.rocket.basic": {
+          "mode": "projectile",
+          "sides": {
+            "soft": {
+              "damage": "220.375",
+              "reference_count": 3
+            },
+            "hard": {
+              "damage": "220.375",
+              "reference_count": 3
+            }
+          }
+        },
+        "explosive.satchel": {
+          "mode": "stuck",
+          "sides": {
+            "soft": {
+              "damage": "70.00000000000001",
+              "reference_count": 9
+            },
+            "hard": {
+              "damage": "70.00000000000001",
+              "reference_count": 9
+            }
+          }
+        },
+        "ammo.rocket.hv": {
+          "mode": "projectile",
+          "sides": {
+            "soft": {
+              "damage": "24",
+              "reference_count": 25
+            },
+            "hard": {
+              "damage": "24",
+              "reference_count": 25
+            }
+          }
+        },
+        "grenade.beancan": {
+          "mode": "stuck",
+          "sides": {
+            "soft": {
+              "damage": "14.500000000000002",
+              "reference_count": 42
+            },
+            "hard": {
+              "damage": "14.500000000000002",
+              "reference_count": 42
+            }
+          }
+        }
+      }
+    }
+  },
+  "recipe_sources": {
+    "metal.facemask": {
+      "url": "https://rust-data.com/zh/items/metal-facemask",
+      "sha256": "c1f35d28257f157b9e7106adf54d49f4219be97dc7ef131679aeced2c48e0e96",
+      "retrieved_at": "2026-11-01"
+    },
+    "metal.plate.torso": {
+      "url": "https://rust-data.com/zh/items/metal-plate-torso",
+      "sha256": "44e482a7caad41cd949b51066f16e0d42273e729d9e2dae5dd4cfb7de90b3cdf",
+      "retrieved_at": "2026-11-01"
+    },
+    "hoodie": {
+      "url": "https://rust-data.com/zh/items/hoodie",
+      "sha256": "8f7b12fea3f387592bbdb941869efc58187162f58a67517c26a45e054e58599d",
+      "retrieved_at": "2026-11-01"
+    },
+    "pants": {
+      "url": "https://rust-data.com/zh/items/pants",
+      "sha256": "5e366b18fe8ed85fcd69b0e933264b7a424edda74e61c418737a6f3c31bfeee2",
+      "retrieved_at": "2026-11-01"
+    },
+    "shoes.boots": {
+      "url": "https://rust-data.com/zh/items/shoes-boots",
+      "sha256": "61653009e48ddb9dd8b88db1a76b52cd53233aa4aea1e8ed2ef3c11aa053f049",
+      "retrieved_at": "2026-11-01"
+    },
+    "roadsign.kilt": {
+      "url": "https://rust-data.com/zh/items/roadsign-kilt",
+      "sha256": "b8b3f26f1a7e46f1ed2176bae58fb05bcf2cf83bfe27079b93221954105300d8",
+      "retrieved_at": "2026-11-01"
+    }
+  }
+}

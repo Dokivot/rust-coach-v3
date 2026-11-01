@@ -113,7 +113,7 @@ document.querySelector("#chat-form").addEventListener("submit", async (event) =>
       conversation.turns.push(turn);
     }
     pendingRequest = null;
-    document.querySelector("#connection-label").textContent = "本次对话连接成功";
+    document.querySelector("#connection-label").textContent = turn.calculation ? "本地计算链路已处理" : "本次对话连接成功";
   } catch (error) {
     input.value = message;
     setError(error.message || "连接中断，请重试。失败的消息不会加入对话历史。");

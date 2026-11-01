@@ -12,9 +12,10 @@ class ChatModel(Protocol):
 
 
 class CompatibleChatModel:
-    def __init__(self, settings: Settings, client: httpx.AsyncClient):
+    def __init__(self, settings: Settings, client: httpx.AsyncClient, *, stream_responses: bool = False):
         self.settings = settings
         self.client = client
+        self.stream_responses = stream_responses
 
     async def complete(self, messages: list[ModelMessage]) -> ModelReply:
         if not self.settings.configured:
@@ -26,6 +27,7 @@ class CompatibleChatModel:
         serialized_messages = [message.model_dump() for message in messages]
         if self.settings.api_mode == "responses":
             endpoint = "responses"
+            payload["stream"] = self.stream_responses
             payload.update(input=serialized_messages, max_output_tokens=self.settings.max_output_tokens, store=False)
         else:
             endpoint = "chat/completions"
@@ -54,10 +56,13 @@ class CompatibleChatModel:
         except httpx.RequestError as error:
             raise AppError("model_unreachable", "无法连接模型服务，请检查网络和 Base URL。", 502) from error
         try:
-            data = json.loads(raw)
-            if self.settings.api_mode == "responses":
+            if self.settings.api_mode == "responses" and self.stream_responses:
+                reply = self._parse_response_stream(raw)
+            elif self.settings.api_mode == "responses":
+                data = json.loads(raw)
                 reply = self._parse_response(data)
             else:
+                data = json.loads(raw)
                 choice = data["choices"][0]
                 content = choice["message"].get("content") or choice["message"].get("refusal")
                 if not isinstance(content, str):
@@ -70,6 +75,51 @@ class CompatibleChatModel:
             return ModelReply(content=reply.content.strip(), truncated=reply.truncated)
         except (ValueError, KeyError, IndexError, TypeError, AttributeError) as error:
             raise AppError("model_invalid_response", "模型返回了无法显示的内容，请检查接口是否与 COACH_API_MODE 配置兼容。", 502) from error
+
+    def _parse_response_stream(self, raw: bytes) -> ModelReply:
+        frames, data_lines = [], []
+        for line in raw.decode("utf-8").splitlines() + [""]:
+            if line.startswith("data:"):
+                data_lines.append(line[5:].lstrip(" "))
+            elif not line and data_lines:
+                frame = "\n".join(data_lines)
+                if frame != "[DONE]":
+                    frames.append(json.loads(frame))
+                data_lines = []
+        messages, parts, final = {}, {}, None
+        for event in frames:
+            kind = event["type"]
+            if kind == "error" or kind == "response.failed":
+                raise AppError("model_request_failed", "模型生成失败，请稍后重试或检查模型配置。", 502)
+            if kind == "response.output_item.added":
+                item = event["item"]
+                if item["type"] == "reasoning":
+                    continue
+                if item["type"] != "message" or item["role"] != "assistant":
+                    raise ValueError("Unsupported streaming output item")
+                identifier = item["id"]
+                if identifier in messages:
+                    raise ValueError("Duplicate streaming message")
+                messages[identifier] = event["output_index"]
+            elif kind in {"response.output_text.delta", "response.refusal.delta"}:
+                identifier = event["item_id"]
+                if identifier not in messages or final is not None or not isinstance(event["delta"], str):
+                    raise ValueError("Invalid streaming delta")
+                key = (messages[identifier], event["content_index"], identifier)
+                parts.setdefault(key, []).append(event["delta"])
+            elif kind in {"response.completed", "response.incomplete"}:
+                if final is not None:
+                    raise ValueError("Duplicate terminal event")
+                final = event["response"]
+                expected = "completed" if kind == "response.completed" else "incomplete"
+                if final.get("status") != expected:
+                    raise ValueError("Inconsistent terminal event")
+        if final is None:
+            raise ValueError("Missing terminal event")
+        output = [{"type": "message", "role": "assistant", "content": [
+            {"type": "output_text", "text": "".join(chunks)},
+        ]} for _, chunks in sorted(parts.items())]
+        return self._parse_response({**final, "output": output})
 
     def _parse_response(self, data: dict) -> ModelReply:
         if data.get("error") or data.get("status") == "failed":

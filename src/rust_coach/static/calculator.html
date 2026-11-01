@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>Rust Coach · 本地计算器</title>
+  <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/static/styles.css">
+  <link rel="stylesheet" href="/static/calculator.css">
+  <script src="/static/calculator.js" defer></script>
+</head>
+<body class="calculator-layout">
+  <main class="calculator-shell">
+    <a href="/" class="back-link">← 返回教练对话</a>
+    <div class="eyebrow">PC VANILLA · LOCAL CALCULATION</div>
+    <h1>把资源算清楚。</h1>
+    <p class="calculator-intro">拆墙与合成由代码计算，不需要模型密钥。结果保留公式、批次、库存抵扣与来源。</p>
+    <p id="snapshot-note" class="calculator-note">加载规则快照…</p>
+    <form id="calculation-form">
+      <fieldset id="calculation-fields" disabled>
+        <label>计算类型<select id="operation"><option value="raid">拆建筑 · 爆炸物数量</option><option value="craft">合成路径 · 资源缺口</option></select></label>
+        <section id="raid-fields" class="calculator-card">
+          <h2>拆什么？</h2>
+          <div class="field-grid">
+            <label>目标<select id="target"></select></label>
+            <label>受击面<select id="side"><option value="hard">硬面（默认）</option><option value="soft">软面</option></select></label>
+            <label>目标数量<input id="target-count" type="number" min="1" max="20" step="1" value="1" required></label>
+            <label>每个目标当前生命值<input id="hp" type="number" min="1" max="2000" step="1" placeholder="留空按满血"></label>
+            <label>爆炸物<select id="method"><option value="">比较已收录的单一方案</option></select></label>
+          </div>
+          <p class="calculator-note">多目标按相同血量、独立命中计算；不计溅射共享或维修。按新增硫磺排序，不求混搭全局最优。</p>
+        </section>
+        <section id="craft-fields" class="calculator-card" hidden>
+          <h2>要制作什么？</h2>
+          <div id="goal-rows"></div>
+          <button id="add-goal" type="button" class="secondary-button">＋ 添加物品</button>
+          <p class="calculator-note">套装请逐件选择。已收录爆炸物、武器、工具及部分衣甲，未收录的装备不会猜配方。</p>
+        </section>
+        <section class="calculator-card">
+          <h2>现有资源与条件</h2>
+          <label class="check-label"><input id="inventory-known" type="checkbox">我提供库存（未列物品按 0；空清单表示零库存）</label>
+          <div id="inventory-fields" hidden>
+            <div id="inventory-rows"></div>
+            <button id="add-inventory" type="button" class="secondary-button">＋ 添加库存</button>
+            <p class="calculator-note">保留量不参与制作。已有成品和中间材料会优先抵扣。</p>
+          </div>
+          <div class="field-grid">
+            <label>已有工作台<select id="workbench"><option value="">未提供</option><option value="0">无工作台</option><option value="1">1 级</option><option value="2">2 级</option><option value="3">3 级</option></select></label>
+            <label>火药配方<select id="gunpowder-recipe"><option value="workbench">普通工作台</option><option value="mixing_table">混合台（需自行确认已有）</option></select></label>
+          </div>
+          <label class="check-label"><input id="expand-fuel" type="checkbox">把低级燃料继续展开为动物脂肪与布</label>
+          <p class="calculator-note">未填写库存时只算总需求。蓝图可制作状态仍需核实；不计采集、冶炼、回收、研究和工作台建造成本。</p>
+        </section>
+        <button id="calculate-button" class="calculate-button" type="submit">计算并展示依据 →</button>
+      </fieldset>
+    </form>
+    <p id="calculation-error" class="error" role="alert" hidden></p>
+    <section id="result-panel" class="calculator-card" hidden aria-live="polite">
+      <h2>计算结果</h2>
+      <pre id="calculation-result"></pre>
+      <details><summary>查看完整输入、各方案路径与计算凭据 JSON</summary><pre id="calculation-json"></pre></details>
+    </section>
+  </main>
+</body>
+</html>

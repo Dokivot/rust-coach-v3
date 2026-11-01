@@ -35,6 +35,7 @@ class Turn(BaseModel):
     assistant: str
     created_at: str
     truncated: bool = False
+    calculation: dict | None = None
 
 
 class Conversation(BaseModel):
