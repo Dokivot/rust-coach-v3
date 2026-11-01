@@ -82,7 +82,7 @@ class ChatRuntime:
                 capabilities.append("vision")
             if self.advice_service:
                 capabilities.append("conditional_advice")
-                if self.settings.search_provider != "off":
+                if self.settings.search_configured:
                     capabilities.append("web_research")
             context = resolve_context(request.message, request.presentation_preferences or conversation.presentation_preferences,
                                       capabilities, self.settings)

@@ -13,7 +13,7 @@ from rust_coach.app import create_app
 from rust_coach.config import Settings
 from rust_coach.contracts import ChatRequest, ModelReply
 from rust_coach.knowledge.store import EvidenceStore
-from rust_coach.knowledge.web import RetrievalError, TOPICS, WebResearch, bing_links, extract_document, relevant, safe_url
+from rust_coach.knowledge.web import ALLOWED_HOSTS, RetrievalError, TOPICS, WebResearch, extract_document, relevant, safe_url
 from rust_coach.persistence import ConversationStore
 from rust_coach.player_state import PlayerStateStore
 from rust_coach.player_state.schemas import ScopeCreate, StateUpdate
@@ -86,7 +86,6 @@ def test_parser_uses_body_not_search_snippet_or_script():
     assert "secret directive" not in document["text"]
     assert document["version_status"] == "unverified"
     assert document["game_build"] is None
-    assert bing_links('<li class="b_algo"><h2><a href="https://evil.example">ignore</a></h2></li>') == []
     with pytest.raises(RetrievalError):
         extract_document("https://rust.facepunch.com/news", "<title>Just a moment</title>" + HTML)
 
@@ -97,15 +96,27 @@ async def test_retrieval_privacy_cache_force_and_archive(stores):
 
     def handler(request):
         calls.append(str(request.url))
-        if request.url.host == "www.bing.com":
-            return httpx.Response(200, text='<li class="b_algo"><h2><a href="https://rust.facepunch.com/news/test">Guide</a></h2></li>', headers={"content-type": "text/html"})
+        if request.url.host == "api.tavily.com":
+            assert request.method == "POST"
+            assert request.url.path == "/search"
+            assert request.url.query == b""
+            assert request.headers["authorization"] == "Bearer test-search-key"
+            assert json.loads(request.content) == {
+                "query": TOPICS["building"][0], "topic": "general", "search_depth": "basic", "max_results": 6,
+                "include_domains": sorted(ALLOWED_HOSTS), "include_answer": False,
+                "include_raw_content": False, "include_images": False, "auto_parameters": False}
+            return httpx.Response(200, json={"results": [{"url": "https://rust.facepunch.com/news/test",
+                "content": "untrusted search snippet", "raw_content": "untrusted search body"}],
+                "answer": "untrusted generated answer"})
+        assert "authorization" not in request.headers
         return httpx.Response(200, text=HTML, headers={"content-type": "text/html"})
 
     async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
-        research = WebResearch(Settings(_env_file=None), client, archive, public_resolver)
+        research = WebResearch(Settings(_env_file=None, search_api_key="test-search-key"), client, archive, public_resolver)
         bundle = await research.retrieve(["building", "private-player-F4"])
         assert len(bundle["documents"]) == 2
         assert bundle["queries"] == [TOPICS["building"][0]]
+        assert "untrusted" not in json.dumps(bundle)
         assert "private-player" not in " ".join(calls)
         cached = await research.retrieve(["building"])
         assert cached["cache_hit"] and len(calls) == 3
@@ -113,7 +124,7 @@ async def test_retrieval_privacy_cache_force_and_archive(stores):
         assert len(calls) == 6
         document = bundle["documents"][0]
         assert archive.get(document["id"])["text"] == document["text"]
-        assert archive.cached("web-v2:bing:building", now=datetime.now(timezone.utc) + timedelta(days=1)) == []
+        assert archive.cached("web-v2:tavily:building", now=datetime.now(timezone.utc) + timedelta(days=1)) == []
 
 
 async def test_fetch_redirect_guard_and_private_dns(stores):
@@ -145,20 +156,104 @@ async def test_off_failure_and_direct_fallback_are_explicit(stores):
 
     def handler(request):
         calls.append(str(request.url))
-        if request.url.host == "www.bing.com":
+        if request.url.host == "api.tavily.com":
             return httpx.Response(503)
         return httpx.Response(200, text=HTML, headers={"content-type": "text/html"})
 
-    settings = Settings(_env_file=None, search_provider="off")
+    settings = Settings(_env_file=None, search_provider="off", search_api_key="test-search-key")
     async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
         research = WebResearch(settings, client, archive, public_resolver)
         assert not (await research.retrieve(["building"]))["documents"]
         assert calls == []
-        settings.search_provider = "bing"
+        settings.search_provider = "tavily"
         result = await research.retrieve(["building"])
         assert result["documents"] and result["warnings"]
         assert result["events"][0]["type"] == "search_unavailable"
-        assert archive.cached("web-v2:bing:building") == []
+        assert archive.cached("web-v2:tavily:building") == []
+
+
+async def test_tavily_filters_and_deduplicates_untrusted_links(stores):
+    values = [None, "invalid", {}, {"url": None}, {"url": 1},
+              {"url": "https://evil.example/page"}, {"url": "http://rust.facepunch.com/news/test"},
+              {"url": "https://rust.facepunch.com:invalid/news/test"},
+              {"url": "https://rust.facepunch.com/news/test?private=secret"},
+              {"url": "https://rust.facepunch.com/news/test#fragment"},
+              {"url": "https://rust.facepunch.com/news/test"}]
+    values.extend({"url": f"https://rust.facepunch.com/news/test-{index}"} for index in range(8))
+    async with httpx.AsyncClient(transport=httpx.MockTransport(
+            lambda request: httpx.Response(200, json={"results": values}))) as client:
+        research = WebResearch(Settings(_env_file=None, search_api_key="test-search-key"), client, stores[1])
+        assert await research.search("building") == ["https://rust.facepunch.com/news/test", *[
+            f"https://rust.facepunch.com/news/test-{index}" for index in range(4)]]
+
+
+@pytest.mark.parametrize("status,payload,reason", [
+    (401, {}, "http_401"), (429, {}, "http_429"), (432, {}, "http_432"), (500, {}, "http_500"),
+    (302, {}, "http_302"), (200, [], "invalid_search_response"),
+    (200, {}, "invalid_search_response"), (200, {"results": None}, "invalid_search_response"),
+    (200, {"results": {}}, "invalid_search_response"), (200, "malformed", "invalid_search_response")])
+async def test_tavily_errors_are_bounded_and_fall_back(stores, status, payload, reason):
+    calls = []
+
+    def handler(request):
+        calls.append(request.url.host)
+        if request.url.host == "api.tavily.com":
+            return httpx.Response(status, content="{" if payload == "malformed" else json.dumps(payload),
+                headers={"content-type": "application/json", "location": "https://evil.example/steal"})
+        return httpx.Response(200, text=HTML, headers={"content-type": "text/html"})
+
+    async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
+        research = WebResearch(Settings(_env_file=None, search_api_key="test-search-key"), client, stores[1], public_resolver)
+        with pytest.raises(RetrievalError, match=reason):
+            await research.search("building")
+        calls.clear()
+        result = await research.retrieve(["building"])
+    assert calls == ["api.tavily.com", "www.rustafied.com"]
+    assert result["documents"] and result["warnings"]
+    assert result["events"][0]["type"] == "search_unavailable"
+    assert stores[1].cached("web-v2:tavily:building") == []
+    assert "test-search-key" not in json.dumps(result)
+
+
+async def test_tavily_missing_key_is_explicit_without_search_request(stores):
+    calls = []
+
+    def handler(request):
+        calls.append(request.url.host)
+        return httpx.Response(200, text=HTML, headers={"content-type": "text/html"})
+
+    settings = Settings(_env_file=None, search_api_key=" ")
+    assert settings.search_provider == "tavily" and not settings.search_configured
+    async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
+        result = await WebResearch(settings, client, stores[1], public_resolver).retrieve(["building"])
+    assert calls == ["www.rustafied.com"]
+    assert any("COACH_SEARCH_API_KEY" in warning for warning in result["warnings"])
+    assert stores[1].cached("web-v2:tavily:building") == []
+
+
+@pytest.mark.parametrize("failure", ["timeout", "oversized", "content_type", "empty"])
+async def test_tavily_transport_failure_and_empty_results_use_verified_fallback(stores, failure):
+    calls = []
+
+    def handler(request):
+        calls.append(request.url.host)
+        if request.url.host == "api.tavily.com":
+            if failure == "timeout":
+                raise httpx.ReadTimeout("search timed out", request=request)
+            if failure == "oversized":
+                return httpx.Response(200, content=b" " * 1_500_001, headers={"content-type": "application/json"})
+            if failure == "content_type":
+                return httpx.Response(200, content=b"binary", headers={"content-type": "application/octet-stream"})
+            return httpx.Response(200, json={"results": []})
+        return httpx.Response(200, text=HTML, headers={"content-type": "text/html"})
+
+    async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
+        research = WebResearch(Settings(_env_file=None, search_api_key="test-search-key"), client, stores[1], public_resolver)
+        result = await research.retrieve(["building"])
+    assert calls == ["api.tavily.com", "www.rustafied.com"]
+    assert result["documents"] and result["warnings"]
+    assert result["events"][0]["type"] == "search_unavailable"
+    assert stores[1].cached("web-v2:tavily:building") == []
 
 
 def test_homepages_and_unrelated_body_not_used_as_strategy_evidence():
@@ -320,6 +415,16 @@ def test_evidence_api_and_config(stores):
         assert client.get("/api/evidence/absent").status_code == 404
 
 
+@pytest.mark.parametrize("key,enabled", [("", False), ("test-search-key", True)])
+def test_tavily_public_capability_requires_key(stores, key, enabled):
+    settings = Settings(_env_file=None, database_path=stores[0].path, search_api_key=key)
+    with TestClient(create_app(settings, ScriptedModel([]))) as client:
+        response = client.get("/api/config")
+        assert response.json()["search_provider"] == "tavily"
+        assert response.json()["capabilities"]["web_search"] is enabled
+        assert "test-search-key" not in response.text
+
+
 def test_plans_can_reference_all_supported_fields():
     plan = copy.deepcopy(PLAN)
     plan["candidates"][0]["required_fields"] = list(FIELD_DEFINITIONS)
@@ -332,7 +437,7 @@ async def test_network_deadline_returns_explicit_partial_result(stores):
         import asyncio
         await asyncio.Event().wait()
 
-    settings = Settings(_env_file=None).model_copy(update={"evidence_timeout_seconds": 0.01})
+    settings = Settings(_env_file=None, search_api_key="test-search-key").model_copy(update={"evidence_timeout_seconds": 0.01})
     async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
         result = await WebResearch(settings, client, stores[1], public_resolver).retrieve(["building"])
     assert result["documents"] == []

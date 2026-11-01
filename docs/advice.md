@@ -74,8 +74,8 @@ flowchart TD
 
 ## 取证策略与知识时效
 
-- 默认 `COACH_SEARCH_PROVIDER=bing`：读取公开 Bing 结果页，无需搜索密钥；HTML 结构变化、反爬和网络故障均可能导致搜索不可用。适合本地试用，不承诺搜索 SLA。
-- 可选 `brave`：在本地配置 `COACH_SEARCH_API_KEY`；使用 Brave Search API。可选 `off`：禁用网络，只保留观察和本地工具。
+- 默认 `COACH_SEARCH_PROVIDER=tavily`：在本地 `.env` 配置 `COACH_SEARCH_API_KEY` 为 Tavily 密钥，重启后生效。旧的 Bing/Brave 搜索入口已移除；原配置需改为 `tavily` 并替换密钥。可选 `off`：禁用网络，只保留观察和本地工具。
+- 通过共享 HTTP 客户端调用 [Tavily Search API](https://docs.tavily.com/documentation/api-reference/endpoint/search)（`POST https://api.tavily.com/search`，Bearer 鉴权），固定 `basic` 深度、关闭自动参数调整，每主题最多六条候选，限定来源域名。不请求生成式答案或原始正文，返回链接仍需独立抓取与核验。缺少密钥时明确提示，API 的 `web_search` 能力为 false；认证失败、限流、响应异常或超时按现有取证预算降级，不自动重试付费搜索。
 - 规划器只能选择 building/upkeep/progression/recycling/monuments/combat/updates 主题，代码构造固定公开查询。玩家原文、库存、坐标、服务器标识不进入搜索参数；模型服务仍会收到问题与有效状态。
 - 每轮至多两个主题、四份正文。抓取只允许 HTTPS 和已登记来源域名，检查 DNS 公网地址及每次重定向，限定内容类型、响应体大小和时间。不是通用 URL 浏览代理。
 - 搜索结果与预登记的相关专题页面共同组成候选。排除首页、购买页等通用入口，并用主题词检查正文；主题词检查不代表语义蕴含验证。搜索失败明确标记“搜索不可用，使用直接资料”，不会把搜索摘要当正文。抓取失败保留成功部分；没有正文就不输出需要网页依据的策略。

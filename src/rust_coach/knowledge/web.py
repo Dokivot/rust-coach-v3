@@ -1,11 +1,10 @@
 import asyncio
-import base64
 import ipaddress
 import json
 import logging
 import socket
 from datetime import datetime, timezone
-from urllib.parse import parse_qs, urljoin, urlsplit, urlunsplit
+from urllib.parse import urljoin, urlsplit, urlunsplit
 
 import httpx
 from bs4 import BeautifulSoup
@@ -63,28 +62,6 @@ async def public_dns(host):
         raise RetrievalError("non_public_address")
 
 
-def bing_links(html):
-    soup = BeautifulSoup(html, "html.parser")
-    result = []
-    for heading in soup.select("li.b_algo h2 a"):
-        target = heading.get("href", "")
-        if urlsplit(target).hostname == "www.bing.com":
-            encoded = parse_qs(urlsplit(target).query).get("u", [""])[0]
-            if not encoded.startswith("a1"):
-                continue
-            try:
-                target = base64.urlsafe_b64decode(encoded[2:] + "=" * (-len(encoded[2:]) % 4)).decode()
-            except (ValueError, UnicodeError):
-                continue
-        try:
-            normalized = safe_url(target)
-        except (ValueError, RetrievalError):
-            continue
-        if normalized not in result:
-            result.append(normalized)
-    return result[:5]
-
-
 def extract_document(url, html):
     soup = BeautifulSoup(html, "html.parser")
     title = soup.title.get_text(" ", strip=True)[:250] if soup.title else url
@@ -111,8 +88,9 @@ class WebResearch:
     def __init__(self, settings, client, store, resolver=public_dns):
         self.settings, self.client, self.store, self.resolver = settings, client, store, resolver
 
-    async def _read(self, url, headers=None):
-        async with self.client.stream("GET", url, headers=headers, timeout=10, follow_redirects=False) as response:
+    async def _read(self, url, headers=None, *, method="GET", payload=None):
+        async with self.client.stream(method, url, headers=headers, json=payload,
+                                      timeout=10, follow_redirects=False) as response:
             if response.is_redirect:
                 return response.status_code, response.headers, b""
             if response.status_code != 200:
@@ -127,24 +105,36 @@ class WebResearch:
             return response.status_code, response.headers, bytes(body)
 
     async def search(self, topic):
+        if self.settings.search_provider == "off":
+            return []
+        key = self.settings.search_api_key.get_secret_value().strip()
+        if not key:
+            raise RetrievalError("search_key_missing")
         query = TOPICS[topic][0]
-        if self.settings.search_provider == "brave":
-            key = self.settings.search_api_key.get_secret_value()
-            if not key:
-                raise RetrievalError("search_key_missing")
-            url = str(httpx.URL("https://api.search.brave.com/res/v1/web/search", params={"q": query, "count": 6}))
-            _, _, body = await self._read(url, {"X-Subscription-Token": key, "Accept": "application/json"})
-            values = json.loads(body).get("web", {}).get("results", [])
-            links = []
-            for item in values:
-                try:
-                    links.append(safe_url(item["url"]))
-                except (KeyError, ValueError, RetrievalError):
-                    continue
-            return links[:5]
-        url = str(httpx.URL("https://www.bing.com/search", params={"q": query}))
-        _, _, body = await self._read(url)
-        return bing_links(body)
+        status, _, body = await self._read("https://api.tavily.com/search",
+            {"Authorization": "Bearer " + key, "Accept": "application/json"}, method="POST",
+            payload={"query": query, "topic": "general", "search_depth": "basic", "max_results": 6,
+                     "include_domains": sorted(ALLOWED_HOSTS), "include_answer": False,
+                     "include_raw_content": False, "include_images": False, "auto_parameters": False})
+        if status != 200:
+            raise RetrievalError("http_" + str(status))
+        try:
+            data = json.loads(body)
+        except (ValueError, UnicodeError):
+            raise RetrievalError("invalid_search_response") from None
+        if not isinstance(data, dict) or not isinstance(data.get("results"), list):
+            raise RetrievalError("invalid_search_response")
+        links = []
+        for item in data["results"]:
+            if not isinstance(item, dict) or not isinstance(item.get("url"), str):
+                continue
+            try:
+                url = safe_url(item["url"])
+            except (ValueError, RetrievalError):
+                continue
+            if url not in links:
+                links.append(url)
+        return links[:5]
 
     async def fetch(self, url):
         for _ in range(3):
@@ -177,6 +167,8 @@ class WebResearch:
                         found = [url for url in found if specific_url(url)]
                     if isinstance(found, BaseException) or not found:
                         bundle["events"].append({"type": "search_unavailable", "topic": topic})
+                        if isinstance(found, RetrievalError) and str(found) == "search_key_missing":
+                            bundle["warnings"].append("Tavily 搜索密钥未配置，请在本地 .env 设置 COACH_SEARCH_API_KEY。")
                         bundle["warnings"].append("搜索未返回可用可信来源，尝试直接读取已登记的相关资料；不代表已穷尽最新资料。")
                         found = [TOPICS[topic][1]]
                     urls.extend([TOPICS[topic][1], *found[:1]])
