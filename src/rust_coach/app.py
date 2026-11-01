@@ -21,6 +21,7 @@ from rust_coach.runtime import ChatRuntime
 from rust_coach.calculations import Calculator, CalculationRequest
 from rust_coach.calculations.presentation import render_calculation
 from rust_coach.player_state.api import player_state_router
+from rust_coach.presentation.contracts import PresentationPreferences, ResponseContext
 
 
 logger = logging.getLogger("rust_coach")
@@ -94,6 +95,8 @@ def create_app(settings: Settings | None = None, model: ChatModel | None = None)
                              "calculators": True, "player_state": True},
             "search_provider": settings.search_provider,
             "history_turns": settings.history_turns,
+            "presentation": {"persona_version": ResponseContext().persona_version,
+                             "preferences_schema": PresentationPreferences.model_json_schema()},
         }
 
     @app.get("/api/evidence/{document_id}")
@@ -126,6 +129,10 @@ def create_app(settings: Settings | None = None, model: ChatModel | None = None)
     async def delete_conversation(conversation_id: UUID, request: Request):
         await request.app.state.runtime.delete(str(conversation_id))
         return Response(status_code=204)
+
+    @app.post("/api/conversations/{conversation_id}/presentation", response_model=PresentationPreferences)
+    async def set_presentation(conversation_id: UUID, payload: PresentationPreferences, request: Request):
+        return await request.app.state.runtime.set_presentation_preferences(str(conversation_id), payload)
 
     @app.post("/api/conversations/{conversation_id}/messages", response_model=Turn)
     async def chat(conversation_id: UUID, payload: ChatRequest, request: Request):

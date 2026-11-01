@@ -79,6 +79,7 @@ function updateControls() {
   sendButton.disabled = busy || (!configured && !canSendLocally()) || !conversation || !input.value.trim();
   document.querySelector("#chat-player-scope").disabled = busy || !conversation;
   document.querySelector("#chat-inventory-container").disabled = busy || !playerBinding?.scope_id;
+  document.querySelectorAll('.presentation-settings select, #presentation-reset').forEach((control) => { control.disabled = busy || !conversation; });
   document.querySelectorAll('[data-action="new"]').forEach((button) => { button.disabled = busy; });
   document.querySelectorAll('[data-action="delete"]').forEach((button) => { button.disabled = busy || !conversation; });
   document.querySelector("#input-count").textContent = `${input.value.length} / 6000`;
@@ -116,7 +117,9 @@ function renderConversation() {
   document.querySelector("#welcome").hidden = Boolean(conversation?.turns.length);
   for (const turn of conversation?.turns || []) {
     addMessage("user", turn.user);
-    const article = addMessage("assistant", turn.assistant, false, turn.truncated);
+    const main = turn.presentation?.blocks.filter((block) => block.placement === "main").map((block) => block.text).join("\n\n");
+    const article = addMessage("assistant", main ?? turn.assistant, false, turn.truncated);
+    if (turn.presentation) renderPresentation(article, turn.presentation);
     if (turn.advice) renderAdviceRecord(article, turn.advice);
     if (turn.player_state_ref) {
       const note = document.createElement("p");
@@ -127,6 +130,59 @@ function renderConversation() {
   }
   scrollArea.scrollTop = scrollArea.scrollHeight;
 }
+
+function renderPresentation(article, presentation) {
+  const context = presentation.context;
+  const english = context.language === "en";
+  const detailBlocks = presentation.blocks.filter((block) => block.placement === "detail");
+  if (detailBlocks.length) {
+    const details = document.createElement("details");
+    details.className = "advice-record";
+    const summary = document.createElement("summary");
+    summary.textContent = english ? "Full reasoning, original tool reports and sources" : "展开完整说明、原始计算报告与来源";
+    const body = document.createElement("div");
+    body.className = "message-content";
+    body.textContent = detailBlocks.map((block) => block.text).join("\n\n");
+    details.append(summary, body);
+    article.append(details);
+  }
+  const audit = document.createElement("details");
+  audit.className = "advice-record";
+  const summary = document.createElement("summary");
+  summary.textContent = english ? "Expression policy and checks" : "表达规范与校验记录";
+  const body = document.createElement("pre");
+  body.textContent = JSON.stringify({persona: context.persona_version, prompts: context.prompt_version,
+    renderer: context.renderer_version, preferences: context.preferences, scenario: context.scenario,
+    checks: presentation.checks, repairs: presentation.repair_count, fallback: presentation.fallback_reason,
+    protected_payload_hash: presentation.protected_payload_hash}, null, 2);
+  audit.append(summary, body);
+  article.append(audit);
+}
+
+function renderPreferences() {
+  const preferences = conversation?.presentation_preferences || {verbosity: "standard", language: "auto", terminology: "plain"};
+  for (const [key, value] of Object.entries(preferences)) document.querySelector(`#presentation-${key}`).value = value;
+  document.querySelector("#presentation-label").textContent = {concise: "简洁", standard: "标准", detailed: "详细"}[preferences.verbosity];
+}
+
+async function savePreferences(preferences) {
+  if (!conversation || busy) return;
+  busy = true;
+  updateControls();
+  try {
+    conversation.presentation_preferences = await api(`/api/conversations/${conversation.id}/presentation`, {
+      method: "POST", body: JSON.stringify(preferences),
+    });
+    pendingRequest = null;
+    setError();
+  } catch (error) { setError(error.message); }
+  finally { busy = false; renderPreferences(); updateControls(); }
+}
+
+document.querySelectorAll('.presentation-settings select').forEach((control) => control.addEventListener("change", () => {
+  savePreferences(Object.fromEntries(["verbosity", "language", "terminology"].map((key) => [key, document.querySelector(`#presentation-${key}`).value])));
+}));
+document.querySelector("#presentation-reset").addEventListener("click", () => savePreferences({verbosity: "standard", language: "auto", terminology: "plain"}));
 
 function renderAdviceRecord(article, advice) {
   const details = document.createElement("details");
@@ -172,6 +228,7 @@ async function createConversation() {
   rememberConversation(conversation.id);
   pendingRequest = null;
   renderConversation();
+  renderPreferences();
   await refreshPlayerState();
 }
 
@@ -206,6 +263,7 @@ document.querySelector("#chat-form").addEventListener("submit", async (event) =>
   } finally {
     busy = false;
     renderConversation();
+    renderPreferences();
     updateControls();
     input.focus();
   }
@@ -288,6 +346,7 @@ async function initialize() {
     if (!conversation) await createConversation();
     else await refreshPlayerState();
     renderConversation();
+    renderPreferences();
   } catch (error) {
     document.querySelector("#connection-label").textContent = "服务连接失败";
     setError(error.message || "无法连接服务，请刷新页面。");

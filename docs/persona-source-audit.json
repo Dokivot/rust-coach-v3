@@ -1,0 +1,105 @@
+{
+  "reviewed_on": "2026-11-02",
+  "purpose": "Rust Coach 人设与表达一致性调研",
+  "method": "官方域名搜索、AnySearch code.doc 检索辅助发现、httpx 读取最终官方页面正文；摘录从正文获得，未使用搜索摘要作为结论依据。",
+  "limitations": [
+    "这是公开文档研究，不是对厂商内部生产系统的审计。",
+    "文档会更新；记录短摘录和最终 URL，未归档整页或宣称固定发布日期。",
+    "厂商接口能力不能视为当前 OpenAI-compatible 代理服务已支持，需独立兼容性验证。",
+    "方案中的字段协议、错误码、指标门槛和排期是本项目设计，不是来源中的标准或已测结果。"
+  ],
+  "sources": [
+    {
+      "id": "openai_prompt",
+      "url": "https://developers.openai.com/api/docs/guides/prompt-engineering",
+      "http_status": 200,
+      "title": "Prompt engineering",
+      "excerpt": "Identity: Describe the purpose, communication style, and high-level goals of the assistant.",
+      "additional_excerpt": "Version prompts in code Store production prompts in your application code instead of creating reusable prompt objects.",
+      "supports": ["显式身份、指令、示例、上下文分段", "提示词代码版本化与测试"],
+      "application": "版本化 policy 与按任务编译的提示，不让历史对话决定核心人设。"
+    },
+    {
+      "id": "claude_consistency",
+      "requested_url": "https://platform.claude.com/docs/en/test-and-evaluate/strengthen-guardrails/keep-claude-in-character",
+      "url": "https://platform.claude.com/docs/en/test-and-evaluate/strengthen-guardrails/increase-consistency",
+      "http_status": 200,
+      "title": "Increase output consistency",
+      "excerpt": "Use system prompts to set the role: Use system prompts to define Claude’s role and personality.",
+      "additional_excerpt": "Prepare Claude for possible scenarios: Provide a list of common scenarios and expected responses in your prompts.",
+      "supports": ["系统角色", "情境示例", "结构化输出与任务分解"],
+      "application": "定义被偷家、缺条件、角色诱导、工具失败等情况下仍保持一致的教练行为。"
+    },
+    {
+      "id": "anthropic_agents",
+      "requested_url": "https://www.anthropic.com/engineering/building-effective-agents",
+      "url": "https://www.anthropic.com/research/building-effective-agents",
+      "http_status": 200,
+      "title": "Building effective agents",
+      "excerpt": "workflows offer predictability and consistency for well-defined tasks",
+      "additional_excerpt": "You can add programmatic checks",
+      "supports": ["可定义任务使用工作流", "链路中的程序检查", "复杂度与成本需要收益支撑"],
+      "application": "保留现有图与工具结果，不为人设额外构建多 Agent 或无限重写循环。"
+    },
+    {
+      "id": "copilot_instructions",
+      "url": "https://learn.microsoft.com/en-us/microsoft-copilot-studio/authoring-instructions",
+      "http_status": 200,
+      "title": "Write agent instructions",
+      "excerpt": "An agent can't act on instructions to use tools, knowledge sources, other agents, or topics it doesn't have.",
+      "additional_excerpt": "Ensure that any instructions you give your agent are grounded in capabilities and knowledge you configured",
+      "supports": ["指令应与真实配置能力一致", "变更后测试"],
+      "application": "从实际配置生成能力描述，不虚构实时观察、游戏执行或状态保存。",
+      "access_note": "HTML 顶部有授权提示，但公开正文可读取；结论只引用实际读取的正文。"
+    },
+    {
+      "id": "langchain_brand_voice",
+      "url": "https://docs.langchain.com/oss/python/deepagents/content-builder",
+      "http_status": 200,
+      "title": "Content builder",
+      "excerpt": "Brand instructions ( instructions on Managed Deep Agents, or memory files on the SDK) for always-on voice and research rules",
+      "additional_excerpt": "Professional but approachable",
+      "supports": ["稳定注入的品牌表达规范", "身份与写作行为的显式配置"],
+      "application": "借鉴固定加载的表达契约，不直接使用其 subagent、文件系统或持久记忆架构。",
+      "qualification": "该教程明确系统指令文件不同于 durable memory；不要把人设规范与自动学习的用户记忆混淆。"
+    },
+    {
+      "id": "langsmith_evaluation",
+      "url": "https://docs.langchain.com/langsmith/evaluation-concepts",
+      "http_status": 200,
+      "title": "Evaluation concepts",
+      "excerpt": "Offline evaluations Use offline evaluations for pre-deployment testing",
+      "additional_excerpt": "Online evaluations Use online evaluations for production monitoring",
+      "supports": ["离线回归与在线监控", "人工、代码、LLM-as-judge 与成对评审"],
+      "application": "按事实、行动性、风格分别评估，坏例回流到可复现测试。"
+    },
+    {
+      "id": "langsmith_separate_metrics",
+      "url": "https://docs.langchain.com/langsmith/composite-evaluators-sdk",
+      "http_status": 200,
+      "title": "Composite evaluators with the SDK",
+      "excerpt": "uses three evaluators—summary, tone, and formatting—to assess the output",
+      "supports": ["内容、语气和格式分项评价"],
+      "application": "采用分项评价，改为事实硬门槛；不照搬示例中的加权平均来掩盖严重错误。"
+    },
+    {
+      "id": "openai_evaluation",
+      "url": "https://developers.openai.com/api/docs/guides/evaluation-best-practices",
+      "http_status": 200,
+      "title": "Evaluation best practices",
+      "excerpt": "Maintain agreement: Use human feedback to calibrate automated scoring.",
+      "additional_excerpt": "Challenges : Position bias (response order), verbosity bias (preferring longer responses)",
+      "supports": ["持续评测", "人工校准", "裁判偏差与成对比较"],
+      "application": "随机顺序、长度控制、人工复核；不得以单模型自评分代替验收。"
+    },
+    {
+      "id": "openai_structure",
+      "url": "https://developers.openai.com/api/docs/guides/structured-outputs",
+      "http_status": 200,
+      "title": "Structured Outputs",
+      "excerpt": "Structured Outputs can still contain mistakes.",
+      "supports": ["Schema 约束格式但不保证语义正确"],
+      "application": "结构校验之外仍需业务不变量、必需条件、语义评测与版本限制。"
+    }
+  ]
+}

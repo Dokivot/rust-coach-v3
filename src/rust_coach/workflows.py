@@ -7,6 +7,9 @@ from rust_coach.llm import ChatModel
 from rust_coach.calculations.service import CalculationService
 from rust_coach.player_state.service import render_snapshot
 from rust_coach.advice.service import is_advice
+from rust_coach.presentation.contracts import ResponseContext
+from rust_coach.presentation.rendering import finalize_response
+from rust_coach.presentation.service import generate_chat
 
 
 class ChatState(TypedDict):
@@ -20,6 +23,11 @@ class ChatState(TypedDict):
     inventory_container: str | None
     previous_advice: dict | None
     advice: dict | None
+    response_context: dict
+    response_checks: list[dict]
+    response_repairs: int
+    response_fallback: str | None
+    presentation: dict
 
 
 def build_chat_graph(model: ChatModel, instruction_role="system", calculation_model: ChatModel | None = None, advice_service=None):
@@ -40,7 +48,7 @@ def build_chat_graph(model: ChatModel, instruction_role="system", calculation_mo
         return {"route": "done", **result}
 
     async def chat(state: ChatState):
-        return {"reply": await model.complete(state["messages"]), "calculation": None}
+        return await generate_chat(model, state["messages"], ResponseContext.model_validate(state.get("response_context") or {}))
 
     def player_state(state: ChatState):
         return {"reply": ModelReply(content=render_snapshot(state.get("player_snapshot"))), "calculation": None}
@@ -49,7 +57,7 @@ def build_chat_graph(model: ChatModel, instruction_role="system", calculation_mo
         previous = state.get("previous_advice") or {}
         return await advice_service.run(state["messages"][-1].content, state.get("player_snapshot"),
                                         state.get("inventory_container"), previous.get("request"),
-                                        previous.get("answer"))
+                                        previous.get("answer"), state.get("response_context"))
 
     builder = StateGraph(ChatState)
     builder.add_node("chat", chat)
@@ -57,10 +65,12 @@ def build_chat_graph(model: ChatModel, instruction_role="system", calculation_mo
     builder.add_node("calculate", calculate)
     builder.add_node("player_state", player_state)
     builder.add_node("advice", advice)
+    builder.add_node("finalize_response", finalize_response)
     builder.add_edge(START, "route")
     builder.add_conditional_edges("route", lambda state: state["route"], {"chat": "chat", "calculate": "calculate", "player_state": "player_state", "advice": "advice"})
-    builder.add_conditional_edges("calculate", lambda state: state["route"], {"chat": "chat", "done": END})
-    builder.add_edge("chat", END)
-    builder.add_edge("player_state", END)
-    builder.add_edge("advice", END)
+    builder.add_conditional_edges("calculate", lambda state: state["route"], {"chat": "chat", "done": "finalize_response"})
+    builder.add_edge("chat", "finalize_response")
+    builder.add_edge("player_state", "finalize_response")
+    builder.add_edge("advice", "finalize_response")
+    builder.add_edge("finalize_response", END)
     return builder.compile()

@@ -6,6 +6,7 @@ from pathlib import Path
 from uuid import uuid4
 
 from rust_coach.contracts import AppError, Conversation, Turn
+from rust_coach.presentation.contracts import PresentationPreferences
 
 
 class ConversationStore:
@@ -30,6 +31,11 @@ class ConversationStore:
                 connection.execute("ALTER TABLE turns ADD COLUMN player_state_ref TEXT")
             if "advice" not in columns:
                 connection.execute("ALTER TABLE turns ADD COLUMN advice TEXT")
+            if "presentation" not in columns:
+                connection.execute("ALTER TABLE turns ADD COLUMN presentation TEXT")
+            conversation_columns = {row["name"] for row in connection.execute("PRAGMA table_info(conversations)")}
+            if "presentation_preferences" not in conversation_columns:
+                connection.execute("ALTER TABLE conversations ADD COLUMN presentation_preferences TEXT")
 
     @contextmanager
     def connection(self):
@@ -50,34 +56,44 @@ class ConversationStore:
 
     def get(self, conversation_id: str) -> Conversation:
         with self.connection() as connection:
-            exists = connection.execute("SELECT id FROM conversations WHERE id = ?", (conversation_id,)).fetchone()
+            exists = connection.execute("SELECT id, presentation_preferences FROM conversations WHERE id = ?", (conversation_id,)).fetchone()
             if not exists:
                 raise AppError("conversation_not_found", "会话不存在，请创建新对话。", 404)
             rows = connection.execute(
-                "SELECT request_id, user, assistant, created_at, truncated, calculation, player_state_ref, advice FROM turns "
+                "SELECT request_id, user, assistant, created_at, truncated, calculation, player_state_ref, advice, presentation FROM turns "
                 "WHERE conversation_id = ? ORDER BY sequence", (conversation_id,)
             ).fetchall()
         return Conversation(id=conversation_id, turns=[Turn(**(dict(row) | {
             "calculation": json.loads(row["calculation"]) if row["calculation"] else None,
             "player_state_ref": json.loads(row["player_state_ref"]) if row["player_state_ref"] else None,
             "advice": json.loads(row["advice"]) if row["advice"] else None,
-        })) for row in rows])
+            "presentation": json.loads(row["presentation"]) if row["presentation"] else None,
+        })) for row in rows], presentation_preferences=PresentationPreferences.model_validate_json(exists["presentation_preferences"] or "{}"))
 
     def append(self, conversation_id: str, request_id: str, user: str, assistant: str, truncated: bool,
-               calculation: dict | None = None, player_state_ref: dict | None = None, advice: dict | None = None) -> Turn:
+               calculation: dict | None = None, player_state_ref: dict | None = None, advice: dict | None = None,
+               presentation: dict | None = None) -> Turn:
         turn = Turn(request_id=request_id, user=user, assistant=assistant,
                     created_at=datetime.now(timezone.utc).isoformat(), truncated=truncated, calculation=calculation,
-                    player_state_ref=player_state_ref, advice=advice)
+                    player_state_ref=player_state_ref, advice=advice, presentation=presentation)
         with self.connection() as connection:
             connection.execute(
-                "INSERT INTO turns(conversation_id, request_id, user, assistant, created_at, truncated, calculation, player_state_ref, advice) "
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                "INSERT INTO turns(conversation_id, request_id, user, assistant, created_at, truncated, calculation, player_state_ref, advice, presentation) "
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                 (conversation_id, request_id, user, assistant, turn.created_at, truncated,
                  json.dumps(calculation, ensure_ascii=False) if calculation else None,
                  json.dumps(player_state_ref, ensure_ascii=False) if player_state_ref else None,
-                 json.dumps(advice, ensure_ascii=False) if advice else None),
+                 json.dumps(advice, ensure_ascii=False) if advice else None,
+                 json.dumps(presentation, ensure_ascii=False) if presentation else None),
             )
         return turn
+
+    def set_presentation_preferences(self, conversation_id, preferences: PresentationPreferences):
+        self.get(conversation_id)
+        with self.connection() as connection:
+            connection.execute("UPDATE conversations SET presentation_preferences=? WHERE id=?",
+                               (preferences.model_dump_json(), conversation_id))
+        return preferences
 
     def delete(self, conversation_id: str) -> None:
         with self.connection() as connection:

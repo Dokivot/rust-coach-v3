@@ -2,6 +2,7 @@ from typing import Literal
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
+from rust_coach.presentation.contracts import PresentationPreferences
 
 
 class ModelMessage(BaseModel):
@@ -20,6 +21,7 @@ class ChatRequest(BaseModel):
     request_id: UUID
     message: str = Field(min_length=1, max_length=6000)
     player_inventory_container: str | None = Field(default=None, min_length=1, max_length=80, pattern=r"^[a-zA-Z0-9_.:-]+$")
+    presentation_preferences: PresentationPreferences | None = None
 
     @field_validator("message")
     @classmethod
@@ -39,11 +41,13 @@ class Turn(BaseModel):
     calculation: dict | None = None
     player_state_ref: dict | None = None
     advice: dict | None = None
+    presentation: dict | None = None
 
 
 class Conversation(BaseModel):
     id: str
     turns: list[Turn]
+    presentation_preferences: PresentationPreferences = Field(default_factory=PresentationPreferences)
 
 
 class AppError(Exception):
