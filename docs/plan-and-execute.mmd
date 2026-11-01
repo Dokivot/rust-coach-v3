@@ -1,0 +1,49 @@
+flowchart TD
+    START --> prepare_decision["D · prepare_decision"]
+    prepare_decision --> planner["G · Planner：ExecutionPlan"]
+    planner --> validate_plan["D · validate_plan"]
+    validate_plan --> plan_gate{"D · 计划门禁"}
+    plan_gate -->|合法| select_next_step["D · select_next_step"]
+    plan_gate -->|输入缺失| clarify
+    plan_gate -->|可修复且有预算| replanner
+    plan_gate -->|不可继续| partial
+    select_next_step --> step_gate{"D · 剩余工作"}
+    step_gate -->|有 ready step| executor["D · Executor"]
+    step_gate -->|无剩余| finalize_decision
+    step_gate -->|依赖死锁或耗尽| partial
+    executor --> operation{"D · 允许的操作"}
+    operation -->|获取证据| rag["静态 Agentic RAG 子图<br/>可以原地 interrupt"]
+    operation -->|两类计算| calculator["D · CalculatorPort 预留<br/>未接入返回 unavailable"]
+    operation -->|评估候选| evaluate["D · evaluate_actions"]
+    operation -->|组装建议| finalize_decision
+    operation -->|请求玩家信息| clarify
+    rag --> verify_step["D · verify_step"]
+    calculator --> verify_step
+    evaluate --> verify_step
+    verify_step --> progress{"D · assess_progress"}
+    progress -->|继续| select_next_step
+    progress -->|新约束或剩余方案失效| replanner["G · Replanner<br/>保留有效成果，修订剩余步骤"]
+    progress -->|需要补充| clarify
+    progress -->|必要步骤通过| finalize_decision["D · finalize_decision"]
+    progress -->|无依据或预算耗尽| partial
+    replanner --> validate_plan
+    clarify["D · clarify：interrupt<br/>持久暂停，释放 worker"] -->|同 task 的 Command resume| validate_resume["D · validate_resume"]
+    validate_resume -->|有效| refresh["D · refresh_context<br/>新鲜度与版本检查，按依赖失效"]
+    validate_resume -->|无效且可重问| clarify
+    validate_resume -->|拒绝或耗尽| partial
+    refresh --> resume_gate{"D · 恢复策略"}
+    resume_gate -->|只补当前参数| select_next_step
+    resume_gate -->|目标或约束变化| replanner
+    finalize_decision --> final_gate{"D · 行动计划验证"}
+    final_gate -->|通过| END
+    final_gate -->|缺信息且有预算| clarify
+    final_gate -->|可调整且有预算| replanner
+    final_gate -->|不可继续| partial["D · partial：已验证部分 + 限制"]
+    partial --> END
+
+    classDef deterministic fill:#e8f3ff,stroke:#2864a0,color:#12324f
+    classDef generative fill:#f1eaff,stroke:#8652b3,color:#45276b
+    classDef reserved fill:#fff5df,stroke:#ad7b20,color:#684710,stroke-dasharray:6 4
+    class prepare_decision,validate_plan,plan_gate,select_next_step,step_gate,executor,operation,evaluate,verify_step,progress,finalize_decision,clarify,validate_resume,refresh,resume_gate,final_gate,partial deterministic
+    class planner,replanner generative
+    class calculator reserved

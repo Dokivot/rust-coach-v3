@@ -1,0 +1,33 @@
+flowchart TD
+    START --> prepare["D · prepare_evidence_need"]
+    prepare --> input_gate{"D · 玩家信息是否足够"}
+    input_gate -->|是| plan["G · plan_queries"]
+    input_gate -->|否| clarify
+    plan --> source_gate{"D · select_sources<br/>时效 / 覆盖 / 预算"}
+    source_gate -->|vector| vector["D · vector_retrieve<br/>pgvector + 关键词 + metadata"]
+    source_gate -->|web| search["D · web_search"]
+    source_gate -->|both| both["D · retrieve_both<br/>有限并行：vector 与 search→fetch<br/>成功或类型化失败后汇合"]
+    source_gate -->|预算耗尽| partial
+    search --> fetch["D · web_fetch<br/>正文 / 定位 / hash / live_checked_at"]
+    vector --> normalize["D · normalize_evidence<br/>去重 / 版本 / 来源 / 适用性"]
+    fetch --> normalize
+    both --> normalize
+    normalize --> grade["G · grade_evidence<br/>逐声明支持 / 反驳 / 遗漏"]
+    grade --> cover{"D · assess_coverage<br/>引用 / 覆盖 / 冲突 / 时效 / 预算"}
+    cover -->|充分| package["D · package_evidence"]
+    cover -->|缺资料且有预算| rewrite["G · rewrite_query<br/>只针对未覆盖需求"]
+    rewrite --> source_gate
+    cover -->|缺玩家条件| clarify
+    cover -->|冲突未解 / 不可用 / 耗尽| partial
+    clarify["D · clarify：interrupt"] -->|同 task 的 Command resume| validate["D · validate_resume"]
+    validate -->|有效| refresh["D · refresh_context<br/>失效相关证据，保留有效结果"]
+    validate -->|无效且可重问| clarify
+    validate -->|拒绝或耗尽| partial["D · package_partial<br/>缺口 / 冲突 / 假设 / context_changed"]
+    refresh --> prepare
+    package --> END
+    partial --> END
+
+    classDef deterministic fill:#e8f3ff,stroke:#2864a0,color:#12324f
+    classDef generative fill:#f1eaff,stroke:#8652b3,color:#45276b
+    class prepare,input_gate,source_gate,vector,search,fetch,both,normalize,cover,package,clarify,validate,refresh,partial deterministic
+    class plan,grade,rewrite generative

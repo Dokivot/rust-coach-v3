@@ -1,0 +1,237 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2200" height="2200" viewBox="0 0 2200 2200" role="img" aria-labelledby="title description">
+<title id="title">Rust Coach v2 · Plan-and-Execute 与 Agentic RAG</title>
+<desc id="description">包含输入、状态、Plan-and-Execute、Agentic RAG、生成、持久化、知识发布与评测。蓝色为确定性组件，紫色为生成式组件，绿色为存储，金色为预留计算接口。RAG 包括向量语义检索和互联网实时搜索；两个循环支持中途持久澄清。</desc>
+<defs><marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0 0 L8 4 L0 8 Z" fill="#4a637e"/></marker><marker id="arrow-green" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0 0 L8 4 L0 8 Z" fill="#368265"/></marker></defs>
+<rect width="2200" height="2200" fill="#f3f6fb"/><g transform="translate(80 0)" font-family="PingFang SC, Noto Sans CJK SC, Microsoft YaHei, sans-serif">
+<text x="48" y="68" font-size="42" font-weight="800" fill="#142c47">Rust Coach v2 · LangGraph 技术架构</text>
+<text x="48" y="109" font-size="24" font-weight="400" fill="#26354a">Plan-and-Execute 决策  +  Agentic RAG  +  中途澄清与恢复  |  两类计算只预留接口</text>
+<rect x="48" y="138" width="22" height="22" rx="5" fill="#e8f3ff" stroke="#2864a0"/>
+<text x="82" y="157" font-size="20" font-weight="400" fill="#26354a">D  确定性：代码 / 工具 / 规则</text>
+<rect x="500" y="138" width="22" height="22" rx="5" fill="#f1eaff" stroke="#8652b3"/>
+<text x="534" y="157" font-size="20" font-weight="400" fill="#26354a">G  生成式：LLM / 视觉模型</text>
+<rect x="940" y="138" width="22" height="22" rx="5" fill="#e8f5ef" stroke="#368265"/>
+<text x="974" y="157" font-size="20" font-weight="400" fill="#26354a">S  持久化存储</text>
+<text x="1190" y="157" font-size="20" font-weight="400" fill="#26354a">金色：预留接口   实线：在线流   虚线：保存 / 发布 / 观测</text>
+<rect x="40" y="190" width="1960" height="175" rx="20" fill="#ffffff" stroke="#d8e0ec" stroke-width="2"/>
+<text x="64" y="228" font-size="25" font-weight="700" fill="#26354a">01  输入层与 Agent Runtime</text>
+<rect x="70" y="245" width="390" height="95" rx="12" fill="#e8f3ff" stroke="#2864a0" stroke-width="2"/>
+<text x="88" y="277" font-size="23" font-weight="700" fill="#12324f">D · 输入 API</text>
+<text x="88" y="307" font-size="20" font-weight="400" fill="#12324f">文本 / 状态 / 图片 · 鉴权 / 幂等</text>
+<rect x="540" y="245" width="730" height="95" rx="12" fill="#e8f3ff" stroke="#2864a0" stroke-width="2"/>
+<text x="558" y="277" font-size="23" font-weight="700" fill="#12324f">D · Runtime · 任务生命周期</text>
+<text x="558" y="307" font-size="20" font-weight="400" fill="#12324f">预算 / 超时 / 取消 / SSE · 注入客户端 · 恢复同一 task</text>
+<rect x="1400" y="245" width="540" height="95" rx="12" fill="#f7f8fb" stroke="#718096" stroke-width="2"/>
+<text x="1418" y="277" font-size="23" font-weight="700" fill="#26354a">玩家</text>
+<text x="1418" y="307" font-size="20" font-weight="400" fill="#26354a">提问 / 上报状态 / 回答澄清 / 查看结果</text>
+<path d="M1400 275 H1380 V235 H265 V245" fill="none" stroke="#4a637e" stroke-width="2.5" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<text x="720" y="230" font-size="18" fill="#4a637e" paint-order="stroke" stroke="#ffffff" stroke-width="7" stroke-linejoin="round">请求、附件引用、补充回答</text>
+<path d="M460 293 H540" fill="none" stroke="#4a637e" stroke-width="2.5" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<text x="474" y="281" font-size="18" fill="#4a637e" paint-order="stroke" stroke="#ffffff" stroke-width="7" stroke-linejoin="round">请求</text>
+<rect x="40" y="410" width="1280" height="290" rx="20" fill="#ffffff" stroke="#d8e0ec" stroke-width="2"/>
+<text x="64" y="448" font-size="25" font-weight="700" fill="#26354a">02  理解层 · LangGraph 主图：State + Node + Conditional Edge</text>
+<rect x="70" y="470" width="350" height="110" rx="12" fill="#f1eaff" stroke="#8652b3" stroke-width="2"/>
+<text x="88" y="502" font-size="23" font-weight="700" fill="#45276b">G · 语言 / 视觉解析</text>
+<text x="88" y="532" font-size="20" font-weight="400" fill="#45276b">多意图、实体、数量候选</text>
+<text x="88" y="560" font-size="20" font-weight="400" fill="#45276b">图片定位与未知字段</text>
+<rect x="500" y="470" width="340" height="110" rx="12" fill="#e8f3ff" stroke="#2864a0" stroke-width="2"/>
+<text x="518" y="502" font-size="23" font-weight="700" fill="#12324f">D · 状态合并 / 需求检查</text>
+<text x="518" y="532" font-size="20" font-weight="400" fill="#12324f">范围、来源、新鲜度、冲突</text>
+<text x="518" y="560" font-size="20" font-weight="400" fill="#12324f">固定玩家快照与知识 release</text>
+<rect x="920" y="470" width="350" height="110" rx="12" fill="#e8f3ff" stroke="#2864a0" stroke-width="2"/>
+<text x="938" y="502" font-size="23" font-weight="700" fill="#12324f">D · 条件路由</text>
+<text x="938" y="532" font-size="20" font-weight="400" fill="#12324f">事实 / 计算 / 决策</text>
+<text x="938" y="560" font-size="20" font-weight="400" fill="#12324f">缺信息 → 澄清；不支持 → 降级</text>
+<rect x="920" y="615" width="350" height="80" rx="12" fill="#e8f3ff" stroke="#2864a0" stroke-width="2"/>
+<text x="938" y="647" font-size="23" font-weight="700" fill="#12324f">D · interrupt / resume</text>
+<text x="938" y="677" font-size="20" font-weight="400" fill="#12324f">同任务恢复 · 按依赖重新评估</text>
+<path d="M680 340 V388 H245 V470" fill="none" stroke="#4a637e" stroke-width="2.5" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<text x="264" y="391" font-size="18" fill="#4a637e" paint-order="stroke" stroke="#ffffff" stroke-width="7" stroke-linejoin="round">自然语言 / 图片</text>
+<path d="M1100 340 V390 H670 V470" fill="none" stroke="#4a637e" stroke-width="2.5" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<text x="910" y="385" font-size="18" fill="#4a637e" paint-order="stroke" stroke="#ffffff" stroke-width="7" stroke-linejoin="round">结构化表单可直达</text>
+<path d="M420 525 H500" fill="none" stroke="#4a637e" stroke-width="2.5" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<text x="434" y="513" font-size="18" fill="#4a637e" paint-order="stroke" stroke="#ffffff" stroke-width="7" stroke-linejoin="round">候选</text>
+<path d="M840 525 H920" fill="none" stroke="#4a637e" stroke-width="2.5" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<text x="846" y="510" font-size="18" fill="#4a637e" paint-order="stroke" stroke="#ffffff" stroke-width="7" stroke-linejoin="round">执行规格</text>
+<path d="M1095 580 V615" fill="none" stroke="#4a637e" stroke-width="2.5" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<text x="1110" y="604" font-size="18" fill="#4a637e" paint-order="stroke" stroke="#ffffff" stroke-width="7" stroke-linejoin="round">缺字段</text>
+<path d="M920 655 H670 V580" fill="none" stroke="#4a637e" stroke-width="2.5" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<text x="680" y="642" font-size="18" fill="#4a637e" paint-order="stroke" stroke="#ffffff" stroke-width="7" stroke-linejoin="round">补充回答 → 恢复原子图</text>
+<rect x="1360" y="410" width="640" height="700" rx="20" fill="#ffffff" stroke="#d8e0ec" stroke-width="2"/>
+<text x="1384" y="448" font-size="25" font-weight="700" fill="#26354a">知识层 · Agentic RAG 子图</text>
+<rect x="1400" y="470" width="540" height="80" rx="12" fill="#f1eaff" stroke="#8652b3" stroke-width="2"/>
+<text x="1418" y="502" font-size="23" font-weight="700" fill="#45276b">G · 查询规划 / 缺口改写</text>
+<text x="1418" y="532" font-size="20" font-weight="400" fill="#45276b">围绕 EvidenceNeed，改写未覆盖需求</text>
+<rect x="1400" y="580" width="540" height="70" rx="12" fill="#e8f3ff" stroke="#2864a0" stroke-width="2"/>
+<text x="1418" y="612" font-size="23" font-weight="700" fill="#12324f">D · 来源选择 / 时效策略</text>
+<text x="1418" y="642" font-size="20" font-weight="400" fill="#12324f">vector / web / both · 全局预算守卫</text>
+<rect x="1400" y="680" width="250" height="100" rx="12" fill="#e8f3ff" stroke="#2864a0" stroke-width="2"/>
+<text x="1418" y="712" font-size="23" font-weight="700" fill="#12324f">D · 语义检索</text>
+<text x="1418" y="742" font-size="20" font-weight="400" fill="#12324f">pgvector + metadata</text>
+<text x="1418" y="770" font-size="20" font-weight="400" fill="#12324f">关键词融合 / 重排</text>
+<rect x="1690" y="680" width="250" height="100" rx="12" fill="#e8f3ff" stroke="#2864a0" stroke-width="2"/>
+<text x="1708" y="712" font-size="23" font-weight="700" fill="#12324f">D · 实时搜索</text>
+<text x="1708" y="742" font-size="20" font-weight="400" fill="#12324f">web search → fetch</text>
+<text x="1708" y="770" font-size="20" font-weight="400" fill="#12324f">正文 / 时间 / hash</text>
+<rect x="1400" y="830" width="250" height="90" rx="12" fill="#f1eaff" stroke="#8652b3" stroke-width="2"/>
+<text x="1418" y="862" font-size="23" font-weight="700" fill="#45276b">G · 证据评估</text>
+<text x="1418" y="892" font-size="20" font-weight="400" fill="#45276b">相关 / 支持 / 反驳</text>
+<rect x="1690" y="830" width="250" height="90" rx="12" fill="#e8f3ff" stroke="#2864a0" stroke-width="2"/>
+<text x="1708" y="862" font-size="23" font-weight="700" fill="#12324f">D · 覆盖门禁</text>
+<text x="1708" y="892" font-size="20" font-weight="400" fill="#12324f">版本 / 冲突 / 预算</text>
+<rect x="1400" y="980" width="540" height="95" rx="12" fill="#e8f3ff" stroke="#2864a0" stroke-width="2"/>
+<text x="1418" y="1012" font-size="23" font-weight="700" fill="#12324f">D · EvidenceBundle</text>
+<text x="1418" y="1042" font-size="20" font-weight="400" fill="#12324f">声明-证据矩阵、缺口、冲突与来源快照</text>
+<text x="1418" y="1070" font-size="20" font-weight="400" fill="#12324f">已充分则返回；缺玩家状态可原地中断</text>
+<path d="M1670 550 V580" fill="none" stroke="#4a637e" stroke-width="2.5" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<path d="M1590 650 V665 H1525 V680" fill="none" stroke="#4a637e" stroke-width="2.5" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<text x="1412" y="674" font-size="18" fill="#4a637e" paint-order="stroke" stroke="#ffffff" stroke-width="7" stroke-linejoin="round">本地证据</text>
+<path d="M1750 650 V665 H1815 V680" fill="none" stroke="#4a637e" stroke-width="2.5" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<text x="1715" y="674" font-size="18" fill="#4a637e" paint-order="stroke" stroke="#ffffff" stroke-width="7" stroke-linejoin="round">最新请求主动联网</text>
+<path d="M1525 780 V830" fill="none" stroke="#4a637e" stroke-width="2.5" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<text x="1415" y="814" font-size="18" fill="#4a637e" paint-order="stroke" stroke="#ffffff" stroke-width="7" stroke-linejoin="round">归一 / 去重</text>
+<path d="M1815 780 V805 H1640 V830" fill="none" stroke="#4a637e" stroke-width="2.5" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<text x="1770" y="801" font-size="18" fill="#4a637e" paint-order="stroke" stroke="#ffffff" stroke-width="7" stroke-linejoin="round">正文</text>
+<path d="M1650 875 H1690" fill="none" stroke="#4a637e" stroke-width="2.5" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<path d="M1815 920 V950 H1670 V980" fill="none" stroke="#4a637e" stroke-width="2.5" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<text x="1730" y="945" font-size="18" fill="#4a637e" paint-order="stroke" stroke="#ffffff" stroke-width="7" stroke-linejoin="round">充分 / 明确降级</text>
+<path d="M1940 875 H1960 V510 H1940" fill="none" stroke="#4a637e" stroke-width="2.5" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<text transform="translate(1985 850) rotate(-90)" font-size="18" fill="#4a637e">缺资料 → 有界补检索</text>
+<rect x="40" y="740" width="1280" height="370" rx="20" fill="#ffffff" stroke="#d8e0ec" stroke-width="2"/>
+<text x="64" y="778" font-size="25" font-weight="700" fill="#26354a">03  计算短路径 / Plan-and-Execute 决策子图</text>
+<rect x="70" y="800" width="350" height="90" rx="12" fill="#e8f3ff" stroke="#2864a0" stroke-width="2"/>
+<text x="88" y="832" font-size="23" font-weight="700" fill="#12324f">D · 计算输入 / 槽位检查</text>
+<text x="88" y="862" font-size="20" font-weight="400" fill="#12324f">抽取 → 规范化 → 能力检查</text>
+<rect x="500" y="800" width="340" height="90" rx="12" fill="#f1eaff" stroke="#8652b3" stroke-width="2"/>
+<text x="518" y="832" font-size="23" font-weight="700" fill="#45276b">G · Planner / Replanner</text>
+<text x="518" y="862" font-size="20" font-weight="400" fill="#45276b">任务执行计划 · 保留有效成果</text>
+<rect x="920" y="800" width="350" height="90" rx="12" fill="#e8f3ff" stroke="#2864a0" stroke-width="2"/>
+<text x="938" y="832" font-size="23" font-weight="700" fill="#12324f">D · 计划校验 / Executor</text>
+<text x="938" y="862" font-size="20" font-weight="400" fill="#12324f">ready step · 动态工具 / 子图</text>
+<rect x="500" y="960" width="340" height="105" rx="12" fill="#e8f3ff" stroke="#2864a0" stroke-width="2"/>
+<text x="518" y="992" font-size="23" font-weight="700" fill="#12324f">D · 行动候选评估</text>
+<text x="518" y="1022" font-size="20" font-weight="400" fill="#12324f">依赖、前置条件、资源与取舍</text>
+<text x="518" y="1050" font-size="20" font-weight="400" fill="#12324f">未知预算 → conditional</text>
+<rect x="920" y="960" width="350" height="105" rx="12" fill="#e8f3ff" stroke="#2864a0" stroke-width="2"/>
+<text x="938" y="992" font-size="23" font-weight="700" fill="#12324f">D · 步骤验证 / 进度判定</text>
+<text x="938" y="1022" font-size="20" font-weight="400" fill="#12324f">继续 / 重规划 / 澄清 / 结束</text>
+<text x="938" y="1050" font-size="20" font-weight="400" fill="#12324f">必要步骤完成 → ActionPlan</text>
+<rect x="70" y="960" width="350" height="105" rx="12" fill="#fff5df" stroke="#ad7b20" stroke-width="2"/>
+<text x="88" y="992" font-size="23" font-weight="700" fill="#684710">D · CalculatorPort 预留</text>
+<text x="88" y="1022" font-size="20" font-weight="400" fill="#684710">拆建筑爆炸物 / 合成路径缺口</text>
+<text x="88" y="1050" font-size="20" font-weight="400" fill="#684710">暂不实现；未配置不输出数字</text>
+<path d="M970 580 V605 H890 V715 H245 V800" fill="none" stroke="#4a637e" stroke-width="2.5" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<text x="267" y="720" font-size="18" fill="#4a637e" paint-order="stroke" stroke="#ffffff" stroke-width="7" stroke-linejoin="round">事实 / 强计算</text>
+<path d="M1035 580 V598 H865 V725 H670 V800" fill="none" stroke="#4a637e" stroke-width="2.5" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<text x="681" y="770" font-size="18" fill="#4a637e" paint-order="stroke" stroke="#ffffff" stroke-width="7" stroke-linejoin="round">多目标 / 多步</text>
+<path d="M840 845 H920" fill="none" stroke="#4a637e" stroke-width="2.5" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<text x="856" y="830" font-size="18" fill="#4a637e" paint-order="stroke" stroke="#ffffff" stroke-width="7" stroke-linejoin="round">计划</text>
+<path d="M1095 890 V930 H670 V960" fill="none" stroke="#4a637e" stroke-width="2.5" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<text x="1000" y="925" font-size="18" fill="#4a637e" paint-order="stroke" stroke="#ffffff" stroke-width="7" stroke-linejoin="round">候选行动</text>
+<path d="M245 890 V960" fill="none" stroke="#4a637e" stroke-width="2.5" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<text x="265" y="937" font-size="18" fill="#4a637e" paint-order="stroke" stroke="#ffffff" stroke-width="7" stroke-linejoin="round">计算接口调用</text>
+<path d="M920 845 H885 V915 H350 V960" fill="none" stroke="#4a637e" stroke-width="2.5" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<text x="480" y="908" font-size="18" fill="#4a637e" paint-order="stroke" stroke="#ffffff" stroke-width="7" stroke-linejoin="round">可选计算步骤</text>
+<path d="M840 1010 H920" fill="none" stroke="#4a637e" stroke-width="2.5" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<text x="854" y="998" font-size="18" fill="#4a637e" paint-order="stroke" stroke="#ffffff" stroke-width="7" stroke-linejoin="round">结果</text>
+<path d="M420 1010 H450 V1088 H1095 V1065" fill="none" stroke="#4a637e" stroke-width="2.5" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<text x="506" y="1081" font-size="18" fill="#4a637e" paint-order="stroke" stroke="#ffffff" stroke-width="7" stroke-linejoin="round">计算结果 / unavailable</text>
+<path d="M1000 960 V945 H470 V898 H670 V890" fill="none" stroke="#4a637e" stroke-width="2.5" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<text x="480" y="938" font-size="18" fill="#4a637e" paint-order="stroke" stroke="#ffffff" stroke-width="7" stroke-linejoin="round">重规划</text>
+<path d="M1200 960 V890" fill="none" stroke="#4a637e" stroke-width="2.5" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<text x="1211" y="928" font-size="18" fill="#4a637e" paint-order="stroke" stroke="#ffffff" stroke-width="7" stroke-linejoin="round">下一步</text>
+<path d="M1270 820 H1325 V525 H1400" fill="none" stroke="#4a637e" stroke-width="2.5" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<text x="1280" y="510" font-size="18" fill="#4a637e" paint-order="stroke" stroke="#ffffff" stroke-width="7" stroke-linejoin="round">证据需求</text>
+<path d="M1400 1018 H1270" fill="none" stroke="#4a637e" stroke-width="2.5" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<text x="1295" y="1006" font-size="18" fill="#4a637e" paint-order="stroke" stroke="#ffffff" stroke-width="7" stroke-linejoin="round">证据包</text>
+<path d="M1270 990 H1290 V655 H1270" fill="none" stroke="#4a637e" stroke-width="2.5" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<text x="1277" y="730" font-size="18" fill="#4a637e" paint-order="stroke" stroke="#ffffff" stroke-width="7" stroke-linejoin="round">中途缺信息</text>
+<path d="M1400 1045 H1310 V675 H1270" fill="none" stroke="#4a637e" stroke-width="2.5" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<rect x="40" y="1160" width="1280" height="400" rx="20" fill="#ffffff" stroke="#d8e0ec" stroke-width="2"/>
+<text x="64" y="1198" font-size="25" font-weight="700" fill="#26354a">04  生成层 · 数值与行动先验证，风格后组织</text>
+<rect x="70" y="1220" width="350" height="110" rx="12" fill="#e8f3ff" stroke="#2864a0" stroke-width="2"/>
+<text x="88" y="1252" font-size="23" font-weight="700" fill="#12324f">D · AnswerSpec</text>
+<text x="88" y="1282" font-size="20" font-weight="400" fill="#12324f">已验证 claim / action ID</text>
+<text x="88" y="1310" font-size="20" font-weight="400" fill="#12324f">计算步骤、假设、来源与限制</text>
+<rect x="500" y="1220" width="340" height="110" rx="12" fill="#f1eaff" stroke="#8652b3" stroke-width="2"/>
+<text x="518" y="1252" font-size="23" font-weight="700" fill="#45276b">G · 可选表达组织</text>
+<text x="518" y="1282" font-size="20" font-weight="400" fill="#45276b">稳定人设 · 解释取舍</text>
+<text x="518" y="1310" font-size="20" font-weight="400" fill="#45276b">引用声明；不重算关键数字</text>
+<rect x="920" y="1220" width="350" height="110" rx="12" fill="#e8f3ff" stroke="#2864a0" stroke-width="2"/>
+<text x="938" y="1252" font-size="23" font-weight="700" fill="#12324f">D · 渲染 / 输出门禁</text>
+<text x="938" y="1282" font-size="20" font-weight="400" fill="#12324f">模板注入数值、单位与对象</text>
+<text x="938" y="1310" font-size="20" font-weight="400" fill="#12324f">引用校验 / 隐私 / 注入防护</text>
+<rect x="70" y="1420" width="1200" height="100" rx="12" fill="#f7f8fb" stroke="#718096" stroke-width="2"/>
+<text x="88" y="1452" font-size="23" font-weight="700" fill="#26354a">交付给玩家的答案</text>
+<text x="88" y="1482" font-size="20" font-weight="400" fill="#26354a">结论 → 可执行步骤 → 资源差额与取舍 → 适用条件 → 可展开的计算与来源</text>
+<path d="M1180 1065 V1130 H245 V1220" fill="none" stroke="#4a637e" stroke-width="2.5" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<text x="320" y="1149" font-size="18" fill="#4a637e" paint-order="stroke" stroke="#ffffff" stroke-width="7" stroke-linejoin="round">已验证行动 / 条件性结果 / 明确限制</text>
+<path d="M420 1270 H500" fill="none" stroke="#4a637e" stroke-width="2.5" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<text x="436" y="1258" font-size="18" fill="#4a637e" paint-order="stroke" stroke="#ffffff" stroke-width="7" stroke-linejoin="round">可选</text>
+<path d="M840 1270 H920" fill="none" stroke="#4a637e" stroke-width="2.5" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<text x="855" y="1258" font-size="18" fill="#4a637e" paint-order="stroke" stroke="#ffffff" stroke-width="7" stroke-linejoin="round">框架</text>
+<path d="M245 1330 V1375 H1095 V1330" fill="none" stroke="#4a637e" stroke-width="2.5" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<text x="513" y="1365" font-size="18" fill="#4a637e" paint-order="stroke" stroke="#ffffff" stroke-width="7" stroke-linejoin="round">默认：确定性模板</text>
+<path d="M1200 1330 V1420" fill="none" stroke="#4a637e" stroke-width="2.5" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<text x="991" y="1405" font-size="18" fill="#4a637e" paint-order="stroke" stroke="#ffffff" stroke-width="7" stroke-linejoin="round">放行 / 安全模板回退</text>
+<rect x="1360" y="1160" width="640" height="580" rx="20" fill="#ffffff" stroke="#d8e0ec" stroke-width="2"/>
+<text x="1384" y="1198" font-size="25" font-weight="700" fill="#26354a">State / Memory / Persistence</text>
+<rect x="1400" y="1220" width="540" height="110" rx="12" fill="#e8f5ef" stroke="#368265" stroke-width="2"/>
+<text x="1418" y="1252" font-size="23" font-weight="700" fill="#174c39">S · PostgreSQL Checkpointer</text>
+<text x="1418" y="1282" font-size="20" font-weight="400" fill="#174c39">任务级 State · 中断 / 崩溃恢复</text>
+<text x="1418" y="1310" font-size="20" font-weight="400" fill="#174c39">thread_id = task_id；持久化不等于授权</text>
+<rect x="1400" y="1380" width="540" height="135" rx="12" fill="#e8f5ef" stroke="#368265" stroke-width="2"/>
+<text x="1418" y="1412" font-size="23" font-weight="700" fill="#174c39">S · 玩家状态 / 会话 / 长期记忆</text>
+<text x="1418" y="1442" font-size="20" font-weight="400" fill="#174c39">快照：范围 / revision / wipe / 有效期</text>
+<text x="1418" y="1470" font-size="20" font-weight="400" fill="#174c39">会话：消息、指代、已确认假设</text>
+<text x="1418" y="1498" font-size="20" font-weight="400" fill="#174c39">记忆：已确认偏好，不能替代当前库存</text>
+<rect x="1400" y="1570" width="540" height="110" rx="12" fill="#e8f5ef" stroke="#368265" stroke-width="2"/>
+<text x="1418" y="1602" font-size="23" font-weight="700" fill="#174c39">S · 向量知识与任务证据</text>
+<text x="1418" y="1632" font-size="20" font-weight="400" fill="#174c39">pgvector：策略 / 前置条件 / 反例</text>
+<text x="1418" y="1660" font-size="20" font-weight="400" fill="#174c39">网页快照 / 结果 / 预算账本 / outbox</text>
+<path d="M1270 300 H1338 V1138 H1920 V1220" fill="none" stroke="#368265" stroke-width="2.5" stroke-linejoin="round" stroke-dasharray="8 7" marker-end="url(#arrow-green)"/>
+<text x="1400" y="1130" font-size="18" fill="#368265" paint-order="stroke" stroke="#ffffff" stroke-width="7" stroke-linejoin="round">保存 checkpoint</text>
+<path d="M1600 1330 V1350 H1350 V390 H1240 V340" fill="none" stroke="#368265" stroke-width="2.5" stroke-linejoin="round" stroke-dasharray="8 7" marker-end="url(#arrow-green)"/>
+<text x="1400" y="1344" font-size="18" fill="#368265" paint-order="stroke" stroke="#ffffff" stroke-width="7" stroke-linejoin="round">同任务恢复</text>
+<path d="M1400 1455 H1300 V590 H805 V580" fill="none" stroke="#368265" stroke-width="2.5" stroke-linejoin="round" stroke-dasharray="8 7" marker-end="url(#arrow-green)"/>
+<text x="680" y="608" font-size="18" fill="#368265" paint-order="stroke" stroke="#ffffff" stroke-width="7" stroke-linejoin="round">读取相关状态 / 历史 / 偏好</text>
+<path d="M1270 1470 H1380 V1615 H1400" fill="none" stroke="#368265" stroke-width="2.5" stroke-linejoin="round" stroke-dasharray="8 7" marker-end="url(#arrow-green)"/>
+<text x="1196" y="1606" font-size="18" fill="#368265" paint-order="stroke" stroke="#ffffff" stroke-width="7" stroke-linejoin="round">归档 + outbox</text>
+<path d="M1670 1570 V1515" fill="none" stroke="#368265" stroke-width="2.5" stroke-linejoin="round" stroke-dasharray="8 7" marker-end="url(#arrow-green)"/>
+<text x="1690" y="1546" font-size="18" fill="#368265" paint-order="stroke" stroke="#ffffff" stroke-width="7" stroke-linejoin="round">确认的偏好更新</text>
+<rect x="40" y="1590" width="1280" height="150" rx="20" fill="#ffffff" stroke="#d8e0ec" stroke-width="2"/>
+<text x="64" y="1628" font-size="25" font-weight="700" fill="#26354a">知识构建 · 实时结果不自动污染正式语料</text>
+<rect x="70" y="1645" width="1200" height="75" rx="12" fill="#e8f3ff" stroke="#2864a0" stroke-width="2"/>
+<text x="88" y="1677" font-size="23" font-weight="700" fill="#12324f">D · 来源审核 → 条件化分块 → embedding → 回归 → 不可变 kb_release</text>
+<text x="88" y="1707" font-size="20" font-weight="400" fill="#12324f">新网页先保存任务快照，后经 staging 审核入库；计算规则不从网页临时生成执行</text>
+<path d="M1270 1690 H1400" fill="none" stroke="#368265" stroke-width="2.5" stroke-linejoin="round" stroke-dasharray="8 7" marker-end="url(#arrow-green)"/>
+<text x="1290" y="1715" font-size="18" fill="#368265" paint-order="stroke" stroke="#ffffff" stroke-width="7" stroke-linejoin="round">发布索引</text>
+<path d="M1670 1570 V1540 H1370 V730 H1400" fill="none" stroke="#368265" stroke-width="2.5" stroke-linejoin="round" stroke-dasharray="8 7" marker-end="url(#arrow-green)"/>
+<text x="1410" y="1559" font-size="18" fill="#368265" paint-order="stroke" stroke="#ffffff" stroke-width="7" stroke-linejoin="round">读取索引 / 语料</text>
+<path d="M1940 730 H2010 V1620 H1940" fill="none" stroke="#368265" stroke-width="2.5" stroke-linejoin="round" stroke-dasharray="8 7" marker-end="url(#arrow-green)"/>
+<text x="1730" y="1770" font-size="18" fill="#368265" paint-order="stroke" stroke="#ffffff" stroke-width="7" stroke-linejoin="round">保存实时正文快照</text>
+<rect x="40" y="1790" width="1960" height="290" rx="20" fill="#ffffff" stroke="#d8e0ec" stroke-width="2"/>
+<text x="64" y="1828" font-size="25" font-weight="700" fill="#26354a">05  评测与观测 · 跨层埋点与质量闭环</text>
+<rect x="70" y="1860" width="570" height="125" rx="12" fill="#e8f3ff" stroke="#2864a0" stroke-width="2"/>
+<text x="88" y="1892" font-size="23" font-weight="700" fill="#12324f">D · Trace / Metrics / 成本</text>
+<text x="88" y="1922" font-size="20" font-weight="400" fill="#12324f">节点、模型、工具、版本、输入 hash、校验码</text>
+<text x="88" y="1950" font-size="20" font-weight="400" fill="#12324f">延迟、token、费用、终止原因；默认脱敏</text>
+<rect x="730" y="1860" width="570" height="125" rx="12" fill="#e8f3ff" stroke="#2864a0" stroke-width="2"/>
+<text x="748" y="1892" font-size="23" font-weight="700" fill="#12324f">D · Badcase 分类与人工审核</text>
+<text x="748" y="1922" font-size="20" font-weight="400" fill="#12324f">用户反馈 / 校验失败 / 抽样审查</text>
+<text x="748" y="1950" font-size="20" font-weight="400" fill="#12324f">区分计划、检索、状态、证据、表达与恢复</text>
+<rect x="1390" y="1860" width="550" height="125" rx="12" fill="#e8f3ff" stroke="#2864a0" stroke-width="2"/>
+<text x="1408" y="1892" font-size="23" font-weight="700" fill="#12324f">D · 独立评测与发布门禁</text>
+<text x="1408" y="1922" font-size="20" font-weight="400" fill="#12324f">行动可行 / 检索覆盖 / 实时性 / 嵌套恢复</text>
+<text x="1408" y="1950" font-size="20" font-weight="400" fill="#12324f">假数字拦截 / 隔离 / 延迟 / 成本 / 回归</text>
+<path d="M90 1520 H55 V1760 H355 V1860" fill="none" stroke="#4a637e" stroke-width="2.5" stroke-linejoin="round" stroke-dasharray="8 7" marker-end="url(#arrow)"/>
+<text x="377" y="1770" font-size="18" fill="#4a637e" paint-order="stroke" stroke="#ffffff" stroke-width="7" stroke-linejoin="round">全节点 / 工具 / 模型 span</text>
+<path d="M640 1920 H730" fill="none" stroke="#4a637e" stroke-width="2.5" stroke-linejoin="round" stroke-dasharray="8 7" marker-end="url(#arrow)"/>
+<text x="657" y="1905" font-size="18" fill="#4a637e" paint-order="stroke" stroke="#ffffff" stroke-width="7" stroke-linejoin="round">案例</text>
+<path d="M1300 1920 H1390" fill="none" stroke="#4a637e" stroke-width="2.5" stroke-linejoin="round" stroke-dasharray="8 7" marker-end="url(#arrow)"/>
+<text x="1318" y="1905" font-size="18" fill="#4a637e" paint-order="stroke" stroke="#ffffff" stroke-width="7" stroke-linejoin="round">金标</text>
+<path d="M1665 1860 V1750 H1000 V1720" fill="none" stroke="#368265" stroke-width="2.5" stroke-linejoin="round" stroke-dasharray="8 7" marker-end="url(#arrow-green)"/>
+<text x="1019" y="1769" font-size="18" fill="#368265" paint-order="stroke" stroke="#ffffff" stroke-width="7" stroke-linejoin="round">评测发布门禁</text>
+<text x="70" y="2033" font-size="22" font-weight="500" fill="#26354a">终止条件：成功 / 部分结果 / 缺证据 / 预算耗尽 / 取消；等待补充信息是持久化暂停。</text>
+<text x="48" y="2130" font-size="24" font-weight="700" fill="#26354a">可靠性边界：计划必须执行验证；证据缺口可补检索，玩家信息缺口必须询问；未接入计算工具不造数字。</text>
+<text x="48" y="2166" font-size="21" font-weight="400" fill="#26354a">当前为设计交付：主图 + 两个子图 + PostgreSQL/pgvector + 实时搜索接口 + 两个预留 CalculatorPort。</text>
+</g></svg>

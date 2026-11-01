@@ -1,0 +1,124 @@
+flowchart TB
+    USER["玩家：请求 / 状态 / 图片 / 补充信息"]
+    API["D · API + Runtime<br/>鉴权、任务、预算、幂等、SSE、取消"]
+    PARSE["G · 意图 / 观测候选解析"]
+    STATE["D · 状态合并与路由<br/>范围、新鲜度、版本、能力检查"]
+    ASK["D · 共享澄清能力<br/>各图本地 clarify → interrupt → resume<br/>校验补充信息、按依赖失效、恢复原任务"]
+
+    subgraph CALC["强计算短路径 · 仅预留接口"]
+        SLOTS["D · 输入规范化 / 槽位校验"]
+        PORTS["D · CalculatorPort<br/>raid.calculate / craft.plan_gap<br/>not_configured：明确不可用"]
+    end
+
+    subgraph PE["Plan-and-Execute 决策子图"]
+        PREP["D · prepare_decision"]
+        PLAN["G · Planner"]
+        CHECK["D · validate_plan / select_next_step"]
+        EXEC["D · Executor<br/>允许操作、参数、依赖和预算"]
+        ACTION["D · evaluate_actions<br/>前置条件、资源条件、行动取舍"]
+        VERIFY["D · verify_step / assess_progress"]
+        REPLAN["G · Replanner<br/>仅修改未完成或失效步骤"]
+        FINALIZE["D · finalize_decision<br/>ActionPlan：verified / conditional / blocked"]
+    end
+
+    subgraph RAG["Agentic RAG 子图 · 决策证据"]
+        QUERY["G · 查询规划 / 改写"]
+        SOURCES["D · 来源选择 / 时效策略"]
+        VECTOR["D · vector_retrieve<br/>语义 + metadata + 关键词"]
+        WEB["D · web_search → web_fetch<br/>实时发现、正文、时间、hash"]
+        NORMAL["D · 去重 / 适用性检查"]
+        GRADE["G · 证据相关 / 支持 / 反驳"]
+        COVER["D · 覆盖 / 冲突 / 时效 / 预算门禁"]
+        BUNDLE["D · EvidenceBundle<br/>声明-证据矩阵、缺口、冲突"]
+    end
+
+    subgraph KNOW["知识构建与存储"]
+        INGEST["D · 来源审核 / 分块 / embedding / 发布<br/>模型抽取候选须审核"]
+        VDB[("S · PostgreSQL + pgvector<br/>策略、条件、反例；kb_release")]
+        SNAP[("S · 实时正文快照<br/>web_snapshot / live_checked_at")]
+    end
+
+    subgraph PERSIST["State / Memory / Persistence"]
+        CP[("S · PostgreSQL Checkpointer<br/>主图和静态子图；任务级恢复")]
+        MEM[("S · 玩家快照 / 会话 / 长期偏好<br/>独立范围、revision、TTL")]
+        RESULTS[("S · 结果 / 预算账本 / outbox")]
+    end
+
+    SPEC["D · AnswerSpec<br/>已支持声明、行动、假设与来源"]
+    OUTPUT["D · 渲染 / 输出门禁<br/>关键数字来自工具；无工具不补造"]
+    STYLE["G · 可选人设表达<br/>只引用已支持声明"]
+    OBS["D · Trace / 离线评测 / badcase<br/>计划、检索、实时性、恢复、成本 → 回归发布"]
+
+    USER --> API
+    API -->|自然语言或图片| PARSE
+    PARSE -->|候选| STATE
+    API -->|结构化输入| STATE
+    MEM -->|相关状态与偏好| STATE
+    STATE -->|关键缺口| ASK
+    STATE -->|两类计算| SLOTS
+    SLOTS -->|完整且能力匹配| PORTS
+    SLOTS -->|缺字段| ASK
+    PORTS -->|独立计算：验证结果或不可用| SPEC
+    STATE -->|决策建议| PREP
+    PREP --> PLAN
+    PLAN --> CHECK
+    CHECK -->|ready step| EXEC
+    CHECK -->|缺输入| ASK
+    EXEC -->|EvidenceNeed| QUERY
+    EXEC -->|两类计算| PORTS
+    PORTS -->|StepResult| VERIFY
+    EXEC -->|候选行动| ACTION
+    ACTION --> VERIFY
+    VERIFY -->|还有步骤| CHECK
+    VERIFY -->|剩余计划不适用| REPLAN
+    REPLAN --> CHECK
+    VERIFY -->|中途缺输入| ASK
+    VERIFY -->|完成或明确部分结果| FINALIZE
+    FINALIZE --> SPEC
+    STATE -->|独立知识问题| QUERY
+
+    QUERY --> SOURCES
+    SOURCES -->|vector 或 both| VECTOR
+    SOURCES -->|web 或 both；显式最新主动联网| WEB
+    VECTOR -->|查询| VDB
+    VDB -->|匹配片段| VECTOR
+    VECTOR --> NORMAL
+    WEB --> NORMAL
+    NORMAL --> GRADE
+    GRADE --> COVER
+    COVER -->|缺证据且有预算| QUERY
+    COVER -->|缺玩家条件| ASK
+    COVER -->|充分或预算内明确降级| BUNDLE
+    BUNDLE -->|决策步骤：EvidenceBundle / context_changed| VERIFY
+    BUNDLE -->|独立知识请求| SPEC
+
+    ASK -->|needs_input| USER
+    USER -->|同 task 补充回答| API
+    API -->|Command resume / 原子图继续| ASK
+    ASK -->|入口恢复策略| STATE
+    ASK -->|步骤恢复或重规划| CHECK
+    ASK -->|重新评估证据需求| QUERY
+
+    SPEC -->|默认模板| OUTPUT
+    SPEC -->|可选组织| STYLE
+    STYLE -->|声明引用| OUTPUT
+    OUTPUT -->|最终答案或部分结果| USER
+    API -.->|保存 / 恢复| CP
+    CP -.->|嵌套中断状态| ASK
+    OUTPUT -.->|幂等归档| RESULTS
+    WEB -.->|正文快照| SNAP
+    SNAP -.->|入库候选，审核后发布| INGEST
+    INGEST -.->|不可变 release| VDB
+    API -.->|全节点 / 模型 / 工具 spans| OBS
+    COVER -.->|覆盖 / 冲突 / 时效| OBS
+    VERIFY -.->|计划 / 结果 / 中断| OBS
+    OBS -.->|评测门禁| INGEST
+
+    classDef deterministic fill:#e8f3ff,stroke:#2864a0,color:#12324f
+    classDef generative fill:#f1eaff,stroke:#8652b3,color:#45276b
+    classDef storage fill:#e8f5ef,stroke:#368265,color:#174c39
+    classDef reserved fill:#fff5df,stroke:#ad7b20,color:#684710,stroke-dasharray:6 4
+    class API,STATE,ASK,SLOTS,PREP,CHECK,EXEC,ACTION,VERIFY,FINALIZE,SOURCES,VECTOR,WEB,NORMAL,COVER,BUNDLE,INGEST,SPEC,OUTPUT,OBS deterministic
+    class PARSE,PLAN,REPLAN,QUERY,GRADE,STYLE generative
+    class VDB,SNAP,CP,MEM,RESULTS storage
+    class PORTS reserved
