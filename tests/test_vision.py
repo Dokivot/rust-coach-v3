@@ -145,12 +145,15 @@ def test_streaming_upload_limit_returns_error(tmp_path):
         assert response.status_code == 413, response.text
 
 
-def test_unconfirmed_then_confirmed_calc_replay_and_cache(setup):
+def test_automatic_calculation_then_optional_save_and_cache(setup):
     client, application, model, owner = setup
     model.task = "craft"
     attachment = upload(client, owner)
     turn = analyze(client, owner, attachment)
-    assert turn["calculation"] is None
+    assert turn["calculation"]["input"]["inventory"] == {"sulfur":100}
+    assert turn["calculation"]["visual_usage"]["source"] == "image_inferred"
+    assert turn["calculation"]["visual_usage"]["confirmation_id"] is None
+    assert turn["visual"]["usable"] is True
     assert turn["visual"]["confirmed"] is False
     payload = confirmation(turn)
     response = confirm(client, owner, turn, payload)
@@ -230,7 +233,7 @@ def test_non_inventory_observations_saved_without_inventing_stats(setup, kind):
 
 
 @pytest.mark.parametrize("change,code", [
-    ({"subject": "opponent", "action": "save_to_profile"}, "visual_save_scope"),
+    ({"subject": "opponent", "action": "save_to_profile"}, "visual_subject_conflict"),
     ({"edits": [{"observation_id": "wrong", "accepted": True}]}, "visual_incomplete_review"),
     ({"edits": [{"observation_id": "item_a", "accepted": True, "quantity": None}]}, "visual_unknown_quantity"),
     ({"observed_at": (datetime.now(timezone.utc) + timedelta(days=1)).isoformat()}, "future_observation"),
@@ -527,3 +530,177 @@ def test_normalized_crop_uses_image_coordinates_and_removes_exif(setup):
     assert not normalized.getexif()
     crop = application.state.attachments.image(owner,attachment["id"],[0,0,0.5,0.5])
     assert Image.open(io.BytesIO(crop)).size == (25,50)
+
+
+@pytest.mark.parametrize("kind",["inventory","base","equipment"])
+def test_screenshot_only_needs_no_time_or_confirmation(setup,kind):
+    client, application, model, owner = setup
+    states, scope = bind(application,owner)
+    model.kind = kind
+    turn = analyze(client,owner,upload(client,owner),message="")
+    visual = turn["visual"]
+    assert visual["usable"] and visual["fresh"]
+    assert visual["automatic"]["subject"] == "self"
+    assert visual["accepted"] is None and visual["confirmed"] is False
+    assert all(item["subject"] == "self" for item in visual["observations"])
+    assert "默认按你当前的情况分析" in turn["assistant"]
+    assert "请核对识别卡片" not in turn["assistant"]
+    assert "请在卡片中确认" not in turn["assistant"]
+    assert states.get(scope)["revision"] == 0
+    stored = client.get(f"/api/conversations/{owner}").json()["turns"][0]
+    assert stored["visual"]["automatic"] == visual["automatic"]
+
+
+@pytest.mark.parametrize("message,subject,temporal",[
+    ("这是对手的背包","opponent","current"),
+    ("这是队友的背包","teammate","current"),
+    ("这是昨天的截图","self","historical"),
+    ("这是公开示意图","self","example"),
+])
+def test_context_exceptions_never_become_current_self_inventory(setup,message,subject,temporal):
+    client, _, model, owner = setup
+    model.task = "craft"
+    turn = analyze(client,owner,upload(client,owner),message=message)
+    visual = turn["visual"]
+    assert visual["automatic"]["subject"] == subject
+    assert next(iter(visual["resolved_context"].values()))["temporal_context"] == temporal
+    assert turn["calculation"]["status"] == "calculated"
+    assert turn["calculation"]["input"]["inventory"] is None
+    assert not turn["calculation"]["visual_usage"]["inventory_used"]
+
+
+def test_related_conversation_reaches_context_inference(setup,monkeypatch):
+    client, application, model, owner = setup
+    application.state.runtime.store.append(owner,str(uuid4()),"接下来发的是昨天对手的装备图。","可以，发来吧。",False)
+    original = model.complete
+    seen = []
+    async def contextual(messages):
+        parts = next(message.content for message in messages if isinstance(message.content,list))
+        context = json.loads(parts[0].text)
+        seen.append(context)
+        reply = await original(messages)
+        data = json.loads(reply.content)
+        data["screenshot_context"] = [{"attachment_id":context["images"][0]["attachment_id"],"subject":"opponent",
+            "temporal_context":"historical","reason":"用户在上一轮说明截图归属和时间。"}]
+        return ModelReply(content=json.dumps(data))
+    monkeypatch.setattr(model,"complete",contextual)
+    turn = analyze(client,owner,upload(client,owner),message="看看这张")
+    assert "接下来发的是昨天对手的装备图。" in seen[0]["recent_user_context"]
+    assert turn["visual"]["automatic"]["subject"] == "opponent"
+    assert not turn["visual"]["fresh"]
+
+
+def test_explicit_image_metadata_wins_over_inferred_subject(setup,monkeypatch):
+    client, _, model, owner = setup
+    original = model.complete
+    async def opponent(messages):
+        reply = await original(messages)
+        data = json.loads(reply.content)
+        data["observations"][0]["subject"] = "opponent"
+        return ModelReply(content=json.dumps(data))
+    monkeypatch.setattr(model,"complete",opponent)
+    attachment = upload(client,owner)
+    old = (datetime.now(timezone.utc)-timedelta(hours=1)).isoformat()
+    turn = analyze(client,owner,attachment,image_context={attachment["id"]:{"subject":"self","captured_at":old}})
+    assert turn["visual"]["automatic"]["subject"] == "self"
+    assert turn["visual"]["automatic"]["observed_at"] == old
+    assert not turn["visual"]["fresh"]
+
+
+@pytest.mark.parametrize("problem",["partial","unknown_quantity","unknown_item","ambiguous_slot"])
+def test_automatic_calculation_preserves_unknowns_without_confirmation_gate(setup,monkeypatch,problem):
+    client, _, model, owner = setup
+    model.task = "craft"
+    original = model.complete
+    async def incomplete(messages):
+        reply = await original(messages)
+        data = json.loads(reply.content)
+        if problem == "partial":
+            data["inventory_coverage"] = "partial"
+        elif problem == "unknown_quantity":
+            data["observations"][0].update(quantity=None,quantity_status="unknown")
+        elif problem == "unknown_item":
+            data["observations"][0]["item_id"] = None
+        else:
+            data["observations"][0]["slot"] = ""
+        return ModelReply(content=json.dumps(data))
+    monkeypatch.setattr(model,"complete",incomplete)
+    turn = analyze(client,owner,upload(client,owner))
+    assert turn["calculation"]["status"] == "calculated"
+    assert turn["calculation"]["input"]["inventory"] is None
+    assert "识别结果尚未确认" not in turn["assistant"]
+
+
+def test_advice_uses_automatic_inventory_immediately(setup):
+    client, _, model, owner = setup
+    turn = analyze(client,owner,upload(client,owner))
+    service = AdviceService(model,None)
+    state = {"request":{"visual":turn["visual"]},"plan":{"candidates":[{"id":"craft","kind":"craft","goals":{"gunpowder":10},"required_fields":[]}]},"evidence":{"documents":[]}}
+    result = service.evaluate(state)["evaluations"]["craft"]
+    assert result["calculation"]["input"]["inventory"] == {"sulfur":100}
+    assert result["calculation"]["visual_usage"]["source"] == "image_inferred"
+    assert service.visual_context(state["request"])["usable"] is True
+
+
+def test_followup_context_correction_preserves_image_age_and_changes_inventory_use(setup,monkeypatch):
+    client, _, model, owner = setup
+    model.task = "craft"
+    first = analyze(client,owner,upload(client,owner))
+    original = model.complete
+    async def contextual(messages):
+        reply = await original(messages)
+        data = json.loads(reply.content)
+        data["screenshot_context"] = [{"attachment_id":data["observations"][0]["attachment_id"],
+            "subject":"opponent","temporal_context":"historical","reason":"用户纠正为昨天对手的截图。"}]
+        return ModelReply(content=json.dumps(data))
+    monkeypatch.setattr(model,"complete",contextual)
+    response = client.post(f"/api/conversations/{owner}/messages",json={"request_id":str(uuid4()),
+        "message":"这张其实是昨天对手的背包"})
+    assert response.status_code == 200,response.text
+    corrected = response.json()
+    assert corrected["visual"]["automatic"]["subject"] == "opponent"
+    assert not corrected["visual"]["fresh"]
+    assert corrected["visual"]["automatic"]["observed_at"] == first["visual"]["automatic"]["observed_at"]
+    assert corrected["calculation"]["input"]["inventory"] is None
+    assert corrected["visual"]["draft_id"] != first["visual"]["draft_id"]
+
+
+def test_conflicting_image_and_observation_subjects_cannot_offset_inventory(setup,monkeypatch):
+    client, _, model, owner = setup
+    model.task = "craft"
+    original = model.complete
+    async def conflicting(messages):
+        reply = await original(messages)
+        data = json.loads(reply.content)
+        data["observations"][0]["subject"] = "self"
+        data["screenshot_context"] = [{"attachment_id":data["observations"][0]["attachment_id"],
+            "subject":"opponent","temporal_context":"current","reason":"玩家说明这是对手的背包。"}]
+        return ModelReply(content=json.dumps(data))
+    monkeypatch.setattr(model,"complete",conflicting)
+    turn = analyze(client,owner,upload(client,owner))
+    assert turn["visual"]["automatic"]["subject"] == "unknown"
+    assert turn["calculation"]["input"]["inventory"] is None
+
+
+def test_cached_image_does_not_refresh_assumed_observation_time(setup):
+    client, application, model, owner = setup
+    model.task = "craft"
+    attachment = upload(client,owner)
+    old = (datetime.now(timezone.utc)-timedelta(hours=1)).isoformat()
+    with application.state.runtime.store.connection() as connection:
+        connection.execute("UPDATE attachments SET created_at=? WHERE id=?",(old,attachment["id"]))
+    first = analyze(client,owner,attachment)
+    second = analyze(client,owner,upload(client,owner))
+    assert second["visual"]["cache_hit"]
+    assert second["visual"]["automatic"]["observed_at"] == first["visual"]["automatic"]["observed_at"] == old
+    assert not second["visual"]["fresh"]
+    assert second["calculation"]["input"]["inventory"] is None
+
+
+@pytest.mark.parametrize("kind",["equipment","base"])
+def test_noninventory_observations_do_not_imply_empty_inventory(setup,kind):
+    client, _, model, owner = setup
+    model.kind,model.task = kind,"craft"
+    turn = analyze(client,owner,upload(client,owner))
+    assert not turn["visual"]["automatic"]["inventory_complete"]
+    assert turn["calculation"]["input"]["inventory"] is None

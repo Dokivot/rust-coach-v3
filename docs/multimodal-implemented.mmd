@@ -1,6 +1,6 @@
 flowchart TD
     subgraph INPUT[输入层 · 浏览器与 FastAPI]
-        UI[代码：文字/文件/粘贴/拖入<br/>本地裁剪遮盖、主体与实际截图时间]
+        UI[代码：文字/文件/粘贴/拖入即可发送<br/>首次自动探测；裁剪/主体/时间可选]
         UP[代码：限流、字节/像素/格式校验<br/>EXIF 归一化、PNG 重编码、SHA256]
         FILES[(私有附件目录 + SQLite 元数据)]
         UI -->|单文件 multipart| UP --> FILES
@@ -16,32 +16,31 @@ flowchart TD
     UI -->|ChatRequest：文本与附件 ID| RUN
     subgraph VISION[LangGraph 视觉子图]
         PREP[代码 prepare：归属检查、重复图处理、缓存读取]
-        EXTRACT[LLM extract：逐格/局部候选观测<br/>任务、物品、读数、bbox、未知项]
-        CHECK[代码 validate：Schema、图片引用<br/>规范 ID、声明主体]
+        EXTRACT[LLM extract：结合当前问题与近期对话<br/>主体/时间上下文、任务、物品、读数、bbox]
+        CHECK[代码 validate：Schema、图片引用与规范 ID<br/>默认当前本人、显式覆盖、未知项保留]
         REFINE[LLM refine：歧义数字局部复读<br/>与结构修复共用一次预算]
-        DRAFT[代码 persist：保存草稿与来源<br/>识别成功不自动写玩家状态]
+        DRAFT[代码 persist：保存自动结果 image_inferred<br/>完整性/主体/时效校验；不自动写长期档案]
         PREP -->|缓存未命中| EXTRACT --> CHECK
         PREP -->|命中| CHECK
         CHECK -->|关键数量不清且有预算| REFINE --> CHECK
         CHECK -->|合格或明确未知| DRAFT
     end
     VI -->|新图且视觉探测通过| PREP
+    VI -->|续问修正主体/时间：保留原观测时间| PREP
+    RUN -->|相关用户上下文与玩家状态| EXTRACT
     FILES -->|按归属授权读取| PREP
     DRAFT --> ROUTE
     DRAFT --> DRAFTDB[(SQLite：visual_drafts / cache / confirmations)]
     DRAFTDB -->|旧草稿引用| VI
-    subgraph CONFIRM[等待用户与恢复]
-        CARD[代码：返回观测卡片并 END<br/>释放锁与 HTTP 请求]
-        ACCEPT[代码：逐项确认、范围/时间/主体校验<br/>草稿 CAS、玩家 revision、确认幂等]
+    subgraph CONFIRM[可选修正与保存 · 不阻塞默认回答]
+        ACCEPT[代码：应用修改或保存档案<br/>范围/主体/时效、草稿 CAS、确认幂等]
         COMMIT[代码：SQLite 同一事务<br/>回执 + 消费草稿 + 可选状态更新]
         CONTINUE[代码：新 ChatRequest 继续<br/>固定幂等 ID；失败保留已提交回执]
-        CARD --> UI
-        UI -->|修改、排除、确认用途| ACCEPT
+        UI -->|用户主动展开并修改或保存| ACCEPT
         DRAFTDB --> ACCEPT
         ACCEPT --> COMMIT --> CONTINUE --> RUN
         COMMIT --> DRAFTDB
     end
-    ROUTE -->|未确认的精确计算| CARD
     subgraph KNOWLEDGE[Knowledge 与 State / Memory]
         CATALOG[(规范物品与配方/爆炸物规则快照<br/>来源、适用条件、哈希)]
         WEB[代码：按需网页检索与正文快照]
@@ -54,7 +53,7 @@ flowchart TD
     HISTORY --> RUN
     COMMIT -->|仅明确 save_to_profile| PROFILE
     subgraph DECISION[业务与 Tools]
-        OBSERVE[代码：显示候选观测与未知项]
+        OBSERVE[代码：直接显示识别结果与未知项]
         CALC[代码：合成/拆墙计算<br/>完整当前本人库存才可抵扣]
         PLAN[LLM：规划最多三个候选行动]
         EVAL[代码：检索、前提核对、独立预算]
@@ -65,7 +64,7 @@ flowchart TD
         CALC -->|工具报告| ADVICE
     end
     ROUTE -->|仅识别| OBSERVE
-    ROUTE -->|已确认的支持参数| CALC
+    ROUTE -->|支持的参数：立即计算，无确认门槛| CALC
     ROUTE -->|可作条件建议| PLAN
     subgraph OUTPUT[生成 / 评测 / 可观测性]
         FINAL[代码：统一人设 finalizer<br/>保护工具数值、来源、图片范围与时效]
@@ -81,6 +80,6 @@ flowchart TD
     classDef deterministic fill:#e5f1ff,stroke:#2563a6,color:#111;
     classDef generative fill:#fff0da,stroke:#b56918,color:#111;
     classDef persistence fill:#f1edf9,stroke:#7755a0,color:#111;
-    class UI,UP,RUN,VI,ROUTE,PREP,CHECK,DRAFT,CARD,ACCEPT,COMMIT,CONTINUE,WEB,OBSERVE,CALC,EVAL,FINAL,TEST deterministic;
+    class UI,UP,RUN,VI,ROUTE,PREP,CHECK,DRAFT,ACCEPT,COMMIT,CONTINUE,WEB,OBSERVE,CALC,EVAL,FINAL,TEST deterministic;
     class EXTRACT,REFINE,PLAN,ADVICE generative;
     class FILES,DRAFTDB,CATALOG,PROFILE,HISTORY persistence;

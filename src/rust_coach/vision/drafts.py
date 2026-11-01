@@ -140,7 +140,10 @@ class VisualDraftStore:
                 "inventory_complete":complete,"container_id":request.container_id,"subject":request.subject,
                 "calculation":request.calculation.model_dump(mode="json") if request.calculation else payload["extraction"].get("calculation"),
                 "continue_task":request.continue_task,"saved":False,"state_revision":None}
+            receipt["current_assumption"] = payload.get("automatic",{}).get("current_assumption",True)
             if request.action == "save_to_profile":
+                if not receipt["current_assumption"]:
+                    raise AppError("visual_observation_not_current", "这张图按上下文属于历史或参考资料，不能保存为当前状态。",422)
                 if scope_id is None or request.subject != "self":
                     raise AppError("visual_save_scope", "只能把本人观测保存到已关联的玩家档案。对手或历史分析可仅用于本轮。", 422)
                 declared = {context.get("subject") for context in payload["image_context"].values()}

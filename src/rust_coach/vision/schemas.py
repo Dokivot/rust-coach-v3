@@ -46,6 +46,13 @@ class VisualObservation(StrictModel):
         return self
 
 
+class ScreenshotContext(StrictModel):
+    attachment_id: UUID
+    subject: Subject = "self"
+    temporal_context: Literal["current", "historical", "example", "unknown"] = "current"
+    reason: str = Field(default="", max_length=300)
+
+
 class VisualExtraction(StrictModel):
     task: Literal["observe", "craft", "raid", "advice"] = "observe"
     observations: list[VisualObservation] = Field(default_factory=list, max_length=120)
@@ -53,11 +60,14 @@ class VisualExtraction(StrictModel):
     image_relationship: Literal["same_snapshot", "different_snapshots", "unknown"] = "unknown"
     inventory_coverage: Literal["full_view", "partial", "unknown"] = "unknown"
     calculation: CalculationRequest | None = None
+    screenshot_context: list[ScreenshotContext] = Field(default_factory=list, max_length=4)
 
     @model_validator(mode="after")
     def identities(self):
         if len({item.id for item in self.observations}) != len(self.observations):
             raise ValueError("Duplicate observation ID")
+        if len({item.attachment_id for item in self.screenshot_context}) != len(self.screenshot_context):
+            raise ValueError("Duplicate screenshot context")
         if self.calculation and (self.calculation.inventory is not None or self.calculation.reserve):
             raise ValueError("Visual extraction cannot set aggregate inventory")
         if self.calculation and self.calculation.operation != self.task:

@@ -8,6 +8,7 @@ from rust_coach.player_state.schemas import FIELD_DEFINITIONS
 from rust_coach.presentation.contracts import AnswerBlock, AnswerEnvelope, ProtectedAssertion, ResponseContext
 from rust_coach.presentation.validation import check_envelope, narrative_issues, signature
 from rust_coach.vision.presentation import visual_summary
+from rust_coach.vision.context import visual_input
 
 
 STATUS_TEXT = {
@@ -132,7 +133,7 @@ def finalize_response(state):
                         container.get("usable_for_exact_calculation") and not current["containers"][key]["usable_for_exact_calculation"]
                         for key, container in snapshot["containers"].items())
         visual = state.get("visual") or {}
-        accepted = visual.get("accepted")
+        accepted = visual_input(visual)
         if accepted and (not visual.get("fresh") or datetime.fromisoformat(accepted["expires_at"]) <= datetime.now(timezone.utc)):
             stale = True
         payload["delivery_state_stale"] = stale

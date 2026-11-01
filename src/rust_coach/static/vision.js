@@ -29,7 +29,7 @@ window.VisionUI = (() => {
   function subjectField(parent, value = "unknown") {
     const label = element("label", "图片主体 ");
     const select = element("select");
-    for (const [key, text] of Object.entries({unknown: "尚未确认", self: "本人", opponent: "对手", teammate: "队友"})) {
+    for (const [key, text] of Object.entries({unknown: "自动判断", self: "本人", opponent: "对手", teammate: "队友"})) {
       const option = element("option", text);
       option.value = key;
       select.append(option);
@@ -70,10 +70,24 @@ window.VisionUI = (() => {
       preview.src = item.url;
       preview.alt = `待发送截图 ${index + 1}`;
       card.append(preview);
-      const subject = subjectField(card, item.subject);
+      card.append(element("p", "默认按当前情况分析，可直接发送。"));
+      const metadata = element("details");
+      metadata.append(element("summary", "补充主体或时间（可选）"));
+      const subject = subjectField(metadata, item.subject);
       subject.addEventListener("change", () => { item.subject = subject.value; hooks.invalidate(); });
-      const time = field(card, "实际截图时间（必填）", "datetime-local", item.time);
+      const time = field(metadata, "截图时间（可留空）", "datetime-local", item.time);
       time.addEventListener("change", () => { item.time = time.value; hooks.invalidate(); });
+      card.append(metadata);
+      card.append(button("裁剪 / 遮盖", () => locked(async () => {
+        const blob = await edit(item.blob);
+        if (!blob) return;
+        if (blob.size > (config.max_bytes || 8388608)) throw new Error("处理后的图片过大，请缩小或裁剪后重试。");
+        if (item.attachment) await hooks.api(item.attachment.url, {method: "DELETE"});
+        URL.revokeObjectURL(item.url);
+        Object.assign(item, {blob, url: URL.createObjectURL(blob), attachment: null});
+        hooks.invalidate();
+        renderPending();
+      })));
       card.append(button("移除", () => locked(async () => {
         if (item.attachment) await hooks.api(item.attachment.url, {method: "DELETE"});
         URL.revokeObjectURL(item.url);
@@ -162,9 +176,7 @@ window.VisionUI = (() => {
         if (pending.length >= 4) throw new Error("每轮最多四张图片。");
         if (!["image/png", "image/jpeg", "image/webp"].includes(file.type)) throw new Error("仅支持 PNG、JPEG、WebP 静态图片。");
         if (file.size > (config.max_bytes || 8388608)) throw new Error("单张图片最多 8 MiB，请先压缩或裁剪。");
-        const blob = await edit(file);
-        if (!blob) continue;
-        if (blob.size > (config.max_bytes || 8388608)) throw new Error("规范化后的图片过大，请缩小或裁剪后重试。");
+        const blob = file;
         pending.push({blob, url: URL.createObjectURL(blob), subject: "unknown", time: "", attachment: null});
       }
       document.querySelector(".vision-composer").open = true;
@@ -175,8 +187,11 @@ window.VisionUI = (() => {
     hooks.refreshControls();
   }
   async function requestFields() {
-    if (pending.length && !config.enabled) throw new Error("请先点击“验证截图接口”，通过后再发送截图。");
-    if (pending.some(item => !item.time)) throw new Error("请填写每张图片的实际截图时间。旧截图不会刷新成当前状态。");
+    if (pending.length && !config.enabled) {
+      await hooks.api("/api/vision/probe", {method: "POST", body: "{}"});
+      config = (await hooks.api("/api/config")).vision;
+      document.querySelector("#vision-status").textContent = "接口已验证";
+    }
     const context = {};
     for (const item of pending) {
       if (!item.attachment) {
@@ -187,7 +202,9 @@ window.VisionUI = (() => {
         if (!response.ok) throw new Error(body.error?.message || "上传失败");
         item.attachment = body;
       }
-      context[item.attachment.id] = {subject: item.subject, captured_at: new Date(item.time).toISOString()};
+      if (item.subject !== "unknown" || item.time) {
+        context[item.attachment.id] = {subject: item.subject, ...(item.time ? {captured_at: new Date(item.time).toISOString()} : {})};
+      }
     }
     return {attachment_ids: pending.map(item => item.attachment.id), image_context: context};
   }
@@ -223,8 +240,8 @@ window.VisionUI = (() => {
   }
   async function render(article, visual, interactive = true) {
     const owner = hooks.conversation().id;
-    const card = element("section", undefined, "visual-card");
-    card.append(element("h3", "截图依据与逐项核对"));
+    const card = element("details", undefined, "visual-card");
+    card.append(element("summary", "查看识别详情与图片区域"));
     article.append(card);
     let draft;
     try { draft = await hooks.api(`/api/conversations/${owner}/visual-drafts/${visual.draft_id}`); }
@@ -232,7 +249,8 @@ window.VisionUI = (() => {
     if (!card.isConnected || hooks.conversation().id !== owner) return;
     const payload = draft.payload;
     const accepted = payload.accepted;
-    card.append(element("p", accepted ? `${accepted.saved ? "已保存到档案" : "仅用于本次任务"} · 观测时间 ${accepted.observed_at} · 确认不保证识别准确` : "尚未确认。请对照图像逐项修正，再勾选接受。局部堆叠数量不会覆盖容器总量。"));
+    const resolved = accepted || payload.automatic;
+    card.append(element("p", accepted ? `${accepted.saved ? "已保存到档案" : "仅用于本次任务"} · 观测时间 ${accepted.observed_at}` : "识别结果已直接用于本次分析。可以继续追问；修正和保存档案均为可选操作。"));
     if (!draft.available) card.append(element("p", "草稿或原图已过期、取消或删除。历史记录仅供回顾。", "vision-error"));
     const images = element("div", undefined, "visual-images");
     const canvases = new Map();
@@ -269,13 +287,18 @@ window.VisionUI = (() => {
       regions.append(button(`区域 ${observation.id}`, () => canvases.get(observation.attachment_id)?.(observation.bbox)));
     }
     card.append(regions);
+    for (const observation of resolved?.observations || payload.extraction.observations) {
+      card.append(element("p", `${observation.label}${observation.quantity === null ? "" : ` × ${observation.quantity}`} · ${observation.description}`));
+    }
+    const corrections = element("details");
+    corrections.append(element("summary", "修正识别 / 保存到档案（可选）"));
     const controls = element("fieldset");
     const active = draft.status === "pending" && draft.available && interactive;
     controls.dataset.inactive = String(!active);
     const rows = (accepted?.observations || payload.extraction.observations).map(observation => {
       const row = element("div", undefined, "visual-row");
       const title = element("div", undefined, "visual-row-title");
-      const checked = field(title, observation.label, "checkbox", Boolean(accepted));
+      const checked = field(title, `保留 ${observation.label}`, "checkbox", true);
       title.append(button(`定位 ${observation.id}`, () => canvases.get(observation.attachment_id)?.(observation.bbox)));
       row.append(title);
       const item = field(row, "物品 ID（未知留空）", "text", observation.item_id || "");
@@ -283,17 +306,18 @@ window.VisionUI = (() => {
       quantity.min = "0"; quantity.max = "1000000"; quantity.step = "1";
       const description = field(row, "局部描述", "text", observation.description);
       description.parentElement.className = "visual-description";
-      row.append(element("p", `${observation.region_kind} · ${observation.slot || "槽位未定"} · ${observation.uncertainty.join("；") || "仍需人工核对"}`));
+      row.append(element("p", `${observation.region_kind} · ${observation.slot || "槽位未定"} · ${observation.uncertainty.join("；") || "自动识别"}`));
       controls.append(row);
       return {observation, checked, item, quantity, description};
     });
     const subjects = [...new Set([...Object.values(payload.image_context).map(value => value.subject),
       ...payload.extraction.observations.map(value => value.subject)].filter(value => value !== "unknown"))];
-    const subject = subjectField(controls, accepted?.subject || (subjects.length === 1 ? subjects[0] : "unknown"));
+    const subject = subjectField(controls, resolved?.subject || (subjects.length === 1 ? subjects[0] : "self"));
     const captureTimes = Object.values(payload.image_context).map(value => value.captured_at).filter(Boolean).sort();
-    const observed = field(controls, "实际观测时间", "datetime-local", localTime(accepted?.observed_at || captureTimes[0]));
-    const container = field(controls, "库存容器标识", "text", accepted?.container_id || "backpack");
-    const complete = field(controls, "我已核对：图中覆盖整个容器，所有物品和数量准确（用于精确缺口）", "checkbox", accepted?.inventory_complete);
+    const defaultTime = resolved?.observed_at || captureTimes[0] || draft.created_at;
+    const observed = field(controls, "观测时间（自动填写，可修改）", "datetime-local", localTime(defaultTime));
+    const container = field(controls, "库存容器标识", "text", resolved?.container_id || "backpack");
+    const complete = field(controls, "覆盖整个容器", "checkbox", resolved?.inventory_complete);
     complete.disabled = payload.extraction.inventory_coverage !== "full_view";
     controls.append(element("p", `识别覆盖范围：${payload.extraction.inventory_coverage}。局部截图只计算总需求，不推断未拍到的库存为零。`));
     const totals = field(controls, "局部更新：我确认这些数字是容器内该物品的总量，而非单格堆叠数", "checkbox");
@@ -306,35 +330,34 @@ window.VisionUI = (() => {
     calculation.placeholder = '{"operation":"craft","goals":{"gunpowder":10}}';
     details.append(calculation);
     controls.append(details);
-    const continueTask = field(controls, "确认后继续原问题", "checkbox", true);
+    const continueTask = field(controls, "修改后重新回答原问题", "checkbox", true);
     const actions = element("div", undefined, "vision-actions");
     const submit = action => locked(async () => {
-      if (!observed.value) throw new Error("请填写实际观测时间。");
       const edits = rows.map(row => ({observation_id: row.observation.id, accepted: row.checked.checked,
         item_id: row.item.value.trim() || null, quantity: row.quantity.value === "" ? null : Number(row.quantity.value), description: row.description.value}));
       const body = {confirmation_id: crypto.randomUUID(), draft_revision: draft.revision,
-        expected_state_revision: payload.scope_revision, action, subject: subject.value, observed_at: new Date(observed.value).toISOString(),
+        expected_state_revision: payload.scope_revision, action, subject: subject.value, observed_at: observed.value ? new Date(observed.value).toISOString() : defaultTime,
         container_id: container.value, inventory_complete: complete.checked, quantities_are_container_totals: totals.checked,
         same_snapshot: same.checked, edits, calculation: calculation.value.trim() ? JSON.parse(calculation.value) : null, continue_task: continueTask.checked};
       const prior = previousAttempt(draft.id);
       if (prior && JSON.stringify({...prior, confirmation_id: ""}) === JSON.stringify({...body, confirmation_id: ""})) body.confirmation_id = prior.confirmation_id;
       await confirm(draft.id, body);
     });
-    actions.append(button("全部核对后选中", () => rows.forEach(row => { row.checked.checked = true; })),
-      button("确认，仅用于本次任务", () => submit("accept_for_turn")),
-      button("确认并保存到本人档案", () => submit("save_to_profile")),
-      button("取消草稿", () => locked(async () => { await hooks.api(`/api/conversations/${owner}/visual-drafts/${draft.id}/cancel`, {method: "POST", body: "{}"}); await reload(); })));
+    actions.append(button("应用修改", () => submit("accept_for_turn")),
+      button("保存到本人档案", () => submit("save_to_profile")),
+      button("停止使用此图", () => locked(async () => { await hooks.api(`/api/conversations/${owner}/visual-drafts/${draft.id}/cancel`, {method: "POST", body: "{}"}); await reload(); })));
     controls.append(actions);
-    card.append(controls);
+    corrections.append(controls);
+    card.append(corrections);
     if (accepted && draft.available && interactive && previousAttempt(draft.id)) card.append(button("重试继续（不重复保存）", () => locked(() => confirm(draft.id, previousAttempt(draft.id)))));
     if (!active) card.append(element("p", "此卡片只读；可继续在聊天框追问。需要修正已确认信息时，请重新提交图片。"));
-    if (payload.extraction.unknowns.length) card.append(element("p", "待确认：" + payload.extraction.unknowns.join("；")));
+    if (payload.extraction.unknowns.length) card.append(element("p", "尚不明确：" + payload.extraction.unknowns.join("；")));
     updateControls();
   }
   function init(callbacks, capabilities) {
     hooks = callbacks;
     config = capabilities;
-    const showStatus = () => { document.querySelector("#vision-status").textContent = config.enabled ? "接口已验证" : "需验证接口"; };
+    const showStatus = () => { document.querySelector("#vision-status").textContent = config.enabled ? "接口已验证" : "首次发送时自动连接"; };
     showStatus();
     document.querySelector("#vision-add").onclick = () => document.querySelector("#vision-files").click();
     document.querySelector("#vision-files").onchange = event => { addFiles([...event.target.files]); event.target.value = ""; };
