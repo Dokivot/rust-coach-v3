@@ -11,7 +11,7 @@ flowchart LR
   DB[(SQLite：已完成对话)] -->|最近轮次| RT
   RT --> GRAPH[LangGraph：START → chat → END]
   GRAPH --> ADAPTER[HTTP Adapter：兼容协议与错误归一]
-  ADAPTER -->|Chat Completions| MODEL[LLM：生成回复]
+  ADAPTER -->|Responses / Chat Completions| MODEL[LLM：生成回复]
   MODEL --> ADAPTER --> GRAPH --> RT
   RT -->|原子保存成功的一轮| DB
   RT -->|结构化 Turn| API -->|纯文本显示| UI
@@ -36,7 +36,7 @@ flowchart LR
 | `contracts.py` | 消息、回复、会话、请求校验 | 经调研后新增业务输入输出类型 |
 | `runtime.py` | 装配图、构建有限上下文、超时、重复请求处理 | 任务调度、业务路由与总预算 |
 | `workflows.py` | 最小聊天图 | 业务子图分别放入独立模块，不把业务逻辑全部塞入节点 |
-| `llm.py` | `ChatModel` 协议、HTTP adapter | 替换 provider 或增加流式模型 adapter |
+| `llm.py` | `ChatModel` 协议、Responses / Chat Completions HTTP adapter | 替换 provider 或增加流式模型 adapter |
 | `persistence.py` | 本地 SQLite 会话存储 | 需要多用户与迁移时替换存储实现 |
 | `extensions.py` | 知识、搜索、决策、两类计算器占位 | 完成业务调研后确定成功返回契约并实现 adapter |
 | `static/` | 聊天、配置反馈、当前会话恢复 | 图片上传、证据卡、计划展示 |

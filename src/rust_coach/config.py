@@ -13,6 +13,7 @@ class Settings(BaseSettings):
 
     base_url: str = "https://cf.api.fan/v1"
     model: str = Field(default="gpt-5.6-sol", min_length=1)
+    api_mode: Literal["responses", "chat_completions"] = "responses"
     api_key: SecretStr = SecretStr("")
     database_path: Path = Path("data/coach.sqlite3")
     request_timeout_seconds: float = Field(default=90, ge=1, le=300)

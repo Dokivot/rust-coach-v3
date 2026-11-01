@@ -21,14 +21,20 @@ class CompatibleChatModel:
             raise AppError("model_not_configured", "请在本地 .env 配置 COACH_API_KEY，然后重启服务。", 503)
         payload = {
             "model": self.settings.model,
-            "messages": [message.model_dump() for message in messages],
             "stream": False,
-            self.settings.output_token_parameter: self.settings.max_output_tokens,
         }
+        serialized_messages = [message.model_dump() for message in messages]
+        if self.settings.api_mode == "responses":
+            endpoint = "responses"
+            payload.update(input=serialized_messages, max_output_tokens=self.settings.max_output_tokens, store=False)
+        else:
+            endpoint = "chat/completions"
+            payload.update(messages=serialized_messages)
+            payload[self.settings.output_token_parameter] = self.settings.max_output_tokens
         try:
             async with self.client.stream(
                 "POST",
-                f"{self.settings.base_url}/chat/completions",
+                f"{self.settings.base_url}/{endpoint}",
                 json=payload,
                 headers={"Authorization": f"Bearer {self.settings.api_key.get_secret_value()}"},
             ) as response:
@@ -49,12 +55,50 @@ class CompatibleChatModel:
             raise AppError("model_unreachable", "无法连接模型服务，请检查网络和 Base URL。", 502) from error
         try:
             data = json.loads(raw)
-            choice = data["choices"][0]
-            content = choice["message"].get("content") or choice["message"].get("refusal")
-            if not isinstance(content, str) or not content.strip() or len(content) > 60000:
+            if self.settings.api_mode == "responses":
+                reply = self._parse_response(data)
+            else:
+                choice = data["choices"][0]
+                content = choice["message"].get("content") or choice["message"].get("refusal")
+                if not isinstance(content, str):
+                    raise ValueError("Invalid content")
+                if choice.get("finish_reason") in {"tool_calls", "function_call"}:
+                    raise ValueError("Tool calls are not enabled")
+                reply = ModelReply(content=content, truncated=choice.get("finish_reason") == "length")
+            if not reply.content.strip() or len(reply.content) > 60000:
                 raise ValueError("Invalid content")
-            if choice.get("finish_reason") in {"tool_calls", "function_call"}:
-                raise ValueError("Tool calls are not enabled")
-            return ModelReply(content=content.strip(), truncated=choice.get("finish_reason") == "length")
+            return ModelReply(content=reply.content.strip(), truncated=reply.truncated)
         except (ValueError, KeyError, IndexError, TypeError, AttributeError) as error:
-            raise AppError("model_invalid_response", "模型返回了无法显示的内容，请检查接口是否兼容 Chat Completions。", 502) from error
+            raise AppError("model_invalid_response", "模型返回了无法显示的内容，请检查接口是否与 COACH_API_MODE 配置兼容。", 502) from error
+
+    def _parse_response(self, data: dict) -> ModelReply:
+        if data.get("error") or data.get("status") == "failed":
+            raise AppError("model_request_failed", "模型生成失败，请稍后重试或检查模型配置。", 502)
+        truncated = data.get("status") == "incomplete"
+        if truncated:
+            if data["incomplete_details"]["reason"] != "max_output_tokens":
+                raise ValueError("Unsupported incomplete response")
+        elif data.get("status") != "completed":
+            raise ValueError("Response is not complete")
+        output = data["output"]
+        if not isinstance(output, list):
+            raise ValueError("Invalid output")
+        parts = []
+        for item in output:
+            if item["type"] == "reasoning":
+                continue
+            if item["type"] != "message" or item["role"] != "assistant":
+                raise ValueError("Unsupported output item")
+            if not isinstance(item["content"], list):
+                raise ValueError("Invalid message content")
+            for part in item["content"]:
+                if part["type"] == "output_text":
+                    text = part["text"]
+                elif part["type"] == "refusal":
+                    text = part["refusal"]
+                else:
+                    raise ValueError("Unsupported content type")
+                if not isinstance(text, str):
+                    raise ValueError("Invalid content")
+                parts.append(text)
+        return ModelReply(content="".join(parts), truncated=truncated)

@@ -1,12 +1,15 @@
 import asyncio
+import json
 from uuid import uuid4
 
+import httpx
 import pytest
 from fastapi.testclient import TestClient
 
 from rust_coach.app import create_app
 from rust_coach.config import Settings
 from rust_coach.contracts import AppError, ChatRequest, ModelReply
+from rust_coach.llm import CompatibleChatModel
 from rust_coach.persistence import ConversationStore
 from rust_coach.runtime import ChatRuntime
 
@@ -107,6 +110,45 @@ async def test_context_budget_keeps_complete_recent_pairs(settings):
     await runtime.chat(identifier, ChatRequest(request_id=uuid4(), message="继续"))
     assert [message.role for message in model.calls[0]] == ["system", "user", "assistant", "user"]
     assert model.calls[0][1].content == "问题2"
+
+
+async def test_responses_runtime_history_failure_and_retry(settings):
+    settings.api_mode = "responses"
+    calls = []
+
+    def handler(request):
+        assert request.url.path == "/v1/responses"
+        calls.append(json.loads(request.content))
+        if len(calls) == 2:
+            return httpx.Response(200, json={"status": "failed", "error": {"message": "private"}})
+        return httpx.Response(200, json={
+            "status": "incomplete",
+            "incomplete_details": {"reason": "max_output_tokens"},
+            "output": [{"type": "message", "role": "assistant", "content": [
+                {"type": "output_text", "text": "你好！"},
+            ]}],
+        })
+
+    store = ConversationStore(settings.database_path)
+    identifier = store.create().id
+    async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
+        runtime = ChatRuntime(settings, CompatibleChatModel(settings, client), store)
+        first = await runtime.chat(identifier, ChatRequest(request_id=uuid4(), message="你好"))
+        assert first.truncated is True
+        request = ChatRequest(request_id=uuid4(), message="继续")
+        with pytest.raises(AppError) as caught:
+            await runtime.chat(identifier, request)
+        assert caught.value.code == "model_request_failed"
+        assert len(store.get(identifier).turns) == 1
+        second = await runtime.chat(identifier, request)
+        assert await runtime.chat(identifier, request) == second
+    assert len(calls) == 3
+    assert calls[1] == calls[2]
+    assert [message["role"] for message in calls[2]["input"]] == ["system", "user", "assistant", "user"]
+    assert calls[2]["input"][2]["content"] == first.assistant
+    restored = ConversationStore(settings.database_path).get(identifier)
+    assert len(restored.turns) == 2
+    assert all(turn.truncated for turn in restored.turns)
 
 
 async def test_busy_guard_and_timeout_release_lock(settings):

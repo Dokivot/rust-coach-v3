@@ -1,6 +1,6 @@
 # Rust Coach v3
 
-面向 Rust 生存游戏的教练 Agent。当前版本是可运行的本地聊天骨架：FastAPI + LangGraph + SQLite + 浏览器聊天界面，通过 OpenAI-compatible Chat Completions 接口调用模型。
+面向 Rust 生存游戏的教练 Agent。当前版本是可运行的本地聊天骨架：FastAPI + LangGraph + SQLite + 浏览器聊天界面，支持 OpenAI-compatible Responses 和 Chat Completions 接口，默认使用 Responses。
 
 ## 本地启动
 
@@ -21,12 +21,15 @@ uv run uvicorn rust_coach.app:create_app --factory --host 127.0.0.1 --port 8000
 ```dotenv
 COACH_BASE_URL=https://cf.api.fan/v1
 COACH_MODEL=gpt-5.6-sol
+COACH_API_MODE=responses
 COACH_API_KEY=在本地填写你的密钥
 ```
 
 服务读取 `.env` 后需要重启。密钥不会发给浏览器，也不纳入 Git。没有密钥时页面仍可打开，但输入被禁用并显示配置提示。页面显示“已配置”只表示存在密钥，成功收到回复后才显示本次连接成功。该第三方服务的模型权限与兼容性需用有效密钥实测。
 
-如服务不支持 `max_completion_tokens`，在 `.env` 设置 `COACH_OUTPUT_TOKEN_PARAMETER=max_tokens`；指令消息角色可通过 `COACH_INSTRUCTION_ROLE=system` 或 `developer` 配置。不要盲目切换参数，应根据服务文档或实际返回定位。
+`COACH_API_MODE=responses` 调用 `/v1/responses`，使用 `input` 和 `max_output_tokens`，并设置 `store=false`，每轮从本地历史重建上下文。已有 `.env` 未设置该项时也默认使用 Responses。`COACH_BASE_URL` 仍填写包含 `/v1` 的服务基础地址，不要追加 `/responses` 或 `/chat/completions`。实现依据 [OpenAI 官方迁移文档](https://developers.openai.com/api/docs/guides/migrate-to-responses)。
+
+如果服务仅支持旧接口，设置 `COACH_API_MODE=chat_completions`，即可调用 `/v1/chat/completions`。此模式默认使用 `max_completion_tokens`；如服务不支持，在 `.env` 设置 `COACH_OUTPUT_TOKEN_PARAMETER=max_tokens`。该配置只影响 Chat Completions，Responses 始终使用 `max_output_tokens`。两种模式均可通过 `COACH_MAX_OUTPUT_TOKENS` 设置输出上限，通过 `COACH_INSTRUCTION_ROLE=system` 或 `developer` 配置指令消息角色。
 
 ## 首版边界
 
