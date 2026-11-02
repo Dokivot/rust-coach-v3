@@ -234,7 +234,7 @@ total_latency
 | --- | --- | --- |
 | 请求/业务结果留存 | SQLite conversations/turns、calculation、advice、presentation、visual | 已保存部分业务结果，但没有统一跨层 trace |
 | 生成检查 | `AnswerEnvelope`、`checks`、`fallback_reason`、persona tests | 已有生成门禁字段和离线测试 |
-| 评测脚本 | `presentation/evaluate.py`、`tests/test_*` | 有人设/建议/视觉等局部评测；没有统一 EvalRun |
+| 评测脚本 | `presentation/evaluate.py`、`architecture.evaluation`、`tests/test_*` | 已有 `EvalCase/EvalRun/EvalReport` 契约；尚未接入独立持久化评测仓库 |
 | 检索证据 | `EvidenceStore`、网页快照和 advice 引用 | 有局部来源追踪；缺少统一 retrieval span/覆盖指标 |
 | 延迟/成本 | 局部模型调用计数和运行时间 | 尚未全链路采集 token、工具成本和关键路径 |
 | badcase | 日志、文档和手工验证记录 | 尚未有结构化 Badcase 生命周期与回归索引 |

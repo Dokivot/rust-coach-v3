@@ -290,10 +290,10 @@ flowchart LR
 | 计算渲染 | `render_calculation`、`calculation_assertions` | 数字和条件主要由代码渲染 |
 | 建议渲染 | `finalize_response`、候选 ID/可行性/引用检查 | 已有候选、状态和来源门禁 |
 | 普通聊天生成 | `generate_chat` + `narrative_issues` + 一次修复/回退 | 已有有限修复，不是完整语义验证 |
-| 统一输出交接 | `finalize_response` → `ModelReply`/presentation | 已有实现，但上游尚未统一为最终 `DecisionResult/AnswerSpec` |
+| 统一输出交接 | `DecisionResult` → `AnswerSpec` → `finalize_response`/`AnswerEnvelope` | 首期已接通；旧业务 metadata 作为兼容输入保留 |
 | 跨层评测 | `tests/test_presentation.py`、persona evaluation | 有基础测试；完整事实/风格/漂移数据集仍需建设 |
 
-当前实现已经覆盖生成层的轻量版本，但不能因此宣称所有自由文本都被事实验证。下一步应将决策层最终 `DecisionResult` 适配为统一 `AnswerSpec`，确保内部 `ExecutionPlan` 不进入生成上下文，扩大 `ProtectedAssertion` 的覆盖，增加结果状态和断言级回归，并把回退/澄清/过期路径纳入端到端评测。
+当前实现覆盖生成层的首期适配：`DecisionResult` 先转换为 `AnswerSpec`，内部 `ExecutionPlan` 不进入生成上下文，再与现有保护断言和回退逻辑合并。自由文本仍需现有规则门禁；后续应扩大断言覆盖并纳入更多恢复路径评测。
 
 ## 12. 评测与验收
 

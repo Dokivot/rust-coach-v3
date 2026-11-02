@@ -337,14 +337,14 @@ ParsedInput → 初步意图/实体 → KnowledgeQuery
 
 | 设计对象 | 当前实现/对应位置 | 状态 |
 | --- | --- | --- |
-| 输入交付 | `workflows.py` 的 `visual_input`、`ChatRequest`、视觉证据对象 | 已有局部能力；尚未统一为 `ParsedInput` |
-| 意图/路由 | `workflows.py` 的 `route`、`is_advice`、计算匹配器 | 已有受限分支；尚未形成版本化 `IntentSpec` |
+| 输入交付 | `rust_coach.architecture.input`、`workflows.py` 的 `visual_input` | 已统一为版本化 `ParsedInput`；视觉服务作为适配器保留 |
+| 意图/路由 | `UnderstandingLayer` 加旧 `route` 兼容兜底 | 已形成 `IntentSpec`、`CoachTaskRepresentation` 和版本化 route |
 | 状态上下文 | `PlayerStateService`、snapshot/revision/TTL、视觉草稿 | 已有状态边界；理解层合并协议仍需抽象 |
 | 知识补充 | `EvidenceStore`、Tavily/WebResearch、建议链路 | 已有局部检索；尚未统一 `KnowledgeQuery/Context` |
-| 决策交接 | `AdviceService` 和计算服务输入 | 已有业务调用；尚未统一 `DecisionRequest/Feedback` |
+| 决策交接 | `DecisionRequest`、`DecisionLayer` 加 Advice/Calculator 适配器 | 已统一首期 `DecisionRequest`；跨子图 feedback 仍待扩展 |
 | 澄清恢复 | 计算多轮补充和视觉草稿确认 | 尚未形成跨子图的持久化 interrupt/resume 协议 |
 
-当前实现可以继续复用，但不能把现有 `route` 函数或视觉草稿对象直接宣称为完整理解层。优先改造顺序是：先定义 `IntentSpec`、`StateClaim`、`CoachTaskRepresentation` 和 `ClarificationRequest`；再把现有计算/建议/视觉分支包在理解层适配器后；最后接入知识查询循环和决策反馈恢复。
+当前实现已经完成首期理解层适配：结构化对象由 `UnderstandingLayer` 生成，旧 `route` 只负责兼容已有视觉和追问行为。跨子图澄清、持久化 interrupt/resume 和统一知识查询仍属于后续扩展。
 
 ## 11. 评测与验收
 

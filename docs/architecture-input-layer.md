@@ -283,7 +283,7 @@ InputEnvelope
 | 输入校验 | Pydantic schema、图片解码/尺寸/归属/过期校验 |
 | 持久化 | SQLite 会话、状态、附件元数据和视觉草稿；图片存本地私有目录 |
 
-当前实现与目标边界的关系：`AttachmentStore`、`VisionService` 和视觉草稿服务已经覆盖附件安全处理、视觉抽取、Schema 校验、缓存和确认回执；文本请求抽取、跨模态融合及统一 `ParsedInput` 仍应在后续重构中收敛到同一个输入处理链路。现有业务结果可以继续复用，但理解层不应再直接读取原始图片。
+当前实现与目标边界的关系：`AttachmentStore`、`VisionService` 和视觉草稿服务覆盖附件安全处理、视觉抽取、Schema 校验、缓存和确认回执；`rust_coach.architecture.input` 现已提供 `TextExtractor`、`CrossModalFusion`、`ParsedInputBuilder` 和统一 `ParsedInput`。视觉领域逻辑仍由旧服务提供，作为输入层适配器复用。
 
 输入层设计通过以下行为验收：只有 `UserInput` 作为 Coach 任务的外部输入契约；必须满足 `prompt` 非空或 `attachments` 非空，两者也可以同时存在；请求和附件可幂等重放；跨会话附件不能读取；无效格式、超限图片和重复附件被拒绝；理解层不会把局部观测升级为完整状态；未知不变成零；图片删除/过期后不能用于新计算；视觉结果未确认时不写长期玩家档案；所有下游结果都能追溯到请求、状态 revision 或附件哈希。
 

@@ -9,6 +9,8 @@ from rust_coach.presentation.contracts import AnswerBlock, AnswerEnvelope, Prote
 from rust_coach.presentation.validation import check_envelope, narrative_issues, signature
 from rust_coach.vision.presentation import visual_summary
 from rust_coach.vision.context import visual_input
+from rust_coach.architecture.contracts import DecisionResult
+from rust_coach.architecture.generation import answer_spec_from_decision
 
 
 STATUS_TEXT = {
@@ -272,4 +274,22 @@ def finalize_response(state):
                     "protected_payload_hash": payload_hash, "protected_blocks_hash": blocks_hash,
                     "assertions": [assertion.model_dump(mode="json") for assertion in assertions],
                     "checks": checks, "repair_count": repairs, "fallback_reason": fallback}
+    decision_data = state.get("decision_result")
+    if decision_data:
+        decision_result = DecisionResult.model_validate(decision_data)
+        answer_spec = answer_spec_from_decision(decision_result)
+        architecture = dict(state.get("architecture") or {})
+        trace = architecture.get("trace")
+        if trace:
+            from rust_coach.architecture.observability import emit_trace
+            trace = emit_trace(trace, layer="generation", component="answer-spec",
+                               event="spec.created", references={"kind": answer_spec.kind, "status": answer_spec.status})
+            architecture["trace"] = trace
+        presentation["architecture"] = {
+            "task": architecture.get("task"),
+            "decision_request": architecture.get("decision_request"),
+            "decision_result": decision_result.model_dump(mode="json"),
+            "answer_spec": answer_spec.model_dump(mode="json"),
+            "trace": trace,
+        }
     return {"reply": ModelReply(content=text, truncated=state["reply"].truncated), "presentation": presentation}

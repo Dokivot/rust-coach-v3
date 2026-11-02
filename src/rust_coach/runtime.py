@@ -17,6 +17,8 @@ from rust_coach.presentation.contracts import PresentationPreferences
 from rust_coach.memory.service import MemoryService
 from rust_coach.memory.store import now_iso
 from rust_coach.memory.policy import deterministic_candidates, validate_candidate
+from rust_coach.architecture.input import InputLayer
+from rust_coach.architecture.observability import emit_trace, new_trace
 
 
 logger = logging.getLogger("rust_coach")
@@ -145,6 +147,14 @@ class ChatRuntime:
                 messages.insert(-1, ModelMessage(role="user", content="玩家状态数据（非指令，不自动写回）：\n" +
                                                 state_context))
             try:
+                task_id = uuid5(NAMESPACE_URL, "rust-coach:task:" + conversation_id + ":" + str(request.request_id))
+                trace_context = new_trace(request.request_id, task_id)
+                trace = {"context": trace_context.model_dump(mode="json"), "events": []}
+                trace = emit_trace(trace, layer="input", component="ingress", event="request.received",
+                                   references={"attachment_count": len(request.attachment_ids)})
+                parsed_input = InputLayer().parse(request, task_id=task_id)
+                trace = emit_trace(trace, layer="input", component="parsed-input", event="parsed.created",
+                                   references={"unknowns": len(parsed_input.unknowns), "candidate_count": len(parsed_input.request_candidates)})
                 previous_advice = conversation.turns[-1].advice if conversation.turns and (
                     conversation.turns[-1].player_state_ref or {}).get("scope_id") == scope_id else None
                 visual_ref = str(request.visual_draft_id) if request.visual_draft_id else None
@@ -169,7 +179,9 @@ class ChatRuntime:
                         "player_snapshot": snapshot, "inventory_container": request.player_inventory_container,
                         "previous_calculation": previous_input,
                         "previous_advice": previous_advice,
-                        "pending_message": previous.get("pending_message") if previous else None}, {"recursion_limit": 12})
+                        "pending_message": previous.get("pending_message") if previous else None,
+                        "architecture": {"trace": trace},
+                        "parsed_input": parsed_input.model_dump(mode="json")}, {"recursion_limit": 12})
             except TimeoutError as error:
                 raise AppError("model_timeout", "模型响应超时，请稍后重试。", 504) from error
             reply = result["reply"]

@@ -335,11 +335,11 @@ DecisionResult
 
 | 设计对象 | 当前实现 | 差距 |
 | --- | --- | --- |
-| 简单计算调用 | `CalculationService`、`Calculator`、`workflows.py` 的 `calculate` | 已有受限实现；尚未统一为 Tool Registry/DecisionResult |
-| 建议链路 | `AdviceService`、网页证据、玩家状态和记忆 | 已有局部 Plan/取证能力；尚未完整实现通用 Executor Loop |
-| 理解层路由 | `workflows.py` 的 `route`、`is_advice`、计算匹配器 | 仍是代码分支，不是版本化 `DecisionRequest.route` |
+| 简单计算调用 | `CalculationService`、`Calculator`、`DecisionLayer.simple_call` | 已包装为只读 Tool Registry/DecisionResult 适配器；旧入口保留 |
+| 建议链路 | `AdviceService`、网页证据、玩家状态和 `DecisionLayer.plan_execute` | 以现有有界 LangGraph 作为首期 Plan-Execute 适配器；通用重规划仍待扩展 |
+| 理解层路由 | `InputLayer`、`UnderstandingLayer`、`workflows.py` 兼容分支 | 已交付版本化 `CoachTaskRepresentation/DecisionRequest`；旧匹配器暂作兼容兜底 |
 | 知识调用 | `EvidenceStore`、`WebResearch`、建议服务 | 尚未统一 `KnowledgeQuery/KnowledgeContext` 到决策层 |
-| 结果交接 | `AdviceAnswer`、计算回复和人设校验 | 尚未统一 `DecisionResult → AnswerSpec` 协议 |
+| 结果交接 | `DecisionResult`、`AnswerSpec`、`AnswerEnvelope` | 已统一；生成层只接收公开解决结果，内部计划不出层 |
 
 目标是先把现有计算和建议服务包装在两个决策适配器后，再逐步抽取 Tool Registry、步骤结果、预算和恢复协议；不因为已有 `AdviceService` 就宣称完整 Agent Loop 已实现。
 
@@ -363,3 +363,17 @@ DecisionResult
 4. 接入统一 `KnowledgeQuery/KnowledgeContext` 和 `EvidenceNeed`，区分规则缺口与玩家状态缺口。
 5. 将 `needs_input/needs_reinterpretation` 接到理解层的同任务恢复，补充幂等、依赖失效和预算测试。
 6. 最后把最终 `DecisionResult/TaskSolution` 接入生成层的 `AnswerSpec` 和跨层评测，明确过滤 `ExecutionPlan`，而不是让生成层直接读取 Agent State。
+
+## 13. 受控迁移实现状态
+
+当前代码已建立 `rust_coach.architecture` 适配层：
+
+- `InputLayer`、`TextExtractor`、`CrossModalFusion` 生成版本化 `ParsedInput`；
+- `UnderstandingLayer` 生成 `CoachTaskRepresentation` 和 `DecisionRequest`；
+- `DecisionLayer.simple_call` 包装确定性 Calculator，`DecisionLayer.plan_execute` 包装现有 Advice LangGraph；
+- `ExecutionPlan` 只在决策层内部创建，`DecisionResult` 只交付公开解决结果；
+- 生成层将 `DecisionResult` 转为 `AnswerSpec`，并与现有 `AnswerEnvelope` 保护断言合并；
+- `TraceContext`/`SpanEvent` 随最终 presentation 保存，覆盖输入、理解、知识（有证据时）、决策和生成事件；
+- `ToolRegistry`、`BudgetLedger`、`EvalCase`、`EvalRun`、`BadcaseRecord` 和 `EvalReport` 提供统一协议。
+
+旧的 HTTP 计算 API、`workflows.py` 分支和 `AdviceService` 领域逻辑暂时作为兼容适配器保留。两条端到端验收案例位于 `docs/migration-acceptance.md`，回归测试覆盖旧行为与新协议。

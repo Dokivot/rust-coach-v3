@@ -121,6 +121,12 @@ def create_app(settings: Settings | None = None, model: ChatModel | None = None,
             "history_turns": settings.history_turns,
             "presentation": {"persona_version": ResponseContext().persona_version,
                              "preferences_schema": PresentationPreferences.model_json_schema()},
+            "architecture": {
+                "version": "six-layer-v1",
+                "layers": ["input", "understanding", "knowledge", "decision", "generation", "evaluation"],
+                "flows": {"calculation": "simple_call", "state_advice": "plan_execute"},
+                "trace_persistence": "conversation_turn.presentation.architecture.trace",
+            },
             "vision":request.app.state.vision.capabilities(),
         }
 
