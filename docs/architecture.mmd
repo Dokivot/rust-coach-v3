@@ -1,8 +1,19 @@
 flowchart TB
-    USER["玩家：请求 / 状态 / 图片 / 补充信息"]
+    USER["玩家：提示词 + 可选截图"]
     API["D · API + Runtime<br/>鉴权、任务、预算、幂等、SSE、取消"]
-    PARSE["G · 意图 / 观测候选解析"]
-    STATE["D · 状态合并与路由<br/>范围、新鲜度、版本、能力检查"]
+    subgraph INPUT["输入层 · UserInput 多模态处理链路"]
+        INGRESS["D · 接入校验<br/>字段、幂等、附件归属"]
+        TEXT["G · 文本抽取<br/>请求候选、状态陈述、实体"]
+        VISION["G · 视觉抽取<br/>物品、数量、区域、未知项"]
+        FUSION["D · 跨模态融合与校验<br/>指代绑定、Schema、来源、覆盖"]
+        PARSED["D · ParsedInput<br/>请求候选 + 状态候选 + evidence + unknowns"]
+        INGRESS --> TEXT
+        INGRESS --> VISION
+        TEXT --> FUSION
+        VISION --> FUSION
+        FUSION --> PARSED
+    end
+    STATE["D/G · 理解层<br/>语义消歧、状态合并与路由"]
     ASK["D · 共享澄清能力<br/>各图本地 clarify → interrupt → resume<br/>校验补充信息、按依赖失效、恢复原任务"]
 
     subgraph CALC["强计算短路径 · 仅预留接口"]
@@ -50,9 +61,8 @@ flowchart TB
     OBS["D · Trace / 离线评测 / badcase<br/>计划、检索、实时性、恢复、成本 → 回归发布"]
 
     USER --> API
-    API -->|自然语言或图片| PARSE
-    PARSE -->|候选| STATE
-    API -->|结构化输入| STATE
+    API -->|prompt + attachment_ids| INGRESS
+    PARSED -->|统一结构化结果| STATE
     MEM -->|相关状态与偏好| STATE
     STATE -->|关键缺口| ASK
     STATE -->|两类计算| SLOTS
@@ -118,7 +128,7 @@ flowchart TB
     classDef generative fill:#f1eaff,stroke:#8652b3,color:#45276b
     classDef storage fill:#e8f5ef,stroke:#368265,color:#174c39
     classDef reserved fill:#fff5df,stroke:#ad7b20,color:#684710,stroke-dasharray:6 4
-    class API,STATE,ASK,SLOTS,PREP,CHECK,EXEC,ACTION,VERIFY,FINALIZE,SOURCES,VECTOR,WEB,NORMAL,COVER,BUNDLE,INGEST,SPEC,OUTPUT,OBS deterministic
-    class PARSE,PLAN,REPLAN,QUERY,GRADE,STYLE generative
+    class API,INGRESS,FUSION,PARSED,STATE,ASK,SLOTS,PREP,CHECK,EXEC,ACTION,VERIFY,FINALIZE,SOURCES,VECTOR,WEB,NORMAL,COVER,BUNDLE,INGEST,SPEC,OUTPUT,OBS deterministic
+    class TEXT,VISION,PLAN,REPLAN,QUERY,GRADE,STYLE generative
     class VDB,SNAP,CP,MEM,RESULTS storage
     class PORTS reserved

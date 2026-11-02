@@ -8,13 +8,14 @@ flowchart TD
     subgraph RUNTIME[Runtime 与理解层]
         Start[代码：请求去重、冻结档案 revision<br/>附件归属、任务预算、视觉能力检查]
         HasImage{代码：有图片?}
-        Route[代码：结合问题与图像任务提示路由<br/>图像类别不等于业务意图]
+        TextExtract[输入层 TextExtractor：prompt<br/>请求候选、状态陈述、实体]
+        Route[理解层：消费 ParsedInput<br/>语义路由；不再处理原始图片]
         Start --> HasImage
     end
     UI -->|文字 + attachment_ids| Start
     Assets -->|授权附件引用| Start
-    HasImage -->|无| Route
-    subgraph VISION[视觉子图：从像素到有来源的候选观测]
+    HasImage -->|无| TextExtract --> Route
+    subgraph VISION[输入层多模态处理子图：从用户输入到 ParsedInput]
         Prepare[代码：按需缩略/裁剪 + 坐标变换<br/>读取缓存，不刷新观测时间]
         Extract[LLM/VLM：分类、逐格识别、可见关系<br/>输出候选值 + 区域引用 + 未知项]
         Validate[代码：Schema、实体映射、数量形式<br/>覆盖、重复、冲突、主体与时点检查]
@@ -28,7 +29,7 @@ flowchart TD
     HasImage -->|有但能力不可用| Degrade[代码：保留附件与文本<br/>说明不可识别，请转写或稍后重试]
     Assets --> Prepare
     Catalog[知识：规范物品/槽位/UI 版本目录] --> Validate
-    Validate -->|合格候选或明确未知| Route
+    Validate -->|ParsedInput：请求/状态候选、证据、未知| Route
     Route --> Gate{代码：当前结论需要已确认精确字段?}
     Gate -->|需要且不足| Draft[代码：持久化确认草稿 + 最小补充项<br/>本次执行 END，释放会话锁]
     Draft --> DraftDB[(SQLite：草稿 revision / 来源 / 待续任务)]
@@ -72,5 +73,5 @@ flowchart TD
     classDef generative fill:#fff0da,stroke:#b56918,color:#111;
     classDef persistence fill:#f1edf9,stroke:#7755a0,color:#111;
     class UI,Upload,Start,HasImage,Route,Prepare,Validate,Retry,Gate,Draft,Confirm,Ephemeral,Commit,Continue,Calc,Observe,Research,Degrade,Final,Eval deterministic;
-    class Extract,Advice generative;
+    class TextExtract,Extract,Advice generative;
     class Assets,Catalog,DraftDB,Profiles,Rules,Persist persistence;

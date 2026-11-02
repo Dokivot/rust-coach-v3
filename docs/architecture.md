@@ -8,14 +8,14 @@
 
 | 层 | 负责 | 主要产物 |
 |---|---|---|
-| 输入层 | 接收用户提示词和可选图像等多模态附件；校验、归一化、来源记录 | `InputEnvelope` |
-| 理解层 | 意图、实体、槽位、视觉观测解析；状态合并与路由 | `IntentSpec`、有效状态引用 |
+| 输入层 | 接收用户提示词和可选图像等多模态附件；完成文本/视觉解析、融合和校验 | `ParsedInput` |
+| 理解层 | 处理结构化请求/状态候选；语义消歧、上下文合并与路由 | `IntentSpec`、有效状态引用 |
 | 知识层 | 规则、机制资料、实时证据、版本与引用 | `EvidenceBundle` |
 | 决策层 | 计算、计划、约束校验、行动取舍 | `ActionPlan`、`CalculationResult` |
 | 生成层 | 基于已验证结果组织解释、执行输出门禁 | `AnswerSpec`、最终回答 |
 | 评测与观测 | 跨层 trace、质量评测、成本、badcase 与回归发布 | 指标、评测样本、改进反馈 |
 
-本次先细化输入层，见 [输入层设计](architecture-input-layer.md)。其中的请求字段、玩家状态范围、附件引用、图像保留策略和当前 API 以现有实现为准；后续各层按同一契约继续展开。
+本次先细化输入层，见 [输入层设计](architecture-input-layer.md)。输入层只接收 `UserInput = prompt + optional attachments`，并交付 `ParsedInput`；其中的请求候选、玩家状态候选和图像证据经过理解层语义消歧后，才进入后续业务链路。
 
 ## 2. 需求分析与本次架构决策
 
@@ -92,15 +92,15 @@
 
 ## 5. 输入层、理解层与玩家状态
 
-输入层的独立设计和实际接入边界见 [输入层设计](architecture-input-layer.md)。输入层只接收 `UserInput`（提示词和可选附件）；本节的玩家状态是理解层从用户输入解析出的观测，或运行时读取的已有上下文。
+输入层的独立设计和实际接入边界见 [输入层设计](architecture-input-layer.md)。输入层内部完成文本/视觉抽取和跨模态融合，向理解层交付 `ParsedInput`；理解层不再读取原始图片或解析原始多模态消息，只处理结构化候选和已有上下文。
 
 ### 5.1 输入与意图
 
-CoachRequest 包含 request_id、conversation_id、task_id（继续任务时）、`user_input.prompt`、`user_input.attachments`、server_context 和 task_preferences。`player_observations` 不属于外部输入字段：它由理解层从 prompt/附件解析，或由 Runtime 按会话绑定加载。身份从鉴权上下文获得，不信任模型自报的 user ID。
+CoachRequest 包含 request_id、conversation_id、task_id（继续任务时）、`user_input.prompt`、`user_input.attachments`、server_context 和 task_preferences。输入层将 prompt 和附件解析为 `ParsedInput.request_candidates`、`ParsedInput.player_state_candidates`、`unknowns` 与 provenance；`player_observations` 不属于外部输入字段。身份从鉴权上下文获得，不信任模型自报的 user ID。
 
 服务器上下文区分 platform、server、wipe、build、ruleset/mod，允许 unknown。图片存对象引用/hash/采集时间。状态来自用户输入、截图或授权且实际支持相应字段的接口，不假定可自动读取完整游戏状态。
 
-处理顺序：**输入校验 → 语言/视觉抽取 → 实体规范化 → 状态合并 → 意图/信息需求检查 → 路由**。结构化表单可跳过 LLM。
+处理顺序：**输入层接入与校验 → 文本/视觉抽取 → 跨模态融合 → 解析结果校验 → 理解层语义消歧与状态合并 → 意图/信息需求检查 → 路由**。结构化内部结果可跳过原始输入解析，但不能绕过统一的 `ParsedInput` 契约。
 
 IntentSpec 包含：
 
@@ -115,7 +115,7 @@ IntentSpec 包含：
 
 PlayerSnapshot 包含库存/容器、蓝图/工作台、基地观测、装备背景、队伍、在线/离线时间、威胁信号、目标/偏好。字段或集合携带 source、observed_at、coverage、verification、valid_until、server_id、wipe_id；整体带 revision。
 
-视觉模型输出 ObservationCandidate 与截图区域引用；代码核对实体、数量范围、覆盖和冲突。关键模糊数量须确认，模型自报置信度不能直接当可信事实。未显示格子不是零库存，单张基地截图不是完整拓扑。
+输入层视觉处理链输出 ObservationCandidate 与截图区域引用；代码核对实体、数量范围、覆盖和冲突。理解层消费这些结构化候选并结合任务与已有状态决定采用范围。关键模糊数量须确认，模型自报置信度不能直接当可信事实。未显示格子不是零库存，单张基地截图不是完整拓扑。
 
 完整盘点替换相应容器；局部截图只 patch 可见范围。observation_id 去重，revision 乐观锁；增减事件须有可靠基准。冲突按字段、时间与范围处理，不能凭模型认为“更合理”覆盖。
 

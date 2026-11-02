@@ -8,15 +8,16 @@ flowchart TD
     subgraph RT[Agent Runtime · 单进程串行聊天]
         RUN[代码：请求幂等、超时、上下文限长<br/>恢复最近图片；范围/失效边界检查]
         VI{代码：新附件或草稿引用?}
-        ROUTE[代码：命令/意图路由<br/>视觉 task 是候选提示]
+        TEXT_PARSE[输入层 TextExtractor：prompt<br/>请求候选、状态陈述、实体]
+        ROUTE[理解层：消费 ParsedInput<br/>语义路由；不再读取原始图片]
         RUN --> VI
-        VI -->|无图片| ROUTE
+        VI -->|无图片| TEXT_PARSE --> ROUTE
         VI -->|已有草稿：复核范围与时效| ROUTE
     end
     UI -->|ChatRequest：文本与附件 ID| RUN
-    subgraph VISION[LangGraph 视觉子图]
+    subgraph VISION[输入层 · LangGraph 多模态处理子图]
         PREP[代码 prepare：归属检查、重复图处理、缓存读取]
-        EXTRACT[LLM extract：结合当前问题与近期对话<br/>主体/时间上下文、任务、物品、读数、bbox]
+        EXTRACT[LLM/VLM extract：结合 prompt 与图片<br/>请求候选、任务、物品、读数、bbox]
         CHECK[代码 validate：Schema、图片引用与规范 ID<br/>默认当前本人、显式覆盖、未知项保留]
         REFINE[LLM refine：歧义数字局部复读<br/>与结构修复共用一次预算]
         DRAFT[代码 persist：保存自动结果 image_inferred<br/>完整性/主体/时效校验；不自动写长期档案]
@@ -27,9 +28,9 @@ flowchart TD
     end
     VI -->|新图且视觉探测通过| PREP
     VI -->|续问修正主体/时间：保留原观测时间| PREP
-    RUN -->|相关用户上下文与玩家状态| EXTRACT
+    RUN -->|本轮 prompt 与必要上下文| EXTRACT
     FILES -->|按归属授权读取| PREP
-    DRAFT --> ROUTE
+    DRAFT -->|ParsedInput：候选、证据、未知项| ROUTE
     DRAFT --> DRAFTDB[(SQLite：visual_drafts / cache / confirmations)]
     DRAFTDB -->|旧草稿引用| VI
     subgraph CONFIRM[可选修正与保存 · 不阻塞默认回答]
@@ -81,5 +82,5 @@ flowchart TD
     classDef generative fill:#fff0da,stroke:#b56918,color:#111;
     classDef persistence fill:#f1edf9,stroke:#7755a0,color:#111;
     class UI,UP,RUN,VI,ROUTE,PREP,CHECK,DRAFT,API,ACCEPT,COMMIT,CONTINUE,WEB,OBSERVE,CALC,EVAL,FINAL,TEST deterministic;
-    class EXTRACT,REFINE,PLAN,ADVICE generative;
+    class TEXT_PARSE,EXTRACT,REFINE,PLAN,ADVICE generative;
     class FILES,DRAFTDB,CATALOG,PROFILE,HISTORY persistence;

@@ -13,30 +13,31 @@
 <text x="974" y="157" font-size="20" font-weight="400" fill="#26354a">S  持久化存储</text>
 <text x="1190" y="157" font-size="20" font-weight="400" fill="#26354a">金色：预留接口   实线：在线流   虚线：保存 / 发布 / 观测</text>
 <rect x="40" y="190" width="1960" height="175" rx="20" fill="#ffffff" stroke="#d8e0ec" stroke-width="2"/>
-<text x="64" y="228" font-size="25" font-weight="700" fill="#26354a">01  输入层与 Agent Runtime</text>
+<text x="64" y="228" font-size="25" font-weight="700" fill="#26354a">01  输入层：UserInput 多模态处理与 Agent Runtime</text>
 <rect x="70" y="245" width="390" height="95" rx="12" fill="#e8f3ff" stroke="#2864a0" stroke-width="2"/>
 <text x="88" y="277" font-size="23" font-weight="700" fill="#12324f">D · 输入 API</text>
-<text x="88" y="307" font-size="20" font-weight="400" fill="#12324f">文本 / 状态 / 图片 · 鉴权 / 幂等</text>
+<text x="88" y="307" font-size="20" font-weight="400" fill="#12324f">提示词 / 图片 · 鉴权 / 幂等</text>
 <rect x="540" y="245" width="730" height="95" rx="12" fill="#e8f3ff" stroke="#2864a0" stroke-width="2"/>
-<text x="558" y="277" font-size="23" font-weight="700" fill="#12324f">D · Runtime · 任务生命周期</text>
-<text x="558" y="307" font-size="20" font-weight="400" fill="#12324f">预算 / 超时 / 取消 / SSE · 注入客户端 · 恢复同一 task</text>
+<text x="558" y="277" font-size="23" font-weight="700" fill="#12324f">D · InputPipeline + Runtime</text>
+<text x="558" y="307" font-size="20" font-weight="400" fill="#12324f">文本抽取 / 视觉抽取 / 跨模态融合 / 校验</text>
+<text x="558" y="335" font-size="20" font-weight="400" fill="#12324f">预算 / 超时 / 取消 / SSE · 恢复同一 task</text>
 <rect x="1400" y="245" width="540" height="95" rx="12" fill="#f7f8fb" stroke="#718096" stroke-width="2"/>
 <text x="1418" y="277" font-size="23" font-weight="700" fill="#26354a">玩家</text>
 <text x="1418" y="307" font-size="20" font-weight="400" fill="#26354a">提问 / 上报状态 / 回答澄清 / 查看结果</text>
 <path d="M1400 275 H1380 V235 H265 V245" fill="none" stroke="#4a637e" stroke-width="2.5" stroke-linejoin="round" marker-end="url(#arrow)"/>
-<text x="720" y="230" font-size="18" fill="#4a637e" paint-order="stroke" stroke="#ffffff" stroke-width="7" stroke-linejoin="round">请求、附件引用、补充回答</text>
+<text x="700" y="230" font-size="18" fill="#4a637e" paint-order="stroke" stroke="#ffffff" stroke-width="7" stroke-linejoin="round">提示词、附件引用、补充回答</text>
 <path d="M460 293 H540" fill="none" stroke="#4a637e" stroke-width="2.5" stroke-linejoin="round" marker-end="url(#arrow)"/>
-<text x="474" y="281" font-size="18" fill="#4a637e" paint-order="stroke" stroke="#ffffff" stroke-width="7" stroke-linejoin="round">请求</text>
+<text x="474" y="281" font-size="18" fill="#4a637e" paint-order="stroke" stroke="#ffffff" stroke-width="7" stroke-linejoin="round">UserInput</text>
 <rect x="40" y="410" width="1280" height="290" rx="20" fill="#ffffff" stroke="#d8e0ec" stroke-width="2"/>
 <text x="64" y="448" font-size="25" font-weight="700" fill="#26354a">02  理解层 · LangGraph 主图：State + Node + Conditional Edge</text>
-<rect x="70" y="470" width="350" height="110" rx="12" fill="#f1eaff" stroke="#8652b3" stroke-width="2"/>
-<text x="88" y="502" font-size="23" font-weight="700" fill="#45276b">G · 语言 / 视觉解析</text>
-<text x="88" y="532" font-size="20" font-weight="400" fill="#45276b">多意图、实体、数量候选</text>
-<text x="88" y="560" font-size="20" font-weight="400" fill="#45276b">图片定位与未知字段</text>
+<rect x="70" y="470" width="350" height="110" rx="12" fill="#e8f3ff" stroke="#2864a0" stroke-width="2"/>
+<text x="88" y="502" font-size="23" font-weight="700" fill="#12324f">D · ParsedInput 接收</text>
+<text x="88" y="532" font-size="20" font-weight="400" fill="#12324f">请求候选、状态候选、证据</text>
+<text x="88" y="560" font-size="20" font-weight="400" fill="#12324f">unknowns / provenance / 解析版本</text>
 <rect x="500" y="470" width="340" height="110" rx="12" fill="#e8f3ff" stroke="#2864a0" stroke-width="2"/>
-<text x="518" y="502" font-size="23" font-weight="700" fill="#12324f">D · 状态合并 / 需求检查</text>
-<text x="518" y="532" font-size="20" font-weight="400" fill="#12324f">范围、来源、新鲜度、冲突</text>
-<text x="518" y="560" font-size="20" font-weight="400" fill="#12324f">固定玩家快照与知识 release</text>
+<text x="518" y="502" font-size="23" font-weight="700" fill="#12324f">D · 语义理解 / 状态合并</text>
+<text x="518" y="532" font-size="20" font-weight="400" fill="#12324f">目标、实体、槽位与上下文</text>
+<text x="518" y="560" font-size="20" font-weight="400" fill="#12324f">范围、来源、新鲜度、冲突</text>
 <rect x="920" y="470" width="350" height="110" rx="12" fill="#e8f3ff" stroke="#2864a0" stroke-width="2"/>
 <text x="938" y="502" font-size="23" font-weight="700" fill="#12324f">D · 条件路由</text>
 <text x="938" y="532" font-size="20" font-weight="400" fill="#12324f">事实 / 计算 / 决策</text>
@@ -45,9 +46,9 @@
 <text x="938" y="647" font-size="23" font-weight="700" fill="#12324f">D · interrupt / resume</text>
 <text x="938" y="677" font-size="20" font-weight="400" fill="#12324f">同任务恢复 · 按依赖重新评估</text>
 <path d="M680 340 V388 H245 V470" fill="none" stroke="#4a637e" stroke-width="2.5" stroke-linejoin="round" marker-end="url(#arrow)"/>
-<text x="264" y="391" font-size="18" fill="#4a637e" paint-order="stroke" stroke="#ffffff" stroke-width="7" stroke-linejoin="round">自然语言 / 图片</text>
+<text x="264" y="391" font-size="18" fill="#4a637e" paint-order="stroke" stroke="#ffffff" stroke-width="7" stroke-linejoin="round">ParsedInput</text>
 <path d="M1100 340 V390 H670 V470" fill="none" stroke="#4a637e" stroke-width="2.5" stroke-linejoin="round" marker-end="url(#arrow)"/>
-<text x="910" y="385" font-size="18" fill="#4a637e" paint-order="stroke" stroke="#ffffff" stroke-width="7" stroke-linejoin="round">结构化表单可直达</text>
+<text x="900" y="385" font-size="18" fill="#4a637e" paint-order="stroke" stroke="#ffffff" stroke-width="7" stroke-linejoin="round">运行时上下文</text>
 <path d="M420 525 H500" fill="none" stroke="#4a637e" stroke-width="2.5" stroke-linejoin="round" marker-end="url(#arrow)"/>
 <text x="434" y="513" font-size="18" fill="#4a637e" paint-order="stroke" stroke="#ffffff" stroke-width="7" stroke-linejoin="round">候选</text>
 <path d="M840 525 H920" fill="none" stroke="#4a637e" stroke-width="2.5" stroke-linejoin="round" marker-end="url(#arrow)"/>
