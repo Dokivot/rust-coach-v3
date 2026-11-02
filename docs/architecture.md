@@ -1,8 +1,23 @@
 # Rust Coach：LangGraph 工程架构设计 v2
 
-修订日期：2026-11-01。本版替代初版设计，按四项新增要求调整主流程、计算边界、知识检索和中途澄清。本文描述后续业务系统目标；当前已实现基础聊天骨架，尚无计算器、向量索引或搜索集成。现状与范围见 [首版实施说明](scaffold.md)。
+修订日期：2026-11-03。本版在既有 LangGraph、计算、玩家状态、网页取证和视觉输入设计上补充六层架构总览，并先细化输入层。目标能力与当前实现边界分别见 [首版实施说明](scaffold.md)、[建议链路](advice.md) 和 [截图实施说明](multimodal-implementation.md)。
 
-## 1. 需求分析与本次架构决策
+## 1. 六层架构总览
+
+项目按“输入层 → 理解层 → 知识层 → 决策层 → 生成层 → 评测与观测”组织。六层共享 Agent Runtime、任务状态和持久化，但通过版本化契约交接，避免模型直接改写玩家状态或绕过工具生成结论。
+
+| 层 | 负责 | 主要产物 |
+|---|---|---|
+| 输入层 | 接收用户提示词和可选图像等多模态附件；校验、归一化、来源记录 | `InputEnvelope` |
+| 理解层 | 意图、实体、槽位、视觉观测解析；状态合并与路由 | `IntentSpec`、有效状态引用 |
+| 知识层 | 规则、机制资料、实时证据、版本与引用 | `EvidenceBundle` |
+| 决策层 | 计算、计划、约束校验、行动取舍 | `ActionPlan`、`CalculationResult` |
+| 生成层 | 基于已验证结果组织解释、执行输出门禁 | `AnswerSpec`、最终回答 |
+| 评测与观测 | 跨层 trace、质量评测、成本、badcase 与回归发布 | 指标、评测样本、改进反馈 |
+
+本次先细化输入层，见 [输入层设计](architecture-input-layer.md)。其中的请求字段、玩家状态范围、附件引用、图像保留策略和当前 API 以现有实现为准；后续各层按同一契约继续展开。
+
+## 2. 需求分析与本次架构决策
 
 系统面向生存游戏 Rust，包含两条业务链路：**基于玩家当前状态的决策建议**和**两类确定性计算**。推荐 Python + LangGraph；游戏名称不约束后端语言。
 
@@ -15,7 +30,7 @@
 
 结论：**Plan-and-Execute 适合决策建议；Agentic RAG 是 Executor 可调用的知识获取子流程；精确计算保留独立短路径。** 外层决定“为完成玩家目标还需做什么”，内层决定“为这个证据问题还缺什么资料”，避免两层都在规划整段对话。
 
-### 1.1 支持范围
+### 2.1 支持范围
 
 | 问题 | 路径 | 输出边界 |
 |---|---|---|
@@ -27,7 +42,7 @@
 
 不保留战斗模拟、护甲伤害引擎、基地攻击路径求解器作为当前建设项。装备和基地仍可作为决策背景。
 
-### 1.2 正确性边界
+### 2.2 正确性边界
 
 - LLM 数字、搜索摘要和计算器网页上的孤立结果不能冒充确定性计算。
 - 检索相关不等于支持当前版本、当前玩家的结论；未知状态不能默认成有利条件。
@@ -35,7 +50,7 @@
 - 计算 provider 未接入时，依赖精确成本的行动为 conditional/blocked，不能声称资源已验证。
 - 工具、检索、澄清与重规划都有预算；证据不足、拒绝补充和超时是合法退出情形。
 
-## 2. 总体架构与技术栈
+## 3. 总体架构与技术栈
 
 ![Rust Coach v2 技术架构](architecture.svg)
 
@@ -58,7 +73,7 @@
 
 首期不要求独立图数据库、Kafka 或微服务网格。工具是能力契约，存储负责数据，Graph 负责控制流。
 
-## 3. 模块职责与依赖方向
+## 4. 模块职责与依赖方向
 
 | 模块 | 负责 | 不负责 |
 |---|---|---|
@@ -75,11 +90,13 @@
 
 依赖：API → Runtime → Graph → Application/Domain → Ports；具体 adapter 由 Runtime 注入。节点调用用例并返回增量。RAG 返回证据，不越过外层计划直接替玩家决定行动。
 
-## 4. 输入、理解与玩家状态
+## 5. 输入层、理解层与玩家状态
 
-### 4.1 输入与意图
+输入层的独立设计和实际接入边界见 [输入层设计](architecture-input-layer.md)。输入层只接收 `UserInput`（提示词和可选附件）；本节的玩家状态是理解层从用户输入解析出的观测，或运行时读取的已有上下文。
 
-CoachRequest 包含 request_id、conversation_id、task_id（继续任务时）、message、attachments、player_observations、server_context、task_preferences。身份从鉴权上下文获得，不信任模型自报的 user ID。
+### 5.1 输入与意图
+
+CoachRequest 包含 request_id、conversation_id、task_id（继续任务时）、`user_input.prompt`、`user_input.attachments`、server_context 和 task_preferences。`player_observations` 不属于外部输入字段：它由理解层从 prompt/附件解析，或由 Runtime 按会话绑定加载。身份从鉴权上下文获得，不信任模型自报的 user ID。
 
 服务器上下文区分 platform、server、wipe、build、ruleset/mod，允许 unknown。图片存对象引用/hash/采集时间。状态来自用户输入、截图或授权且实际支持相应字段的接口，不假定可自动读取完整游戏状态。
 
@@ -94,7 +111,7 @@ IntentSpec 包含：
 
 多意图保留依赖，例如“先决定要不要拆，再算差额”以决策为主，内部调用计算接口。“最省”必须明确成本维度。初始 required_slots 不是所有字段：后续检索/工具发现新前置条件时，同样可以澄清。
 
-### 4.2 玩家状态
+### 5.2 玩家状态
 
 PlayerSnapshot 包含库存/容器、蓝图/工作台、基地观测、装备背景、队伍、在线/离线时间、威胁信号、目标/偏好。字段或集合携带 source、observed_at、coverage、verification、valid_until、server_id、wipe_id；整体带 revision。
 
@@ -104,9 +121,9 @@ PlayerSnapshot 包含库存/容器、蓝图/工作台、基地观测、装备背
 
 换服、wipe、死亡、交易、被袭击等使相关字段失效。缺少事件接入时按 TTL 和决策风险重新确认。阶段是科技、资源、基地、队伍与时间的推断，不只按开服天数。
 
-## 5. 状态、记忆和两种计划
+## 6. 状态、记忆和两种计划
 
-### 5.1 生命周期
+### 6.1 生命周期
 
 | 对象 | 存储 | 机制 |
 |---|---|---|
@@ -119,7 +136,7 @@ PlayerSnapshot 包含库存/容器、蓝图/工作台、基地观测、装备背
 
 conversation_id 表示聊天，task_id 对应 LangGraph thread_id。同任务补充信息复用 thread；新目标创建新任务并加载相关对话。Checkpointer 负责执行恢复，MemoryService 负责跨任务数据，不能混为一谈。
 
-### 5.2 TaskState 契约
+### 6.2 TaskState 契约
 
 | 字段组 | 内容 |
 |---|---|
@@ -137,7 +154,7 @@ conversation_id 表示聊天，task_id 对应 LangGraph thread_id。同任务补
 
 StepResult 绑定 step_id、plan_revision、input_hash、snapshot_revision、evidence_set_id、provider_version。依赖改变标记 stale，未受影响成果可以复用。
 
-### 5.3 ExecutionPlan 与 ActionPlan
+### 6.3 ExecutionPlan 与 ActionPlan
 
 **ExecutionPlan 是 Agent 的研究执行计划**，例如核对离线时间、检索策略、比较候选、核算资源、验证建议。Planner 创建，Executor 消费。
 
@@ -149,9 +166,9 @@ operation 限于 retrieve_evidence、request_information、calculate_raid、calc
 
 可行性区分 verified、conditional、blocked。计划结构合法不等于资源可行；“执行”指 Agent 的检索/工具操作，不指自动操作游戏。未来资源和效果只在模拟状态，不扣真实背包。
 
-## 6. 主图与计算短路径
+## 7. 主图与计算短路径
 
-### 6.1 主图
+### 7.1 主图
 
 主链为 START → load_context → parse_and_reconcile → assess_request → 条件路由：
 
@@ -167,7 +184,7 @@ operation 限于 retrieve_evidence、request_information、calculate_raid、calc
 
 已知简单事实走实体/版本直查；结构化计算直接调用同一用例，无需 Planner。子图执行中可原地持久中断，不需要先结束再重新运行。
 
-### 6.2 两个 CalculatorPort，仅预留
+### 7.2 两个 CalculatorPort，仅预留
 
 **本次不调研/接入具体网站，不实现拆家公式、配方引擎或爬虫。** 先定义接口，后续调研选择 provider。当前 availability = not_configured；这和玩家漏填字段不同，不能反复问用户来掩盖缺少工具。
 
@@ -184,7 +201,7 @@ CalculationResult：status（exact/conditional/bounded/needs_input/unavailable/u
 
 固定路径：**抽取 → 规范化 → 完整性/schema 校验 → capability 检查 → 工具调用 → 结果验证 → 模板渲染**。缺输入返回 NeedsInput；未配置返回 unavailable；不支持版本返回 unsupported；均不回退为 LLM 心算。
 
-### 6.3 后续网站调研与接入标准
+### 7.3 后续网站调研与接入标准
 
 优先可授权 API、可审查实现或本地复现的已验证算法。网页 UI 自动化只在没有稳定接口且满足使用约束时考虑。网站存在不代表可以稳定用于生产。
 
@@ -194,9 +211,9 @@ CalculationResult：status（exact/conditional/bounded/needs_input/unavailable/u
 
 决策调用未配置接口时，将精确预算留为未知并继续不依赖该数字的部分；如果缺口会改变优先级，结果必须为 partial，不能声称已求得最优或可执行的完整方案。
 
-## 7. Plan-and-Execute 决策子图
+## 8. Plan-and-Execute 决策子图
 
-### 7.1 节点编排
+### 8.1 节点编排
 
 | Node | 类型 | 输入 → 输出 |
 |---|---|---|
@@ -216,7 +233,7 @@ CalculationResult：status（exact/conditional/bounded/needs_input/unavailable/u
 
 Planner 不把自己写出的结论当执行结果。Executor 是受限执行层，不是拥有任意权限的自由聊天 Agent。候选行动由模型提出，硬约束与状态转移由代码验证。
 
-### 7.2 循环与条件边
+### 8.2 循环与条件边
 
 完整节点图见 [Plan-and-Execute](plan-and-execute.mmd)。
 
@@ -233,15 +250,15 @@ Planner 通常生成 3–6 个任务级步骤。Replanner 只修改未完成或�
 
 assemble_recommendation 操作映射到 finalize_decision，不另外调用一个不受约束的回答 Agent。候选来自 Planner/Replanner 的结构化输出或领域行动目录，evaluate_actions 只验证与比较，不隐藏一次模型调用。
 
-### 7.3 行动评估
+### 8.3 行动评估
 
 从行动目录与证据生成少量候选，先检查资源/科技/时间/风险等硬约束，再按明确偏好词典序或 Pareto 比较；权重须有来源或玩家确认。避免为不可校准的收益/风险编造精确分数。
 
 计划内顺序应用模拟资源变化，避免重复消耗同一份库存。采集/解锁等前置步骤尚未完成时，后续行动是 conditional。未接入计算工具时不能填写虚构成本。输出首选、备选、第一步、完成标准和改道条件；未来收益仍可能是范围或经验判断。
 
-## 8. 面向决策的知识库设计
+## 9. 面向决策的知识库设计
 
-### 8.1 内容分层
+### 9.1 内容分层
 
 | 层 | 内容 | 用途 |
 |---|---|---|
@@ -254,7 +271,7 @@ assemble_recommendation 操作映射到 finalize_decision，不另外调用一�
 
 StrategyCard 建议包含适用阶段/目标、前置条件、行动、收益风险、反例、停止/切换条件、平台/ruleset/build 范围、来源与审核状态。“先加固”应包含何时适用以及何种证据会推翻建议。
 
-### 8.2 入库与向量索引
+### 9.2 入库与向量索引
 
 流水线：来源登记/允许抓取 → 原文快照/hash → 清洗与来源/日期/版本抽取 → 按主题和条件分块 → 模型抽取策略候选 → 规则/人工审核 → embedding 与关键词索引 → 检索/引用回归 → 不可变 kb_release → 原子发布。
 
@@ -266,9 +283,9 @@ pgvector 的模型/维度/预处理版本绑定索引，升级时重建并回归
 
 语义与关键词召回可各 top 20，经去重/RRF/rerank 留 4–8 条，作为待调优起点。中文别名专门维护。ANN 过滤后候选不足需扩大召回、分区或小集合精确检索，以过滤后的 Recall@k 验证。
 
-## 9. Agentic RAG：语义检索与互联网实时搜索
+## 10. Agentic RAG：语义检索与互联网实时搜索
 
-### 9.1 契约
+### 10.1 契约
 
 EvidenceNeed：question、decision_step_id、required_claims、relevant_player_context、platform/ruleset/build、kb_release、freshness_requirement、allowed_sources、budget_slice。只传相关上下文，web query 不含玩家身份、私有基地坐标或完整背包。
 
@@ -276,7 +293,7 @@ EvidenceBundle：status（sufficient/partial/needs_input/conflict/unavailable）
 
 返回的是材料与支持范围，不是直接绕过 Executor 的最终决策。
 
-### 9.2 节点
+### 10.2 节点
 
 | Node | 类型 | 职责 |
 |---|---|---|
@@ -305,7 +322,7 @@ both 使用明确的有限 fan-out/fan-in：向量分支与 search→fetch 分�
 
 grade 的语义判断仍可能错。代码能验证引用位置、来源、适用性和覆盖结构，不能自动证明所有自然语言事实为真；关键机制要有可信原文与独立评测，不能让模型自评越过门禁。
 
-### 9.3 来源选择策略
+### 10.3 来源选择策略
 
 | 条件 | 选择 |
 |---|---|
@@ -322,7 +339,7 @@ grade 的语义判断仍可能错。代码能验证引用位置、来源、适�
 
 WebFetch 限公共 HTTP(S)、正文类型/大小/timeout，防私网目标和不安全重定向；页面指令不改变系统/工具权限。网页作为证据数据处理。
 
-### 9.4 正式知识与实时证据边界
+### 10.4 正式知识与实时证据边界
 
 本地固定 kb_release；实时页面形成不可变 web_evidence_snapshot。可合并为一个 bundle，但每条声明检查平台/build/ruleset 兼容性，不能给新页面强贴旧 release 标签。
 
@@ -332,15 +349,15 @@ WebFetch 限公共 HTTP(S)、正文类型/大小/timeout，防私网目标和不
 
 新来源进入 staging，审核/去重/切块/embedding/回归后才正式发布。禁止把模型总结、未经确认用户反馈直接回灌为权威语料。
 
-### 9.5 停止条件
+### 10.5 停止条件
 
 required_claims 的覆盖矩阵决定充分性：必要声明有适用证据、关键反证被处理、时效满足；不是拿到 k 篇或模型分数很高就停止。
 
 连续一轮无新增有效证据、重复 query/URL、来源耗尽、冲突未解或预算触顶就 partial，列明缺口。外层改变证据需求可新建 rag_task_id，但总预算不重置，不允许内外循环互相重启绕过上限。
 
-## 10. Agent Loop 中途澄清
+## 11. Agent Loop 中途澄清
 
-### 10.1 发现点与缺口分类
+### 11.1 发现点与缺口分类
 
 入口、Planner、Executor、工具结果、RAG 覆盖评估和最终行动验证都可发现缺失字段。例如检索后才发现策略依赖“是否有队友守家”，不应要求初始 prompt 一次包含所有信息。
 
@@ -352,13 +369,13 @@ required_claims 的覆盖矩阵决定充分性：必要声明有适用证据、�
 
 不能把公共知识缺口全部推给用户，也不能用网上信息补造私人状态。
 
-### 10.2 NeedsInput
+### 11.2 NeedsInput
 
 ClarificationRequest 包含 clarification_id、task_id、origin_graph、step_id、rag_task_id（若有）、missing_fields（类型/原因/范围/选项）、question、accepts_unknown、impact_on_result、return_policy、plan/player_revision、evidence_need_hash、expires_at。
 
 return_policy 仅允许 reassess_request/retry_step/reassess_evidence/replan，由代码白名单控制，不接受任意 goto。优先问影响结论的最小相关字段组并说明原因；可给分支时允许未知，不静默假设。
 
-### 10.3 interrupt / resume 机制
+### 11.3 interrupt / resume 机制
 
 每个需要暂停的图有本地 clarify 节点，共享实现/schema。主图入口、决策子图和 RAG 子图都可原地中断；由顶层 Runtime 统一展示，用户只面对一个 Coach。
 
@@ -366,7 +383,7 @@ return_policy 仅允许 reassess_request/retry_step/reassess_evidence/replan，�
 
 中断保存 checkpoint，发 needs_input 事件后释放 worker/执行租约，不在 HTTP 请求中等用户数小时。恢复入口校验任务所有权、pending interrupt、schema、resume_event_id；同一个事件去重。无效回答产生字段错误并受限重问，不用反复异常崩溃代替校验。
 
-### 10.4 补充后的恢复顺序
+### 11.4 补充后的恢复顺序
 
 1. 将用户确认的 ObservationPatch 按 ID 去重、revision CAS 写入。
 2. 检查等待期间库存/服务器/wipe、知识撤回、网页时效与预算变化。
@@ -376,7 +393,7 @@ return_policy 仅允许 reassess_request/retry_step/reassess_evidence/replan，�
 
 RAG 内确认的新状态若改变外层假设，返回 context_changed 和 revision；外层 verify_step/assess_progress 必须检查，不能把检索成功等同旧计划仍有效。
 
-### 10.5 嵌套持久化规则
+### 11.5 嵌套持久化规则
 
 - 主图使用 PostgreSQL Checkpointer；两个子图作为**静态图节点**挂载，继承父图持久化、每次 invocation 隔离；不设 checkpointer=False，不为每个检索子图建立长期记忆。[L2][L3]
 - 共享输入输出通道明确；不同 schema 用纯映射 wrapper。每个新 RAG invocation 初始化新 rag_task_id 并清理旧输出，中断恢复不能重新初始化。
@@ -385,7 +402,7 @@ RAG 内确认的新状态若改变外层假设，返回 context_changed 和 revi
 - 同 task 单写者租约/fencing token；Checkpoint 不保证外部 exactly-once，预算/状态写入/outbox 各自幂等。
 - graph_version/state_schema_version 绑定 checkpoint，升级保留兼容 worker 或迁移，不强行用新图解释旧状态。
 
-## 11. 预算、异常和终止
+## 12. 预算、异常和终止
 
 以下为待评测的初始配置，上限取先到者，不保证一个任务能用满所有局部限额。
 
@@ -419,9 +436,9 @@ recursion_limit 只是额外 super-step 防护，不能替代业务计数、dead
 
 生命周期：RUNNING ↔ WAITING_INPUT → SUCCEEDED/PARTIAL/FAILED/CANCELLED/EXPIRED。WAITING_INPUT 是暂停不是成功 END。用户换核心目标需显式更新并重新验证，或创建新任务。
 
-## 12. 知识时效、生成与幻觉控制
+## 13. 知识时效、生成与幻觉控制
 
-### 12.1 版本管理
+### 13.1 版本管理
 
 区分游戏 build/ruleset、玩家 wipe/revision、kb_release、embedding/index version、计算 provider/data version、web snapshot/live_checked_at。不可用一个更新时间代替全部含义。
 
@@ -429,7 +446,7 @@ recursion_limit 只是额外 super-step 防护，不能替代业务计数、dead
 
 缓存 key 包含完整语义：本地查询/过滤/release/embedding；web URL/hash/再验证时间；私人结果 user/snapshot/目标/偏好/evidence；计算还含 provider/规则/输入 hash。TTL 只控制回收，不替代适用性。
 
-### 12.2 AnswerSpec 与人设
+### 13.2 AnswerSpec 与人设
 
 AnswerSpec 包含结论、可支持的 claims、ActionPlan、备选、假设、缺失信息、限制、引用和状态/知识/网页/provider 版本。数值由 provider 模板渲染，绑定对象、单位、比较关系与条件；LLM 不再计算一次。
 
@@ -437,15 +454,15 @@ AnswerSpec 包含结论、可支持的 claims、ActionPlan、备选、假设、�
 
 表达固定为“结论 → 立即可做步骤 → 取舍 → 完成/切换条件 → 依据与未知”。人设务实、尊重玩家、不保证胜利；风格不能把 conditional 改成 verified。未接入计算器不能在润色段偷偷补数字。
 
-### 12.3 输出安全
+### 13.3 输出安全
 
 网页、截图文字、工具返回、摘要是数据，不改变系统策略/工具权限。权限、隐私、引用存在、单位/对象绑定和输出契约由代码检查，语义模型自评分不能越过门禁。
 
 流式先显示阶段/工具状态，关键结论验证后再发送；门禁失败回退模板。正常游戏拆家按游戏任务处理。日志默认脱敏，不存密钥、完整私有图像或模型私有思维链。
 
-## 13. 工程化、工具与目录
+## 14. 工程化、工具与目录
 
-### 13.1 工具注册表
+### 14.1 工具注册表
 
 | 工具 | 状态/职责 |
 |---|---|
@@ -459,7 +476,7 @@ AnswerSpec 包含结论、可支持的 claims、ActionPlan、备选、假设、�
 
 统一 ToolResult 包含 call_id、status、data/ref、evidence_refs、input_hash、snapshot_revision、versions、latency、error。注册表配置 schema、支持范围、timeout/retry、权限和成本。ask_user 是图中的持久中断能力，不是阻塞等待人回复的普通外部工具。
 
-### 13.2 持久化与 API
+### 14.2 持久化与 API
 
 PostgreSQL 分表保存 tasks/conversations/messages、checkpoint、player_observations/snapshots、user_memory、documents/chunks/embeddings/sources/kb_releases、search_runs/web_snapshots/evidence_sets、plans/step_results/answers、budget_ledger/outbox/evaluation_cases。对象存储保存图片和合法保留的来源正文。
 
@@ -469,7 +486,7 @@ API 包含创建/查询任务、SSE events、resume、cancel、player observatio
 
 Graph 启动编译复用；客户端由 Runtime 注入；checkpoint setup/迁移在部署时执行。配置版本化模型/prompt、capabilities、检索参数、网络策略、release、预算、TTL、澄清限制。密钥不进入 State。
 
-### 13.3 未来项目布局
+### 14.3 未来项目布局
 
 - api/：鉴权、任务、resume、SSE。
 - runtime/：生命周期、租约、预算账本、依赖。
@@ -482,9 +499,9 @@ Graph 启动编译复用；客户端由 Runtime 注入；checkpoint setup/迁移
 
 当前实际交付仍只有 docs、README 和制图脚本；不为了目录形式提前实现计算器或引入复杂服务。
 
-## 14. 评测与观测
+## 15. 评测与观测
 
-### 14.1 四项要求的验收案例
+### 15.1 四项要求的验收案例
 
 | 要求 | 验证场景 | 必须达到的行为 |
 |---|---|---|
@@ -495,7 +512,7 @@ Graph 启动编译复用；客户端由 Runtime 注入；checkpoint setup/迁移
 
 独立标注集覆盖意图/槽位、玩家状态、策略检索、时效、证据支持/反驳、行动可行性、重规划与恢复。按来源、场景、版本/时间切分，防同义改写/转载泄漏。模型自评和“用户没投诉”不能作为唯一真值。
 
-### 14.2 指标与发布门槛
+### 15.2 指标与发布门槛
 
 - 理解：多意图 F1、关键槽位准确、漏澄清/无谓澄清。
 - 检索：过滤后 Recall@k/nDCG、必要声明覆盖、web 扩展增益、最新请求实时核验率、跨版本污染。
@@ -506,7 +523,7 @@ Graph 启动编译复用；客户端由 Runtime 注入；checkpoint setup/迁移
 
 固定关键回归集要求零跨用户污染、零预算重置、零未配置 provider 假数字、零已知冲突关键事实放行。检索/专家阈值需按真实数据制定并报告样本量，不能拒答全部来刷正确率。后续接入计算器再补独立手算/实测金标、配方批次/共享库存和取整/差分测试；本次不声称运行了这些测试。
 
-### 14.3 故障与 badcase
+### 15.3 故障与 badcase
 
 故障测试覆盖搜索限流、空正文、恶意页面、向量库失败、单分支超时、schema 错误、中断前后崩溃、旧图版本恢复、并发 resume、知识撤回和全局预算耗尽。
 
@@ -514,7 +531,7 @@ Span 记录 task/trace/graph/node、step/plan_revision、rag_task_id、query_has
 
 badcase：用户纠正/失败/抽样 → 快照与版本 → 分类 → 人工金标 → 修复 → 回归 → 灰度/回滚。分类区分理解、状态、计划、检索、网络、证据、工具、表达、恢复；反馈不直接改权威知识。
 
-## 15. 延迟与成本
+## 16. 延迟与成本
 
 以下是待压测目标，不是测量结果。Agentic RAG 增加查询规划、证据评估与网络时延，不能沿用所有决策仅两次模型调用的假设。
 
@@ -529,9 +546,9 @@ badcase：用户纠正/失败/抽样 → 快照与版本 → 分类 → 人工�
 
 公开知识缓存可共享，私人决策答案不可跨用户复用。时效请求执行 live/再验证，不能伪装刚查过。费用按实际价格配置计模型、图片、embedding/rerank、搜索/抓取、未来计算与算力；离线成本分开统计；恢复/重试同样计费并受总预算约束。
 
-## 16. 端到端示例
+## 17. 端到端示例
 
-### 16.1 “现在冲科技还是先加固？”
+### 17.1 “现在冲科技还是先加固？”
 
 Planner 建立“确认处境 → 取证 → 构造候选 → 验证资源/依赖 → 比较”的 ExecutionPlan。Executor 调用 Agentic RAG；向量检索得到条件化策略，涉及补丁或资料过旧时联网取正文。
 
@@ -541,19 +558,19 @@ Planner 建立“确认处境 → 取证 → 构造候选 → 验证资源/依�
 
 最终答复给首选/备选、依据、现在能做的第一步、完成/切换条件及未验证项，不虚构袭击概率或库存。
 
-### 16.2 “这面石墙最省多少炸药？”
+### 17.2 “这面石墙最省多少炸药？”
 
 抽取类型、剩余 HP/确认假设、版本、方法与成本目标，再校验 capability。当前 not_configured，明确尚未接入可靠计算工具，不用 RAG 凑数字。后续 provider 上线后沿同一接口返回方案、过程、依据和范围。
 
-### 16.3 “这次更新之后怎么发展？”
+### 17.3 “这次更新之后怎么发展？”
 
 显式时效需求主动 web/both，搜索后取原文并记录 live_checked_at。若只有旧指南或网络失败，不能说已核实最新版本；输出可用的一般原则与未核实变化。新来源可进入 staging，不即时污染发布向量库。
 
-### 16.4 “材料都在图里，还差多少？”
+### 17.4 “材料都在图里，还差多少？”
 
 遮挡关键数量触发字段级澄清。用户不知道时可请求完整盘点，或描述已知范围内的条件；provider 缺失仍独立报告不可用。补充截图不等于解决工具缺失。
 
-## 17. 实施顺序与本版验收
+## 18. 实施顺序与本版验收
 
 | 阶段 | 交付 | 验收 |
 |---|---|---|
@@ -567,7 +584,7 @@ A–C 可在计算缺省状态推进，前提是能力诚实和结果条件化�
 
 本版设计验收依据：四项要求分别对应第 7、6、8–9、10 节；整体和专项图标注相同模块；工具表、评测、预算、目录与阶段均同步，不遗留首期战斗引擎或仅离线检索约束。
 
-## 18. 技术依据与实施验证
+## 19. 技术依据与实施验证
 
 此前于 2026-11-01 已读取下列官方文档，本版沿用已核对的核心语义，不声称已跑 LangGraph 集成测试：
 
