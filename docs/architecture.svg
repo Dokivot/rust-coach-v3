@@ -111,10 +111,11 @@
 <path d="M1940 875 H1960 V510 H1940" fill="none" stroke="#4a637e" stroke-width="2.5" stroke-linejoin="round" marker-end="url(#arrow)"/>
 <text transform="translate(1985 850) rotate(-90)" font-size="18" fill="#4a637e">缺资料 → 有界补检索</text>
 <rect x="40" y="740" width="1280" height="370" rx="20" fill="#ffffff" stroke="#d8e0ec" stroke-width="2"/>
-<text x="64" y="778" font-size="25" font-weight="700" fill="#26354a">03  计算短路径 / Plan-and-Execute 决策子图</text>
+<text x="64" y="778" font-size="25" font-weight="700" fill="#26354a">03  决策层 · SimpleCall + Plan-and-Execute</text>
 <rect x="70" y="800" width="350" height="90" rx="12" fill="#e8f3ff" stroke="#2864a0" stroke-width="2"/>
-<text x="88" y="832" font-size="23" font-weight="700" fill="#12324f">D · 计算输入 / 槽位检查</text>
-<text x="88" y="862" font-size="20" font-weight="400" fill="#12324f">抽取 → 规范化 → 能力检查</text>
+<text x="88" y="832" font-size="23" font-weight="700" fill="#12324f">D · SimpleCallChain</text>
+<text x="88" y="862" font-size="20" font-weight="400" fill="#12324f">普通聊天直达生成层</text>
+<text x="88" y="890" font-size="20" font-weight="400" fill="#12324f">强计算：一次 CalculatorPort</text>
 <rect x="500" y="800" width="340" height="90" rx="12" fill="#f1eaff" stroke="#8652b3" stroke-width="2"/>
 <text x="518" y="832" font-size="23" font-weight="700" fill="#45276b">G · Planner / Replanner</text>
 <text x="518" y="862" font-size="20" font-weight="400" fill="#45276b">任务执行计划 · 保留有效成果</text>

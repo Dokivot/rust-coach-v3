@@ -137,8 +137,8 @@ def render():
     arrow("M1940 875 H1960 V510 H1940")
     parts.append('<text transform="translate(1985 850) rotate(-90)" font-size="18" fill="#4a637e">缺资料 → 有界补检索</text>')
 
-    panel(40, 740, 1280, 370, "03  计算短路径 / Plan-and-Execute 决策子图")
-    box(70, 800, 350, 90, "D", "计算输入 / 槽位检查", ["抽取 → 规范化 → 能力检查"])
+    panel(40, 740, 1280, 370, "03  决策层 · SimpleCall + Plan-and-Execute")
+    box(70, 800, 350, 90, "D", "SimpleCallChain", ["普通聊天直达生成层", "强计算：一次 CalculatorPort"])
     box(500, 800, 340, 90, "G", "Planner / Replanner", ["任务执行计划 · 保留有效成果"])
     box(920, 800, 350, 90, "D", "计划校验 / Executor", ["ready step · 动态工具 / 子图"])
     box(500, 960, 340, 105, "D", "行动候选评估", ["依赖、前置条件、资源与取舍", "未知预算 → conditional"])

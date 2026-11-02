@@ -71,6 +71,7 @@ node --check src/rust_coach/static/vision.js
 
 - [六层架构：输入层设计](docs/architecture-input-layer.md)：定义用户提示词和可选图像附件的接入、校验、归一化、来源，以及由此解析玩家状态的交接契约。
 - [六层架构：理解层设计](docs/architecture-understanding-layer.md)：定义意图识别、状态解析、请求路由、数据流向，以及确定性组件与 LLM/VLM 的职责边界。
+- [六层架构：决策层设计](docs/architecture-decision-layer.md)：定义简单工具调用、Plan-and-Execute、Agent Loop、工具治理，以及与理解层、知识层和生成层的交接。
 
 - [多模态截图设计](docs/multimodal-design.md) 保留目标和评测规划；首版实际实现、边界及验证见 [实施说明](docs/multimodal-implementation.md) 与 [实际数据流图](docs/multimodal-implemented.mmd)。
 - [人设与表达一致性设计](docs/persona-design.md)：实施前的调研、协议设计与目标指标；附 [来源审核](docs/persona-source-audit.json) 与 [18 个评测种子案例](docs/persona-eval-seeds.json)。已落地范围、测试覆盖与未解决的语义边界见 [实施说明](docs/persona-implementation.md)。

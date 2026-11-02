@@ -33,9 +33,14 @@ flowchart TB
     end
     ASK["D · 共享澄清能力<br/>各图本地 clarify → interrupt → resume<br/>校验补充信息、按依赖失效、恢复原任务"]
 
-    subgraph CALC["强计算短路径 · 仅预留接口"]
+    subgraph SIMPLE["决策层 · SimpleCall 简单调用链路"]
         SLOTS["D · 输入规范化 / 槽位校验"]
         PORTS["D · CalculatorPort<br/>raid.calculate / craft.plan_gap<br/>not_configured：明确不可用"]
+        SIMPLE_VERIFY["D · 结果校验<br/>单位、范围、版本、provenance"]
+        SIMPLE_RESULT["D · DecisionResult<br/>CalculationResult / unavailable / needs_input"]
+        SLOTS --> PORTS
+        PORTS --> SIMPLE_VERIFY
+        SIMPLE_VERIFY --> SIMPLE_RESULT
     end
 
     subgraph PE["Plan-and-Execute 决策子图"]
@@ -89,10 +94,11 @@ flowchart TB
     EM -->|历史事件上下文| U_STATE
     SM -->|偏好与学习上下文| U_STATE
     STATE -->|关键缺口| ASK
-    STATE -->|两类计算| SLOTS
+    STATE -->|简单强计算| SLOTS
+    STATE -->|普通聊天直达| SPEC
     SLOTS -->|完整且能力匹配| PORTS
     SLOTS -->|缺字段| ASK
-    PORTS -->|独立计算：验证结果或不可用| SPEC
+    SIMPLE_RESULT -->|结构化结果| SPEC
     STATE -->|决策建议| PREP
     PREP --> PLAN
     PLAN --> CHECK
@@ -166,7 +172,7 @@ flowchart TB
     classDef generative fill:#f1eaff,stroke:#8652b3,color:#45276b
     classDef storage fill:#e8f5ef,stroke:#368265,color:#174c39
     classDef reserved fill:#fff5df,stroke:#ad7b20,color:#684710,stroke-dasharray:6 4
-    class API,INGRESS,FUSION,PARSED,U_PARSE,U_STATE,STATE,U_QUERY,U_ROUTE,U_CLARIFY,ASK,SLOTS,PREP,CHECK,EXEC,ACTION,VERIFY,FINALIZE,SOURCES,VECTOR,WEB,NORMAL,COVER,BUNDLE,INGEST,SPEC,OUTPUT,OBS deterministic
+    class API,INGRESS,FUSION,PARSED,U_PARSE,U_STATE,STATE,U_QUERY,U_ROUTE,U_CLARIFY,ASK,SLOTS,SIMPLE_VERIFY,SIMPLE_RESULT,PREP,CHECK,EXEC,ACTION,VERIFY,FINALIZE,SOURCES,VECTOR,WEB,NORMAL,COVER,BUNDLE,INGEST,SPEC,OUTPUT,OBS deterministic
     class TEXT,VISION,U_INTENT,PLAN,REPLAN,QUERY,GRADE,STYLE generative
     class KDB,VDB,KG,SNAP,WM,EM,SM,CP,PLAYER,RESULTS storage
     class PORTS reserved

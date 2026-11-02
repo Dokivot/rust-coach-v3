@@ -1,6 +1,6 @@
 # Rust Coach：LangGraph 工程架构设计 v2
 
-修订日期：2026-11-03。本版在既有 LangGraph、计算、玩家状态、网页取证和视觉输入设计上补充六层架构总览，并先细化输入层和理解层。目标能力与当前实现边界分别见 [首版实施说明](scaffold.md)、[建议链路](advice.md) 和 [截图实施说明](multimodal-implementation.md)。
+修订日期：2026-11-03。本版在既有 LangGraph、计算、玩家状态、网页取证和视觉输入设计上补充六层架构总览，并细化输入层、理解层和决策层。目标能力与当前实现边界分别见 [首版实施说明](scaffold.md)、[建议链路](advice.md) 和 [截图实施说明](multimodal-implementation.md)。
 
 ## 1. 六层架构总览
 
@@ -11,19 +11,19 @@
 | 输入层 | 接收用户提示词和可选图像等多模态附件；完成文本/视觉解析、融合和校验 | `ParsedInput` |
 | 理解层 | 处理结构化请求/状态候选；语义消歧、上下文合并与路由 | `CoachTaskRepresentation`、有效状态引用 |
 | 知识层 | 结构化/向量/图谱知识与三类记忆的获取、存储、检索、推导、更新和追溯 | `KnowledgeContext`、`EvidenceBundle` |
-| 决策层 | 计算、计划、约束校验、行动取舍 | `ActionPlan`、`CalculationResult` |
+| 决策层 | 路由后的任务执行；简单工具调用、Plan-and-Execute、约束校验和行动取舍 | `DecisionResult`、`ActionPlan`、`CalculationResult` |
 | 生成层 | 基于已验证结果组织解释、执行输出门禁 | `AnswerSpec`、最终回答 |
 | 评测与观测 | 跨层 trace、质量评测、成本、badcase 与回归发布 | 指标、评测样本、改进反馈 |
 
-本版细化了 [输入层设计](architecture-input-layer.md) 和 [理解层设计](architecture-understanding-layer.md)。输入层只接收 `UserInput = prompt + optional attachments`，并交付 `ParsedInput`；理解层再把请求候选、玩家状态候选和图像证据转换为带来源和不确定性的 `CoachTaskRepresentation`，通过知识查询补充实体/背景，并将任务路由给决策层。知识层的详细设计见 [知识层设计](architecture-knowledge-layer.md)。
+本版细化了 [输入层设计](architecture-input-layer.md)、[理解层设计](architecture-understanding-layer.md) 和 [决策层设计](architecture-decision-layer.md)。输入层只接收 `UserInput = prompt + optional attachments`，并交付 `ParsedInput`；理解层再把请求候选、玩家状态候选和图像证据转换为带来源和不确定性的 `CoachTaskRepresentation`，通过知识查询补充实体/背景，并将任务路由给决策层。决策层按 `simple_call` 或 `plan_execute` 执行，向生成层交付结构化结果。知识层的详细设计见 [知识层设计](architecture-knowledge-layer.md)。
 
 ## 2. 需求分析与本次架构决策
 
-系统面向生存游戏 Rust，包含两条业务链路：**基于玩家当前状态的决策建议**和**两类确定性计算**。推荐 Python + LangGraph；游戏名称不约束后端语言。
+系统面向生存游戏 Rust，包含两条业务链路：**基于玩家当前状态的决策建议**和**两类确定性计算**。推荐 Python + LangGraph；游戏名称不约束后端语言。理解层选择路由，决策层执行 `simple_call` 或 Plan-and-Execute；简单聊天可直接进入生成层，不为普通对话创建无必要的计划。
 
 | 本次要求 | 架构决策 | 交付边界 |
 |---|---|---|
-| 决策采用 Plan-and-Execute | Planner、计划校验、Executor、步骤验证、进度判定、Replanner、最终行动评估 | 明确节点、条件边、循环预算与终止条件 |
+| 决策采用双链路执行 | 简单工具调用处理强计算；Planner、计划校验、Executor、步骤验证、进度判定、Replanner 处理状态建议 | 明确路由、节点、条件边、循环预算与终止条件 |
 | 计算只覆盖拆建筑和合成缺口 | 输入抽取 → 槽位校验 → CalculatorPort → 验证 → 模板输出 | 仅设计接口和后续调研/接入标准，暂不实现计算器或接入网站 |
 | 成熟 Agentic RAG | 独立检索子图，**向量数据库语义检索与互联网实时搜索均为必备能力** | 查询规划、来源选择、正文获取、证据评估、改写、停止与降级 |
 | Loop 中途要求补充信息 | 计划、执行、RAG、行动验证都能产生 NeedsInput | 持久中断、同任务恢复、保留成果、按依赖失效重算 |
@@ -215,7 +215,9 @@ CalculationResult：status（exact/conditional/bounded/needs_input/unavailable/u
 
 决策调用未配置接口时，将精确预算留为未知并继续不依赖该数字的部分；如果缺口会改变优先级，结果必须为 partial，不能声称已求得最优或可执行的完整方案。
 
-## 8. Plan-and-Execute 决策子图
+## 8. 决策层与 Plan-and-Execute 子图
+
+本节是决策流程摘要；简单工具调用、`DecisionRequest`/`DecisionResult`、Tool Registry、Agent Loop、跨层反馈和 demo 范围见 [决策层设计](architecture-decision-layer.md)。决策层接收理解层已经完成语义消歧的任务，不重新读取原始输入；简单计算走一次受约束工具调用，状态建议走 Plan-and-Execute。
 
 ### 8.1 节点编排
 
