@@ -8,6 +8,7 @@ let conversation = null;
 let configured = false;
 let busy = false;
 let pendingRequest = null;
+let sendingDraft = null;
 
 function rememberConversation(identifier) {
   try { localStorage.setItem(storageKey, identifier); } catch {}
@@ -39,7 +40,7 @@ function updateControls() {
   input.disabled = busy || !conversation;
   sendButton.disabled = busy || (!configured && !local) || !conversation || (!input.value.trim() && !VisionUI.hasImages());
   document.querySelector("#new-chat").disabled = busy;
-  document.querySelector("#send-status").textContent = busy ? "正在处理…" : "";
+  document.querySelector("#send-status").textContent = busy ? (sendingDraft?.status || "正在处理…") : "";
   VisionUI.updateControls();
   input.style.height = "auto";
   input.style.height = Math.min(input.scrollHeight, 160) + "px";
@@ -72,7 +73,7 @@ function addMessage(role, content, pending = false, truncated = false) {
 
 function renderConversation() {
   messagesElement.replaceChildren();
-  document.querySelector("#welcome").hidden = Boolean(conversation?.turns.length);
+  document.querySelector("#welcome").hidden = Boolean(conversation?.turns.length || sendingDraft);
   for (const turn of conversation?.turns || []) {
     const userMessage = addMessage("user", turn.user || "已发送截图");
     const imageIds = turn.visual?.request_identity?.attachment_ids || [];
@@ -108,6 +109,17 @@ function renderConversation() {
       assistantMessage.append(details);
     }
   }
+  if (sendingDraft) {
+    const userMessage = addMessage("user", sendingDraft.message || "图片消息", true);
+    for (const attachment of sendingDraft.attachments) {
+      const image = document.createElement("img");
+      image.src = attachment.url;
+      image.alt = "正在发送的截图";
+      image.className = "message-image";
+      userMessage.append(image);
+    }
+    addMessage("assistant", sendingDraft.status, true);
+  }
   requestAnimationFrame(() => { scrollArea.scrollTop = scrollArea.scrollHeight; });
 }
 
@@ -127,27 +139,35 @@ document.querySelector("#chat-form").addEventListener("submit", async event => {
   if ((!message && !VisionUI.hasImages()) || busy || (!configured && !local) || !conversation) return;
   busy = true;
   setError();
-  document.querySelector("#welcome").hidden = true;
-  addMessage("user", message || "已发送截图");
-  addMessage("assistant", "正在思考…", true);
+  const draft = {message, text: input.value, conversationId: conversation.id, attachments: VisionUI.takePending()};
+  draft.status = draft.attachments.some(item => !item.attachment) ? "正在上传图片…" : "正在发送…";
+  sendingDraft = draft;
   input.value = "";
+  renderConversation();
   updateControls();
-  scrollArea.scrollTop = scrollArea.scrollHeight;
+  let sent = false;
   try {
-    const images = await VisionUI.requestFields();
-    if (!pendingRequest || pendingRequest.message !== message) {
+    const images = await VisionUI.requestFields(draft.attachments, draft.conversationId);
+    if (!pendingRequest || pendingRequest.message !== message ||
+        JSON.stringify(pendingRequest.attachment_ids) !== JSON.stringify(images.attachment_ids)) {
       pendingRequest = {request_id: crypto.randomUUID(), message, ...images};
     }
-    const turn = await api("/api/conversations/" + conversation.id + "/messages", {method: "POST", body: JSON.stringify(pendingRequest)});
+    draft.status = "正在思考…";
+    renderConversation();
+    updateControls();
+    const turn = await api("/api/conversations/" + draft.conversationId + "/messages", {method: "POST", body: JSON.stringify(pendingRequest)});
     if (!conversation.turns.some(existing => existing.request_id === turn.request_id)) conversation.turns.push(turn);
     pendingRequest = null;
-    VisionUI.clear();
+    sent = true;
   } catch (error) {
-    input.value = message;
+    input.value = draft.text;
+    VisionUI.restorePending(draft.attachments);
     setError(error.message || "连接中断，文字和图片已保留，请重试。");
   } finally {
+    sendingDraft = null;
     busy = false;
     renderConversation();
+    if (sent) VisionUI.release(draft.attachments);
     updateControls();
     input.focus();
   }

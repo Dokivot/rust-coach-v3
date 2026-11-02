@@ -54,27 +54,41 @@ window.VisionUI = (() => {
     hooks.refreshControls();
   }
 
-  async function requestFields() {
-    if (pending.length && !config.enabled) {
+  async function requestFields(attachments, conversationId) {
+    if (attachments.length && !config.enabled) {
       await hooks.api("/api/vision/probe", {method: "POST", body: "{}"});
       config = (await hooks.api("/api/config")).vision;
     }
-    for (const item of pending) {
+    for (const item of attachments) {
       if (item.attachment) continue;
       const body = new FormData();
       body.append("file", item.blob, "screenshot");
-      const response = await fetch("/api/conversations/" + hooks.conversation().id + "/attachments", {method: "POST", body});
+      const response = await fetch("/api/conversations/" + conversationId + "/attachments", {method: "POST", body});
       const result = await response.json();
       if (!response.ok) throw new Error(result.error?.message || "图片上传失败，请重试。");
       item.attachment = result;
     }
-    return {attachment_ids: pending.map(item => item.attachment.id)};
+    return {attachment_ids: attachments.map(item => item.attachment.id)};
+  }
+
+  function takePending() {
+    const attachments = pending;
+    pending = [];
+    renderPending();
+    return attachments;
+  }
+
+  function restorePending(attachments) {
+    pending = attachments;
+    renderPending();
+  }
+
+  function release(attachments) {
+    attachments.forEach(item => URL.revokeObjectURL(item.url));
   }
 
   function clear() {
-    pending.forEach(item => URL.revokeObjectURL(item.url));
-    pending = [];
-    renderPending();
+    release(takePending());
   }
 
   function init(callbacks) {
@@ -96,5 +110,6 @@ window.VisionUI = (() => {
     updateControls();
   }
 
-  return {init, configure: capabilities => { config = capabilities; }, updateControls, requestFields, clear, hasImages: () => pending.length > 0};
+  return {init, configure: capabilities => { config = capabilities; }, updateControls, requestFields,
+    takePending, restorePending, release, clear, hasImages: () => pending.length > 0};
 })();
