@@ -87,7 +87,7 @@ flowchart TB
     OUTPUT["D · AnswerEnvelope / 输出门禁<br/>模板渲染、隐私、注入、状态保护"]
     STYLE["G · 人设叙述槽位<br/>只组织已支持声明，不新增事实"]
     FALLBACK["D · 确定性回退<br/>澄清 / partial / error，不补造结论"]
-    OBS["D · Trace / 离线评测 / badcase<br/>计划、检索、实时性、恢复、成本 → 回归发布"]
+    OBS["D · Trace / Metrics / Eval / Badcase<br/>输入、检索、决策、生成、延迟、成本 → 发布门禁"]
 
     USER --> API
     API -->|prompt + attachment_ids| INGRESS

@@ -13,7 +13,7 @@
 | 知识层 | 结构化/向量/图谱知识与三类记忆的获取、存储、检索、推导、更新和追溯 | `KnowledgeContext`、`EvidenceBundle` |
 | 决策层 | 路由后的任务执行；简单工具调用、Plan-and-Execute、约束校验和行动取舍 | 最终 `DecisionResult/TaskSolution`（可含 `ActionPlan`）、`CalculationResult` |
 | 生成层 | 在人设约束下组装决策结果；保护事实、组织叙述和执行输出门禁 | `AnswerSpec`、`AnswerEnvelope`、最终回答 |
-| 评测与观测 | 跨层 trace、质量评测、成本、badcase 与回归发布 | 指标、评测样本、改进反馈 |
+| 评测与观测 | 采集六层 trace/events；评估质量、延迟、成本、badcase 并执行回归发布门禁 | `EvalReport`、`BadcaseRecord`、指标和改进反馈 |
 
 本版细化了 [输入层设计](architecture-input-layer.md)、[理解层设计](architecture-understanding-layer.md)、[决策层设计](architecture-decision-layer.md) 和 [生成层设计](architecture-generation-layer.md)。输入层只接收 `UserInput = prompt + optional attachments`，并交付 `ParsedInput`；理解层再把请求候选、玩家状态候选和图像证据转换为带来源和不确定性的 `CoachTaskRepresentation`，通过知识查询补充实体/背景，并将任务路由给决策层。决策层按 `simple_call` 或 `plan_execute` 执行，生成层只在既定人设下组装其结构化结果，不改变事实或行动结论。知识层的详细设计见 [知识层设计](architecture-knowledge-layer.md)。
 
@@ -512,6 +512,8 @@ Graph 启动编译复用；客户端由 Runtime 注入；checkpoint setup/迁移
 当前实际交付仍只有 docs、README 和制图脚本；不为了目录形式提前实现计算器或引入复杂服务。
 
 ## 15. 评测与观测
+
+本节是指标和验收摘要；跨层 `TraceContext`/`SpanEvent`、脱敏采集、评测数据集、成本/延迟分解、badcase 生命周期和发布门禁见 [评测与观测层设计](architecture-evaluation-observability-layer.md)。评测与观测层横切所有层，但不把日志存在当作业务正确性的证明。
 
 ### 15.1 四项要求的验收案例
 

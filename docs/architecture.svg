@@ -229,7 +229,7 @@
 <text x="64" y="1828" font-size="25" font-weight="700" fill="#26354a">05  评测与观测 · 跨层埋点与质量闭环</text>
 <rect x="70" y="1860" width="570" height="125" rx="12" fill="#e8f3ff" stroke="#2864a0" stroke-width="2"/>
 <text x="88" y="1892" font-size="23" font-weight="700" fill="#12324f">D · Trace / Metrics / 成本</text>
-<text x="88" y="1922" font-size="20" font-weight="400" fill="#12324f">节点、模型、工具、版本、输入 hash、校验码</text>
+<text x="88" y="1922" font-size="20" font-weight="400" fill="#12324f">输入、检索、决策、生成：节点、版本、hash</text>
 <text x="88" y="1950" font-size="20" font-weight="400" fill="#12324f">延迟、token、费用、终止原因；默认脱敏</text>
 <rect x="730" y="1860" width="570" height="125" rx="12" fill="#e8f3ff" stroke="#2864a0" stroke-width="2"/>
 <text x="748" y="1892" font-size="23" font-weight="700" fill="#12324f">D · Badcase 分类与人工审核</text>
