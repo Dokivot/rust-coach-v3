@@ -165,16 +165,16 @@
 <text x="64" y="1198" font-size="25" font-weight="700" fill="#26354a">04  生成层 · 数值与行动先验证，风格后组织</text>
 <rect x="70" y="1220" width="350" height="110" rx="12" fill="#e8f3ff" stroke="#2864a0" stroke-width="2"/>
 <text x="88" y="1252" font-size="23" font-weight="700" fill="#12324f">D · AnswerSpec</text>
-<text x="88" y="1282" font-size="20" font-weight="400" fill="#12324f">已验证 claim / action ID</text>
-<text x="88" y="1310" font-size="20" font-weight="400" fill="#12324f">计算步骤、假设、来源与限制</text>
+<text x="88" y="1282" font-size="20" font-weight="400" fill="#12324f">结果状态 / protected assertions</text>
+<text x="88" y="1310" font-size="20" font-weight="400" fill="#12324f">必需区块、假设、来源与限制</text>
 <rect x="500" y="1220" width="340" height="110" rx="12" fill="#f1eaff" stroke="#8652b3" stroke-width="2"/>
-<text x="518" y="1252" font-size="23" font-weight="700" fill="#45276b">G · 可选表达组织</text>
+<text x="518" y="1252" font-size="23" font-weight="700" fill="#45276b">G · 人设叙述槽位</text>
 <text x="518" y="1282" font-size="20" font-weight="400" fill="#45276b">稳定人设 · 解释取舍</text>
-<text x="518" y="1310" font-size="20" font-weight="400" fill="#45276b">引用声明；不重算关键数字</text>
+<text x="518" y="1310" font-size="20" font-weight="400" fill="#45276b">只组织声明；不重算关键数字</text>
 <rect x="920" y="1220" width="350" height="110" rx="12" fill="#e8f3ff" stroke="#2864a0" stroke-width="2"/>
-<text x="938" y="1252" font-size="23" font-weight="700" fill="#12324f">D · 渲染 / 输出门禁</text>
+<text x="938" y="1252" font-size="23" font-weight="700" fill="#12324f">D · AnswerEnvelope / 输出门禁</text>
 <text x="938" y="1282" font-size="20" font-weight="400" fill="#12324f">模板注入数值、单位与对象</text>
-<text x="938" y="1310" font-size="20" font-weight="400" fill="#12324f">引用校验 / 隐私 / 注入防护</text>
+<text x="938" y="1310" font-size="20" font-weight="400" fill="#12324f">引用/隐私/注入校验 · 失败回退</text>
 <rect x="70" y="1420" width="1200" height="100" rx="12" fill="#f7f8fb" stroke="#718096" stroke-width="2"/>
 <text x="88" y="1452" font-size="23" font-weight="700" fill="#26354a">交付给玩家的答案</text>
 <text x="88" y="1482" font-size="20" font-weight="400" fill="#26354a">结论 → 可执行步骤 → 资源差额与取舍 → 适用条件 → 可展开的计算与来源</text>

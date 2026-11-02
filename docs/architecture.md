@@ -1,6 +1,6 @@
 # Rust Coach：LangGraph 工程架构设计 v2
 
-修订日期：2026-11-03。本版在既有 LangGraph、计算、玩家状态、网页取证和视觉输入设计上补充六层架构总览，并细化输入层、理解层和决策层。目标能力与当前实现边界分别见 [首版实施说明](scaffold.md)、[建议链路](advice.md) 和 [截图实施说明](multimodal-implementation.md)。
+修订日期：2026-11-03。本版在既有 LangGraph、计算、玩家状态、网页取证和视觉输入设计上补充六层架构总览，并细化输入层、理解层、决策层和生成层。目标能力与当前实现边界分别见 [首版实施说明](scaffold.md)、[建议链路](advice.md) 和 [截图实施说明](multimodal-implementation.md)。
 
 ## 1. 六层架构总览
 
@@ -11,11 +11,11 @@
 | 输入层 | 接收用户提示词和可选图像等多模态附件；完成文本/视觉解析、融合和校验 | `ParsedInput` |
 | 理解层 | 处理结构化请求/状态候选；语义消歧、上下文合并与路由 | `CoachTaskRepresentation`、有效状态引用 |
 | 知识层 | 结构化/向量/图谱知识与三类记忆的获取、存储、检索、推导、更新和追溯 | `KnowledgeContext`、`EvidenceBundle` |
-| 决策层 | 路由后的任务执行；简单工具调用、Plan-and-Execute、约束校验和行动取舍 | `DecisionResult`、`ActionPlan`、`CalculationResult` |
-| 生成层 | 基于已验证结果组织解释、执行输出门禁 | `AnswerSpec`、最终回答 |
+| 决策层 | 路由后的任务执行；简单工具调用、Plan-and-Execute、约束校验和行动取舍 | 最终 `DecisionResult/TaskSolution`（可含 `ActionPlan`）、`CalculationResult` |
+| 生成层 | 在人设约束下组装决策结果；保护事实、组织叙述和执行输出门禁 | `AnswerSpec`、`AnswerEnvelope`、最终回答 |
 | 评测与观测 | 跨层 trace、质量评测、成本、badcase 与回归发布 | 指标、评测样本、改进反馈 |
 
-本版细化了 [输入层设计](architecture-input-layer.md)、[理解层设计](architecture-understanding-layer.md) 和 [决策层设计](architecture-decision-layer.md)。输入层只接收 `UserInput = prompt + optional attachments`，并交付 `ParsedInput`；理解层再把请求候选、玩家状态候选和图像证据转换为带来源和不确定性的 `CoachTaskRepresentation`，通过知识查询补充实体/背景，并将任务路由给决策层。决策层按 `simple_call` 或 `plan_execute` 执行，向生成层交付结构化结果。知识层的详细设计见 [知识层设计](architecture-knowledge-layer.md)。
+本版细化了 [输入层设计](architecture-input-layer.md)、[理解层设计](architecture-understanding-layer.md)、[决策层设计](architecture-decision-layer.md) 和 [生成层设计](architecture-generation-layer.md)。输入层只接收 `UserInput = prompt + optional attachments`，并交付 `ParsedInput`；理解层再把请求候选、玩家状态候选和图像证据转换为带来源和不确定性的 `CoachTaskRepresentation`，通过知识查询补充实体/背景，并将任务路由给决策层。决策层按 `simple_call` 或 `plan_execute` 执行，生成层只在既定人设下组装其结构化结果，不改变事实或行动结论。知识层的详细设计见 [知识层设计](architecture-knowledge-layer.md)。
 
 ## 2. 需求分析与本次架构决策
 
@@ -168,6 +168,8 @@ operation 限于 retrieve_evidence、request_information、calculate_raid、calc
 
 **ActionPlan 是玩家的游戏行动计划**。ActionSpec 包含 target、preconditions、dependencies、resource_budget、expected_effects、execution_steps、completion_criteria、stop_or_switch_conditions、evidence_refs、assumptions、feasibility_status。
 
+`ExecutionPlan` 只用于决策层内部的 Agent Loop；`ActionPlan` 是建议类任务中已经选定、验证后的玩家行动结果，可以作为 `TaskSolution` 的一个字段交给生成层。`finalize_decision` 的跨层输出是最终 `DecisionResult/TaskSolution`，不是内部步骤计划或工具调用轨迹。
+
 可行性区分 verified、conditional、blocked。计划结构合法不等于资源可行；“执行”指 Agent 的检索/工具操作，不指自动操作游戏。未来资源和效果只在模拟状态，不扣真实背包。
 
 ## 7. 主图与计算短路径
@@ -234,7 +236,7 @@ CalculationResult：status（exact/conditional/bounded/needs_input/unavailable/u
 | verify_step | D；语义检查可参考 G | 输出 + success criteria → StepResult、缺口/错误 |
 | assess_progress | D | 成果/剩余工作 → continue/replan/clarify/finish/partial |
 | replanner | G | 原目标、成果、新信息/失败 → 修改剩余步骤 |
-| finalize_decision | D | 必要步骤成果 → ActionPlan；仍缺信息则返回对应分支 |
+| finalize_decision | D | 必要步骤成果 → 最终 `DecisionResult/TaskSolution`（建议解可含 ActionPlan）；仍缺信息则返回对应分支 |
 | clarify / validate_resume / refresh_context | D，共享实现 | 中断、补充信息校验、依赖失效与恢复 |
 
 Planner 不把自己写出的结论当执行结果。Executor 是受限执行层，不是拥有任意权限的自由聊天 Agent。候选行动由模型提出，硬约束与状态转移由代码验证。
@@ -456,7 +458,9 @@ recursion_limit 只是额外 super-step 防护，不能替代业务计数、dead
 
 ### 13.2 AnswerSpec 与人设
 
-AnswerSpec 包含结论、可支持的 claims、ActionPlan、备选、假设、缺失信息、限制、引用和状态/知识/网页/provider 版本。数值由 provider 模板渲染，绑定对象、单位、比较关系与条件；LLM 不再计算一次。
+本节是生成层约束摘要；完整的 `GenerationInput`、`AnswerSpec`、`AnswerEnvelope`、受保护断言、叙述槽位、输出门禁和回退流程见 [生成层设计](architecture-generation-layer.md)。
+
+AnswerSpec 包含最终 `TaskSolution` 的结论、可支持的 claims、已选行动建议、备选、假设、缺失信息、限制、引用和状态/知识/网页/provider 版本。数值由 provider 模板渲染，绑定对象、单位、比较关系与条件；LLM 不再计算一次。内部 `ExecutionPlan` 不进入 AnswerSpec。
 
 引用要支持相应声明且可定位正文/工具记录，不是“URL 存在”就合格。代码可校验结构化声明，开放文本的完整事实蕴含仍需独立评测和抽查；不宣称绝对零幻觉。
 

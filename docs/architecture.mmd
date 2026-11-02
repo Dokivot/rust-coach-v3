@@ -51,7 +51,7 @@ flowchart TB
         ACTION["D · evaluate_actions<br/>前置条件、资源条件、行动取舍"]
         VERIFY["D · verify_step / assess_progress"]
         REPLAN["G · Replanner<br/>仅修改未完成或失效步骤"]
-        FINALIZE["D · finalize_decision<br/>ActionPlan：verified / conditional / blocked"]
+        FINALIZE["D · finalize_decision<br/>TaskSolution / DecisionResult：verified / conditional / blocked"]
     end
 
     subgraph RAG["Agentic RAG 子图 · 决策证据"]
@@ -82,9 +82,11 @@ flowchart TB
         RESULTS[("S · 结果 / 预算账本 / outbox")]
     end
 
-    SPEC["D · AnswerSpec<br/>已支持声明、行动、假设与来源"]
-    OUTPUT["D · 渲染 / 输出门禁<br/>关键数字来自工具；无工具不补造"]
-    STYLE["G · 可选人设表达<br/>只引用已支持声明"]
+    SPEC["D · AnswerSpec<br/>结果、状态、断言、必需区块与来源"]
+    ASSERT["D · 受保护断言 / 区块校验<br/>数字、候选、条件、引用、回执"]
+    OUTPUT["D · AnswerEnvelope / 输出门禁<br/>模板渲染、隐私、注入、状态保护"]
+    STYLE["G · 人设叙述槽位<br/>只组织已支持声明，不新增事实"]
+    FALLBACK["D · 确定性回退<br/>澄清 / partial / error，不补造结论"]
     OBS["D · Trace / 离线评测 / badcase<br/>计划、检索、实时性、恢复、成本 → 回归发布"]
 
     USER --> API
@@ -148,10 +150,13 @@ flowchart TB
     ASK -->|步骤恢复或重规划| CHECK
     ASK -->|重新评估证据需求| QUERY
 
-    SPEC -->|默认模板| OUTPUT
+    SPEC -->|受保护结果| ASSERT
     SPEC -->|可选组织| STYLE
-    STYLE -->|声明引用| OUTPUT
+    STYLE -->|叙述候选| ASSERT
+    ASSERT -->|通过| OUTPUT
+    ASSERT -->|失败/超时| FALLBACK
     OUTPUT -->|最终答案或部分结果| USER
+    FALLBACK -->|诚实降级| USER
     API -.->|保存 / 恢复| CP
     CP -.->|嵌套中断状态| ASK
     OUTPUT -.->|幂等归档| RESULTS
@@ -172,7 +177,7 @@ flowchart TB
     classDef generative fill:#f1eaff,stroke:#8652b3,color:#45276b
     classDef storage fill:#e8f5ef,stroke:#368265,color:#174c39
     classDef reserved fill:#fff5df,stroke:#ad7b20,color:#684710,stroke-dasharray:6 4
-    class API,INGRESS,FUSION,PARSED,U_PARSE,U_STATE,STATE,U_QUERY,U_ROUTE,U_CLARIFY,ASK,SLOTS,SIMPLE_VERIFY,SIMPLE_RESULT,PREP,CHECK,EXEC,ACTION,VERIFY,FINALIZE,SOURCES,VECTOR,WEB,NORMAL,COVER,BUNDLE,INGEST,SPEC,OUTPUT,OBS deterministic
+    class API,INGRESS,FUSION,PARSED,U_PARSE,U_STATE,STATE,U_QUERY,U_ROUTE,U_CLARIFY,ASK,SLOTS,SIMPLE_VERIFY,SIMPLE_RESULT,PREP,CHECK,EXEC,ACTION,VERIFY,FINALIZE,SOURCES,VECTOR,WEB,NORMAL,COVER,BUNDLE,INGEST,SPEC,ASSERT,OUTPUT,FALLBACK,OBS deterministic
     class TEXT,VISION,U_INTENT,PLAN,REPLAN,QUERY,GRADE,STYLE generative
     class KDB,VDB,KG,SNAP,WM,EM,SM,CP,PLAYER,RESULTS storage
     class PORTS reserved

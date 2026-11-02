@@ -1,13 +1,14 @@
 # Rust Coach 六层架构：决策层设计
 
-修订日期：2026-11-03。决策层是理解层路由后的任务执行层：它接收结构化的 `CoachTaskRepresentation`，在知识、状态和工具能力约束下完成工具调用、计划执行、结果验证和有限重规划，最后把可验证的任务结果交给生成层。决策层不重新解释原始图片，不以模型自由文本替代工具结果，也不直接操作游戏。
+修订日期：2026-11-03。决策层是理解层路由后的任务执行层：它接收结构化的 `CoachTaskRepresentation`，在知识、状态和工具能力约束下完成 Agent Loop、工具调用、结果验证和有限重规划，最后只把最终的任务解决结果交给生成层。`ExecutionPlan` 只存在于决策层内部，不是生成层的输入。决策层不重新解释原始图片，不以模型自由文本替代工具结果，也不直接操作游戏。
 
 ## 1. 六层架构定位
 
 ```text
 输入层 → ParsedInput
 理解层 → CoachTaskRepresentation + DecisionRequest
-决策层 → DecisionResult / CalculationResult / ActionPlan
+决策层内部 → ExecutionPlan / ToolCall / StepResult
+决策层输出 → DecisionResult（TaskSolution）
 生成层 → AnswerSpec → 最终回答
 ```
 
@@ -17,7 +18,7 @@
 | --- | --- | --- |
 | 理解层 | `DecisionRequest`：意图、约束、目标、状态引用、证据需求和路由 | 决策层可以提出缺口或重新理解请求，但不读取原始输入 |
 | 知识层 | `KnowledgeQuery`、`KnowledgeContext`、规则、事实、历史、能力和业务约束 | 知识是依据，不是最终行动排序；工具能力由注册表校验 |
-| 生成层 | `DecisionResult`：声明、数值、行动计划、假设、限制和引用 | 生成层只组织已验证结果，不能改变计算或行动结论 |
+| 生成层 | `DecisionResult`：最终解决结果、声明、数值、假设、限制和引用 | 生成层只组织已验证结果，不能读取内部执行计划或改变结论 |
 
 ## 2. 核心职责与非职责
 
@@ -29,7 +30,7 @@
 4. **知识辅助规划**：向知识层请求规则、事实、行动定义、历史记忆、能力和约束，并检查适用版本和证据覆盖。
 5. **结果验证**：校验计算输入/输出、行动前置条件、资源可行性、计划完成条件和引用完整性。
 6. **有限重规划**：只修改尚未完成或已失效的步骤，复用仍然有效的结果，不通过删除用户目标或硬约束制造成功。
-7. **结果交接**：产出结构化的 `DecisionResult`，供生成层组装；无法完整完成时明确 `partial`、`conditional`、`blocked` 或 `unavailable`。
+7. **结果交接**：把内部执行过程压缩为最终任务解决结果 `DecisionResult/TaskSolution`，供生成层组装；无法完整完成时明确 `partial`、`conditional`、`blocked` 或 `unavailable`。
 
 ### 2.2 非职责
 
@@ -86,10 +87,10 @@ DecisionRequest(plan_execute)
        ├─ replan：只修改未完成/失效步骤
        ├─ clarify：交理解层暂停并等待补充
        ├─ partial：保留已验证部分和限制
-       └─ finalize：生成 ActionPlan
+       └─ finalize：生成最终 TaskSolution
 ```
 
-`ExecutionPlan` 是 Agent 为完成任务安排的研究和工具步骤；`ActionPlan` 是给玩家的游戏行动计划。只有 `ActionPlan` 经过硬约束和证据检查后，才可以交给生成层。
+`ExecutionPlan` 是 Agent 为完成任务安排的研究和工具步骤，始终留在决策层内部。`finalize_decision` 将它和工具结果压缩成最终 `TaskSolution`；对于建议任务，`TaskSolution` 可以包含已选定的玩家行动建议（当前实现中的 `ActionPlan`），但生成层只接收这个最终结果，不接收执行步骤、工具轨迹或未选候选的内部推理。
 
 ## 4. 决策层输入输出协议
 
@@ -151,9 +152,10 @@ DecisionRequest(plan_execute)
 {
   "task_id": "task-1",
   "status": "conditional",
-  "result_kind": "action_plan",
+  "result_kind": "recommendation_solution",
   "calculation": null,
-  "action_plan": {
+  "solution": {
+    "kind": "recommendation",
     "preferred": [],
     "alternatives": [],
     "preconditions": [],
@@ -171,7 +173,7 @@ DecisionRequest(plan_execute)
 }
 ```
 
-生成层可以把 `supported_claims`、行动计划、计算结果、假设和限制组织成回答，但不能改变 `status`、数字、候选 ID、前置条件或引用。
+生成层可以把 `solution` 中已选定的建议、计算结果、假设和限制组织成回答，但不能改变 `status`、数字、候选 ID、前置条件或引用；它不接收 `execution_plan`、工具调用参数或中间步骤。
 
 ## 5. 工具调用管理
 
@@ -305,18 +307,18 @@ stateDiagram-v2
 
 ## 9. 与生成层交互
 
-决策层交给生成层的是结构化结果，而不是“请根据下面内容自由发挥”的长提示：
+决策层交给生成层的是最终结构化解决结果，而不是 `ExecutionPlan` 或“请根据下面内容自由发挥”的长提示：
 
 ```text
 DecisionResult
   ├─ CalculationResult（数字、单位、输入哈希、provider/data version）
-  ├─ ActionPlan（首选、备选、前置、完成/改道条件）
+  ├─ TaskSolution（计算解或建议解；可包含已选行动的前置/完成/改道条件）
   ├─ supported_claims / evidence_refs
   ├─ assumptions / limitations
   └─ status：verified / conditional / blocked / partial / unavailable
 ```
 
-生成层可以选择解释顺序、语言和人设表达，但必须保持候选 ID、数字、单位、可行性、前置条件、限制和来源不变。若结果为 `partial` 或 `blocked`，生成层必须明确未完成原因，不能用积极语气伪装为完成。
+生成层可以选择解释顺序、语言和人设表达，但必须保持候选 ID、数字、单位、可行性、前置条件、限制和来源不变。若结果为 `partial` 或 `blocked`，生成层必须明确未完成原因，不能用积极语气伪装为完成。生成层不应展示 Agent 的研究步骤，除非这些步骤已经被决策层明确压缩为用户任务解决结果中的“下一步”。
 
 ## 10. Demo 范围与实现映射
 
@@ -325,7 +327,7 @@ DecisionResult
 | 用户需求 | 理解层路由 | 决策层链路 | 必须交付 |
 | --- | --- | --- | --- |
 | 精确回答强计算问题 | `calculation.raid` / `calculation.craft_gap` → `simple_call` | 槽位校验 → CalculatorPort → 结果验证 | 可追溯数字、输入、单位、缺口和限制 |
-| 基于当前玩家状态给出决策建议 | `decision.recommendation` → `plan_execute` | Planner → 工具/知识 → 验证 → 评估 → ActionPlan | 首选/备选、前置、第一步、完成和切换条件 |
+| 基于当前玩家状态给出决策建议 | `decision.recommendation` → `plan_execute` | Planner → 工具/知识 → 验证 → 评估 → TaskSolution | 首选/备选、前置、第一步、完成和切换条件 |
 
 简单聊天走生成层直达路径；当聊天出现游戏事实、状态或建议诉求时，由理解层重新路由到知识或决策链路。它不能因为表面上是聊天就绕过事实保护。
 
@@ -351,7 +353,7 @@ DecisionResult
 6. **跨层恢复**：决策层可以请求理解层澄清或重理解；同一任务恢复时保留有效成果，补充信息不会重复执行已有副作用。
 7. **生成一致性**：生成层不能改动数字、候选、可行性、假设和引用；`partial/blocked` 必须显式呈现。
 
-最低验收条件是：简单强计算不经过无必要的 Planner；状态建议必须经过 Plan-and-Execute；两条链路都输出结构化 `DecisionResult`；知识、状态、工具和模型调用均可追溯；无法完成时诚实降级。
+最低验收条件是：简单强计算不经过无必要的 Planner；状态建议必须经过 Plan-and-Execute；两条链路都将内部执行过程压缩为最终结构化 `DecisionResult/TaskSolution`；生成层看不到 `ExecutionPlan`；知识、状态、工具和模型调用均可追溯；无法完成时诚实降级。
 
 ## 12. 建议落地顺序
 
@@ -360,4 +362,4 @@ DecisionResult
 3. 把现有建议链路拆成 `prepare/plan/execute/verify/finalize` 节点，先支持串行步骤和有界重规划。
 4. 接入统一 `KnowledgeQuery/KnowledgeContext` 和 `EvidenceNeed`，区分规则缺口与玩家状态缺口。
 5. 将 `needs_input/needs_reinterpretation` 接到理解层的同任务恢复，补充幂等、依赖失效和预算测试。
-6. 最后把 `DecisionResult` 接入生成层的 `AnswerSpec` 和跨层评测，而不是让生成层直接读取 Agent State。
+6. 最后把最终 `DecisionResult/TaskSolution` 接入生成层的 `AnswerSpec` 和跨层评测，明确过滤 `ExecutionPlan`，而不是让生成层直接读取 Agent State。
