@@ -30,6 +30,51 @@ async function api(path, options = {}) {
   return body;
 }
 
+async function sendChat(conversationId, payload, onStage) {
+  const response = await fetch("/api/conversations/" + conversationId + "/messages", {
+    method: "POST", headers: {"Content-Type": "application/json", "Accept": "text/event-stream"},
+    body: JSON.stringify(payload),
+  });
+  if (!response.ok) {
+    const body = await response.json();
+    throw new Error(body.error?.message || "请求失败，请稍后重试。");
+  }
+  if (!response.headers?.get("content-type")?.includes("text/event-stream")) return response.json();
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+  let sequence = 0;
+  try {
+    while (true) {
+      const {done, value} = await reader.read();
+      if (done) throw new Error("连接中断，文字和图片已恢复，请重试。");
+      buffer = (buffer + decoder.decode(value, {stream: true})).replace(/\r\n/g, "\n");
+      let boundary;
+      while ((boundary = buffer.indexOf("\n\n")) !== -1) {
+        const frame = buffer.slice(0, boundary);
+        buffer = buffer.slice(boundary + 2);
+        const data = frame.split("\n").filter(line => line.startsWith("data:")).map(line => line.slice(5).trimStart()).join("\n");
+        if (!data) continue;
+        const event = JSON.parse(data);
+        if (event.request_id !== payload.request_id) throw new Error("回复与当前请求不匹配，请重试。");
+        if (event.type === "error") throw new Error(event.error?.message || "处理失败，请重试。");
+        if (event.type === "result") {
+          if (event.turn?.request_id !== payload.request_id) throw new Error("回复与当前请求不匹配，请重试。");
+          return event.turn;
+        }
+        if (event.type === "stage" && Number.isInteger(event.sequence) && event.sequence > sequence &&
+            typeof event.stage === "string" && typeof event.label === "string") {
+          sequence = event.sequence;
+          onStage(event);
+        }
+      }
+    }
+  } finally {
+    await reader.cancel().catch(() => {});
+    reader.releaseLock();
+  }
+}
+
 function setError(message = "") {
   errorElement.textContent = message;
   errorElement.hidden = !message;
@@ -118,7 +163,21 @@ function renderConversation() {
       image.className = "message-image";
       userMessage.append(image);
     }
-    addMessage("assistant", sendingDraft.status, true);
+    const assistantMessage = addMessage("assistant", sendingDraft.status, true);
+    if (sendingDraft.stages.length) {
+      const stages = document.createElement("ol");
+      stages.className = "agent-stages";
+      stages.setAttribute("aria-label", "执行阶段");
+      for (const [index, stage] of sendingDraft.stages.entries()) {
+        const item = document.createElement("li");
+        const current = index === sendingDraft.stages.length - 1 && stage.label === sendingDraft.status;
+        item.className = "agent-stage " + (current ? "current" : "completed");
+        item.textContent = stage.label.replace(/^正在/, "");
+        if (current) item.setAttribute("aria-current", "step");
+        stages.append(item);
+      }
+      assistantMessage.append(stages);
+    }
   }
   requestAnimationFrame(() => { scrollArea.scrollTop = scrollArea.scrollHeight; });
 }
@@ -141,6 +200,7 @@ document.querySelector("#chat-form").addEventListener("submit", async event => {
   setError();
   const draft = {message, text: input.value, conversationId: conversation.id, attachments: VisionUI.takePending()};
   draft.status = draft.attachments.some(item => !item.attachment) ? "正在上传图片…" : "正在发送…";
+  draft.stages = draft.attachments.some(item => !item.attachment) ? [{stage: "upload", label: draft.status}] : [];
   sendingDraft = draft;
   input.value = "";
   renderConversation();
@@ -152,10 +212,16 @@ document.querySelector("#chat-form").addEventListener("submit", async event => {
         JSON.stringify(pendingRequest.attachment_ids) !== JSON.stringify(images.attachment_ids)) {
       pendingRequest = {request_id: crypto.randomUUID(), message, ...images};
     }
-    draft.status = "正在思考…";
+    draft.status = "正在等待处理…";
     renderConversation();
     updateControls();
-    const turn = await api("/api/conversations/" + draft.conversationId + "/messages", {method: "POST", body: JSON.stringify(pendingRequest)});
+    const turn = await sendChat(draft.conversationId, pendingRequest, event => {
+      if (sendingDraft !== draft) return;
+      draft.status = event.label;
+      draft.stages.push({stage: event.stage, label: event.label});
+      renderConversation();
+      updateControls();
+    });
     if (!conversation.turns.some(existing => existing.request_id === turn.request_id)) conversation.turns.push(turn);
     pendingRequest = null;
     sent = true;

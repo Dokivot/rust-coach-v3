@@ -735,7 +735,7 @@ def test_natural_c4_followup_uses_readable_partial_inventory(setup,monkeypatch,i
     assert turn["calculation"]["result"]["inventory_used"] == {"metal.fragments":200,"sulfur":140,"charcoal":4}
     assert turn["calculation"]["result"]["acquisition"] == {"techparts":2,"lowgradefuel":60,"sulfur":2060,"charcoal":2996,"cloth":5}
     main = "\n".join(block["text"] for block in turn["presentation"]["blocks"] if block["placement"] == "main")
-    assert "抵扣截图可见材料后" in main and "实际缺口可能更少" in main
+    assert "按截图里能确认的库存" in main and "实际缺口可能更少" in main
     details = "\n".join(block["text"] for block in turn["presentation"]["blocks"] if block["placement"] == "detail")
     assert "已抵扣库存" in details
     assert "库存未知" not in main
@@ -805,11 +805,12 @@ def test_same_turn_c4_answers_first_with_quality_warning_and_recognition_details
     assert turn["calculation"]["result"]["acquisition"]["charcoal"] == 2996
     assert turn["calculation"]["result"]["acquisition"]["sulfur"] == 2060
     assert turn["presentation"]["blocks"][0]["id"] == "calculation_summary"
-    assert turn["assistant"].startswith("制作 1 定时炸弹")
+    assert turn["assistant"].startswith("按截图里能确认的库存，制作 1 个 C4")
     recognition = next(block for block in turn["presentation"]["blocks"] if block["id"] == "visual_scope")
     assert recognition["placement"] == "detail" and "• 木炭 × 4" in recognition["text"]
     assert "• 木炭 × 4" not in turn["assistant"]
-    assert "部分图标有画质提醒" in turn["assistant"]
+    assert "部分图标有画质提醒" in recognition["text"]
+    assert "部分图标有画质提醒" not in turn["assistant"]
     draft = application.state.vision.drafts.get(owner,turn["visual"]["draft_id"])
     for item in draft["payload"]["extraction"]["observations"]:
         item.pop("item_status",None)
@@ -840,7 +841,7 @@ def test_unresolved_identity_is_excluded_and_displayed_as_unresolved(setup,monke
     monkeypatch.setattr(model,"complete",ambiguous)
     turn = analyze(client,owner,upload(client,owner),message="制作10火药还差什么？")
     assert turn["calculation"]["input"]["inventory"] is None
-    assert "无法辨认的物品不计入" in turn["assistant"]
+    assert "截图没有可用于计算的清晰读数，暂列总需求" in turn["assistant"]
     recognition = next(block for block in turn["presentation"]["blocks"] if block["id"] == "visual_scope")
     assert "物品身份未确定，未计入" in recognition["text"]
 
@@ -854,3 +855,74 @@ def test_automatic_subject_is_not_presented_as_an_explicit_unknown_owner(setup):
     assert "subject" not in context["images"][0]
     assert "captured_at" not in context["images"][0]
     assert turn["visual"]["automatic"]["subject"] == "self"
+
+
+def test_stream_reports_real_vision_and_calculation_stages_and_skips_cached_recognition(setup):
+    client, _, model, owner = setup
+    model.task = "craft"
+    attachment = upload(client, owner)
+    payload = {"request_id": str(uuid4()), "message": "合成火药还缺什么？", "attachment_ids": [attachment["id"]]}
+
+    def stream(request):
+        response = client.post(f"/api/conversations/{owner}/messages", json=request, headers={"Accept": "text/event-stream"})
+        return [json.loads(frame[6:]) for frame in response.text.split("\n\n") if frame.startswith("data: ")]
+
+    events = stream(payload)
+    stages = [event["stage"] for event in events if event["type"] == "stage"]
+    assert stages == ["context", "image_context", "recognize_image", "check_image", "understand",
+        "calculate_craft", "compose", "check_answer", "save"]
+    assert events[-1]["turn"]["calculation"]["result"]["inventory_used"] == {"sulfur": 20}
+    cached = stream({**payload, "request_id": str(uuid4())})
+    assert cached[-1]["type"] == "result"
+    assert "recognize_image" not in [event.get("stage") for event in cached]
+    assert len(model.calls) == 1
+
+
+@pytest.mark.parametrize("verbosity", ["standard", "detailed"])
+def test_two_c4_answer_keeps_budget_and_does_not_echo_visual_unknowns(setup, monkeypatch, verbosity):
+    client, application, model, owner = setup
+    original = model.complete
+    notes = [
+        "截图仅显示库存局部，无法确认完整库存范围。",
+        "未看到定时炸弹、炸药、电子零件等清晰数量，因此无法从本图确定还差多少资源。",
+        "目标为2个定时炸弹；未提供工作台等级或蓝图信息。",
+    ]
+
+    async def inventory(messages):
+        parsed = json.loads((await original(messages)).content)
+        template = parsed["observations"][0]
+        parsed.update(task="craft", inventory_coverage="partial", unknowns=notes,
+            calculation={"operation": "craft", "goals": {"explosive.timed": 2}})
+        parsed["observations"] = [{**template, "id": identifier, "item_id": identifier, "label": label,
+            "slot": "slot_" + identifier, "quantity": amount}
+            for identifier, label, amount in [("sulfur", "硫磺", 140), ("charcoal", "木炭", 4), ("cloth", "布", 10)]]
+        return ModelReply(content=json.dumps(parsed, ensure_ascii=False))
+
+    monkeypatch.setattr(model, "complete", inventory)
+    turn = analyze(client, owner, upload(client, owner), message="合成两个C4还差多少资源？",
+        presentation_preferences={"verbosity": verbosity})
+    result = turn["calculation"]["result"]
+    assert result["acquisition"] == {"techparts": 4, "metal.fragments": 400, "lowgradefuel": 120,
+        "sulfur": 4260, "charcoal": 5996}
+    assert result["inventory_used"] == {"cloth": 10, "sulfur": 140, "charcoal": 4}
+    blocks = {block["id"]: block for block in turn["presentation"]["blocks"]}
+    summary = blocks["calculation_summary"]["text"]
+    assert summary.startswith("按截图里能确认的库存，制作 2 个 C4 还差：")
+    for text in ("4 电子零件", "400 金属碎片", "120 低品质燃油", "4260 硫磺", "5996 木炭"):
+        assert "• " + text in summary
+    assert summary.count("实际缺口可能更少") == 1
+    if verbosity == "standard":
+        assert "制作还需要 3 级工作台，并确保相关配方能制作" in summary
+        assert turn["assistant"] == summary
+        assert blocks["rule_limit"]["placement"] == blocks["visual_scope"]["placement"] == "detail"
+        assert all(text not in turn["assistant"] for text in ("尚未提供", "待核对配方", "截图识别结果", "尚不明确", "build"))
+    else:
+        assert blocks["rule_limit"]["placement"] == blocks["original_report"]["placement"] == "main"
+        assert "来源：" in turn["assistant"]
+    assert all(note not in block["text"] for note in notes for block in blocks.values())
+    assert turn["visual"]["unknowns"] == notes
+    observation = next(assertion for assertion in turn["presentation"]["assertions"] if assertion["kind"] == "observation")
+    assert observation["value"]["unknowns"] == notes
+    assert len(model.calls) == 1
+    stored = application.state.runtime.store.get(owner).turns[0]
+    assert stored.assistant == turn["assistant"] and stored.visual["unknowns"] == notes

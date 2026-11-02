@@ -31,7 +31,7 @@ COACH_API_KEY=在本地填写你的密钥
 
 `COACH_API_MODE=responses` 调用 `/v1/responses`，使用 `input` 和 `max_output_tokens`，并设置 `store=false`，每轮从本地历史重建上下文。已有 `.env` 未设置该项时也默认使用 Responses。`COACH_BASE_URL` 仍填写包含 `/v1` 的服务基础地址，不要追加 `/responses` 或 `/chat/completions`。实现依据 [OpenAI 官方迁移文档](https://developers.openai.com/api/docs/guides/migrate-to-responses)。
 
-Responses 模式下，普通聊天、计算、建议和状态解析均使用上游流式传输（`stream=true`），从文本分片收集回复，兼容结束事件中 `output=[]` 的服务。浏览器仍在回复收集完成后一次显示全文。
+Responses 模式下，普通聊天、计算、建议和状态解析均使用上游流式传输（`stream=true`），从文本分片收集回复，兼容结束事件中 `output=[]` 的服务。浏览器实时显示识图、检索、计算、组织语言等实际执行阶段，正文仍在回复收集完成后一次显示。阶段命名、事件协议与验证见 [实时执行阶段](docs/workflow-progress.md)。
 
 如果服务仅支持旧接口，设置 `COACH_API_MODE=chat_completions`，即可调用 `/v1/chat/completions`。此模式默认使用 `max_completion_tokens`；如服务不支持，在 `.env` 设置 `COACH_OUTPUT_TOKEN_PARAMETER=max_tokens`。该配置只影响 Chat Completions，Responses 始终使用 `max_output_tokens`。两种模式均可通过 `COACH_MAX_OUTPUT_TOKENS` 设置输出上限，通过 `COACH_INSTRUCTION_ROLE=system` 或 `developer` 配置指令消息角色。
 

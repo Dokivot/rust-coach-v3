@@ -7,7 +7,7 @@ from uuid import UUID, uuid4
 import httpx
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
-from fastapi.responses import FileResponse, JSONResponse, Response
+from fastapi.responses import FileResponse, JSONResponse, Response, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 
@@ -27,6 +27,7 @@ from rust_coach.attachments.api import RequestSizeLimit, attachment_router
 from rust_coach.attachments.store import AttachmentStore
 from rust_coach.vision.service import VisionService
 from rust_coach.memory.api import memory_router
+from rust_coach.progress import chat_events
 
 
 logger = logging.getLogger("rust_coach")
@@ -167,6 +168,9 @@ def create_app(settings: Settings | None = None, model: ChatModel | None = None,
 
     @app.post("/api/conversations/{conversation_id}/messages", response_model=Turn)
     async def chat(conversation_id: UUID, payload: ChatRequest, request: Request):
+        if "text/event-stream" in request.headers.get("accept", ""):
+            return StreamingResponse(chat_events(request.app.state.runtime, str(conversation_id), payload),
+                media_type="text/event-stream", headers={"X-Accel-Buffering": "no"})
         return await request.app.state.runtime.chat(str(conversation_id), payload)
 
     @app.get("/")

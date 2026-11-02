@@ -9,6 +9,7 @@ from rust_coach.calculations.engine import Calculator
 from rust_coach.calculations.presentation import render_calculation
 from rust_coach.calculations.schemas import CalculationRequest
 from rust_coach.contracts import AppError, ModelMessage, ModelReply
+from rust_coach.progress import report_stage
 from rust_coach.vision.context import visual_input
 from rust_coach.player_state.domain import calculation_inventory, project
 
@@ -92,6 +93,7 @@ blueprints 表示用户明确确认可制作的配方（包括默认配方）。
                 logger.info("calculation_parse_retry reason=invalid_response")
 
     async def run(self, messages, previous=None, pending_message=None, player_snapshot=None, inventory_container=None, visual=None):
+        report_stage("understand")
         parsed = None
         request = None
         player_usage = None

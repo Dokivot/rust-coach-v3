@@ -2,7 +2,20 @@ from datetime import datetime, timezone
 from rust_coach.vision.context import item_identity_status, visual_input
 
 
-def visual_summary(visual,language="zh", *, include_observations=True):
+def visual_warnings(visual, language="zh"):
+    accepted = visual_input(visual)
+    english = language == "en"
+    lines = []
+    if not accepted or not visual.get("fresh") or datetime.fromisoformat(accepted["expires_at"]) <= datetime.now(timezone.utc):
+        lines.append("The screenshot is not valid current inventory; recheck your situation." if english else "这张截图不能作为当前库存，请重新确认现状。")
+    elif accepted["subject"] != "self":
+        lines.append("Other players' items are not counted as yours." if english else "他人的物品没有计入你的库存。")
+    if any(item["kind"] in {"base", "equipment"} for item in visual["observations"]):
+        lines.append("Only visible structures and equipment can be assessed." if english else "这里只判断图中可见的结构和装备。")
+    return "\n".join(lines)
+
+
+def visual_summary(visual,language="zh", *, include_observations=True, include_unknowns=True):
     accepted = visual_input(visual)
     fresh = bool(accepted and visual["fresh"] and datetime.fromisoformat(accepted["expires_at"]) > datetime.now(timezone.utc))
     english = language == "en"
@@ -39,7 +52,7 @@ def visual_summary(visual,language="zh", *, include_observations=True):
     if any(item["kind"] in {"base","equipment"} for item in visual["observations"]):
         lines.append("Only visible structures and equipment are known." if english else "仅能判断可见的结构和装备。")
     if not include_observations:
-        if visual["unknowns"]:
+        if include_unknowns and visual["unknowns"]:
             lines.append(("Unknown: " if english else "尚不明确：") + "；".join(visual["unknowns"]))
         return "\n".join(lines)
     for item in visual["observations"][:12]:
@@ -56,6 +69,6 @@ def visual_summary(visual,language="zh", *, include_observations=True):
         lines.append("• " + details)
     if len(visual["observations"]) > 12:
         lines.append("Other detected items are retained for follow-up questions." if english else "其余已识别物品也会保留用于后续提问。")
-    if visual["unknowns"]:
+    if include_unknowns and visual["unknowns"]:
         lines.append(("Unknown: " if english else "尚不明确：") + "；".join(visual["unknowns"]))
     return "\n".join(lines)

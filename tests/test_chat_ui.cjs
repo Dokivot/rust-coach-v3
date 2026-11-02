@@ -9,6 +9,7 @@ class Element {
     this.children = [];
     this.textContent = "";
     this.events = {};
+    this.attributes = {};
     this.value = "";
     this.style = {};
     this.classList = {add() {}, remove() {}};
@@ -16,7 +17,7 @@ class Element {
   append(...children) { this.children.push(...children); }
   replaceChildren(...children) { this.children = children; }
   addEventListener(name, callback) { this.events[name] = callback; }
-  setAttribute() {}
+  setAttribute(name, value) { this.attributes[name] = value; }
   focus() {}
   set innerHTML(value) { throw new Error("Untrusted content must use textContent"); }
 }
@@ -123,6 +124,7 @@ async function sendingUI({upload, send} = {}) {
       revokeObjectURL: url => urls.revoked.push(url),
     },
     FormData: class { append(name, blob) { this.blob = blob; } },
+    TextDecoder,
     crypto: {randomUUID: () => "request-" + ++requestCount},
     localStorage: {getItem: () => null, setItem() {}},
     requestAnimationFrame: callback => callback(),
@@ -134,6 +136,7 @@ async function sendingUI({upload, send} = {}) {
         return upload ? upload(calls.uploads.length) : response(attachment("image-" + calls.uploads.length));
       }
       if (path.endsWith("/messages")) {
+        assert.equal(options.headers.Accept, "text/event-stream");
         const payload = JSON.parse(options.body);
         calls.messages.push(payload);
         return send ? send(payload, calls.messages.length) : response(turnFor(payload));
@@ -188,7 +191,7 @@ for (const message of ["", "看看这张图"]) {
     await flush();
     assert.equal(ui.calls.messages.length, 1);
     assert.deepEqual(ui.calls.messages[0].attachment_ids, ["image-1"]);
-    assert.equal(ui.element("#send-status").textContent, "正在思考…");
+    assert.equal(ui.element("#send-status").textContent, "正在等待处理…");
     assert.deepEqual(ui.urls.revoked, []);
     replying.resolve(response(turnFor(ui.calls.messages[0])));
     await submission;
@@ -289,3 +292,87 @@ test("starting a new conversation releases a restored draft without carrying its
   assert.notEqual(ui.calls.messages[1].request_id, ui.calls.messages[0].request_id);
   assert.equal(ui.calls.uploads.length, 1);
 });
+
+function eventStream() {
+  let controller;
+  let cancelled = false;
+  const body = new ReadableStream({start(value) { controller = value; }, cancel() { cancelled = true; }});
+  return {
+    response: {ok: true, headers: {get: () => "text/event-stream; charset=utf-8"}, body},
+    write(event, fragmented = false) {
+      const bytes = new TextEncoder().encode("data: " + JSON.stringify(event) + "\r\n\r\n");
+      if (fragmented) {
+        for (const byte of bytes) controller.enqueue(Uint8Array.of(byte));
+      } else controller.enqueue(bytes);
+    },
+    heartbeat() { controller.enqueue(new TextEncoder().encode(": keep-alive\n\n")); },
+    close() { controller.close(); },
+    cancelled: () => cancelled,
+  };
+}
+
+test("real stage frames update the UI before the answer and preserve the screenshot draft", async () => {
+  const stream = eventStream();
+  const ui = await sendingUI({send: () => stream.response});
+  ui.addImages();
+  const submission = ui.submit("合成还差什么？");
+  await flush();
+  const payload = ui.calls.messages[0];
+  stream.heartbeat();
+  stream.write({type: "stage", request_id: payload.request_id, sequence: 1,
+    stage: "recognize_image", label: "正在识图"}, true);
+  await flush();
+  assert.equal(ui.element("#send-status").textContent, "正在识图");
+  assert.equal(ui.element("#messages").children[1].children[1].textContent, "正在识图");
+  assert.equal(ui.element("#messages").children[0].children[2].src, ui.urls.created[0]);
+  assert.equal(ui.element("#message-input").value, "");
+  assert.equal(ui.element("#send").disabled, true);
+  assert.deepEqual(ui.urls.revoked, []);
+  stream.write({type: "stage", request_id: payload.request_id, sequence: 1, stage: "context", label: "重复事件"});
+  stream.write({type: "stage", request_id: payload.request_id, sequence: 0, stage: "context", label: "旧事件"});
+  stream.write({type: "stage", request_id: payload.request_id, sequence: 2,
+    stage: "calculate_craft", label: "正在计算资源缺口"});
+  await flush();
+  assert.equal(ui.element("#send-status").textContent, "正在计算资源缺口");
+  const stages = ui.element("#messages").children[1].children[2];
+  assert.equal(stages.attributes["aria-label"], "执行阶段");
+  assert.deepEqual(stages.children.map(stage => stage.textContent), ["上传图片…", "识图", "计算资源缺口"]);
+  assert.equal(stages.children[1].className, "agent-stage completed");
+  assert.equal(stages.children[2].attributes["aria-current"], "step");
+  stream.write({type: "result", request_id: payload.request_id, turn: turnFor(payload)});
+  await submission;
+  assert.equal(ui.element("#messages").children.length, 2);
+  assert.equal(ui.element("#messages").children[1].children[1].textContent, "已分析。");
+  assert.equal(ui.element("#messages").children[1].children.length, 2);
+  assert.equal(ui.element("#send-status").textContent, "");
+  assert.deepEqual(ui.urls.revoked, ui.urls.created);
+  assert.equal(stream.cancelled(), true);
+});
+
+for (const failure of ["error", "disconnect", "wrong-request", "wrong-result"]) {
+  test("stream " + failure + " restores the draft and keeps retries idempotent", async () => {
+    const stream = eventStream();
+    const ui = await sendingUI({send: (payload, attempt) => attempt === 1 ? stream.response : response(turnFor(payload))});
+    ui.addImages();
+    const submission = ui.submit("  识别截图\n");
+    await flush();
+    const payload = ui.calls.messages[0];
+    stream.write({type: "stage", request_id: payload.request_id, sequence: 1, stage: "recognize_image", label: "正在识图"});
+    if (failure === "disconnect") stream.close();
+    else if (failure === "wrong-request") stream.write({type: "stage", request_id: "other", sequence: 2,
+      stage: "compose", label: "不应显示"});
+    else if (failure === "wrong-result") stream.write({type: "result", request_id: payload.request_id,
+      turn: {...turnFor(payload), request_id: "other"}});
+    else stream.write({type: "error", request_id: payload.request_id, error: {message: "模型响应超时，请重试。"}});
+    await submission;
+    assert.equal(ui.element("#message-input").value, "  识别截图\n");
+    assert.equal(ui.element("#vision-pending").children.length, 1);
+    assert.equal(ui.element("#messages").children.length, 0);
+    assert.equal(ui.element("#error").hidden, false);
+    assert.deepEqual(ui.urls.revoked, []);
+    await ui.submit();
+    assert.deepEqual(ui.calls.messages[1], payload);
+    assert.equal(ui.calls.uploads.length, 1);
+    assert.equal(ui.element("#messages").children.length, 2);
+  });
+}

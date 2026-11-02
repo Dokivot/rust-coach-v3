@@ -15,6 +15,7 @@ from rust_coach.advice.service import is_advice
 from rust_coach.presentation.policy import compile_persona, resolve_context
 from rust_coach.presentation.contracts import PresentationPreferences
 from rust_coach.memory.service import MemoryService
+from rust_coach.progress import report_stage
 from rust_coach.memory.store import now_iso
 from rust_coach.memory.policy import deterministic_candidates, validate_candidate
 from rust_coach.architecture.input import InputLayer
@@ -72,12 +73,15 @@ class ChatRuntime:
                             (turn.presentation or {}).get("request_preferences") != (
                                 request.presentation_preferences.model_dump() if request.presentation_preferences else None)):
                         raise AppError("request_conflict", "请求标识已用于另一条消息，请重新发送。", 409)
+                    report_stage("replay")
                     return turn
             if len(conversation.turns) >= 100:
                 raise AppError("conversation_full", "当前会话已达到 100 轮，请创建新对话。", 409)
+            report_stage("context")
             scope_id = self.player_states.binding(conversation_id)
             command = self.memory.command(request.message)
             if command:
+                report_stage("memory")
                 if request.attachment_ids or request.visual_draft_id:
                     raise AppError("memory_command_images", "记忆管理命令请单独发送，图片可随后发送。", 422)
                 if command[0] == "remember":
@@ -89,6 +93,7 @@ class ChatRuntime:
                         except (ValueError, AppError, TimeoutError):
                             raise AppError("memory_extraction_failed", "这次未能可靠提取记忆，没有保存。请简短说明自己的经历或偏好后重试。", 502) from None
                     command = ("remember", candidates)
+                report_stage("save")
                 with self.store.connection() as connection:
                     connection.execute("BEGIN IMMEDIATE")
                     source = {"conversation_id": conversation_id, "request_id": str(request.request_id),
@@ -194,6 +199,7 @@ class ChatRuntime:
             visual = result.get("visual")
             if visual:
                 visual["request_identity"] = self.visual_identity(request)
+            report_stage("save")
             with self.store.connection() as connection:
                 connection.execute("BEGIN IMMEDIATE")
                 turn = self.store.append(conversation_id, str(request.request_id), request.message,

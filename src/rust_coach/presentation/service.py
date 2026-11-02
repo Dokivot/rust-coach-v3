@@ -2,6 +2,7 @@ import asyncio
 import logging
 
 from rust_coach.contracts import AppError, ModelMessage, ModelReply
+from rust_coach.progress import report_stage
 from rust_coach.presentation.rendering import fallback_text
 from rust_coach.presentation.validation import narrative_issues
 
@@ -12,6 +13,7 @@ logger = logging.getLogger("rust_coach")
 async def generate_chat(model, messages, context):
     checks = []
     for attempt in range(2):
+        report_stage("compose")
         try:
             if attempt:
                 async with asyncio.timeout(20):
@@ -22,6 +24,7 @@ async def generate_chat(model, messages, context):
             if attempt == 0:
                 raise
             break
+        report_stage("check_answer")
         issues = narrative_issues(reply.content)
         if not issues:
             return {"reply": reply, "response_repairs": attempt, "response_checks": checks,

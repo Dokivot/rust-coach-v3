@@ -16,9 +16,11 @@ class ResponseContext(BaseModel):
 
     persona_version: str = "rust-coach-core-v1"
     prompt_version: str = "coach-prompts-v1"
-    renderer_version: str = "coach-render-v2"
+    renderer_version: str = "coach-render-v3"
     preferences: PresentationPreferences = Field(default_factory=PresentationPreferences)
     language: Literal["zh", "en"] = "zh"
+    answer_focus: Literal["general", "resource_gap", "feasibility"] = "general"
+    use_c4_alias: bool = False
     scenario: Literal["normal", "urgent", "teaching", "recovery"] = "normal"
     scenario_reason: str = "default"
     capabilities: tuple[str, ...] = ()

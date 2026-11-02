@@ -19,6 +19,7 @@ from rust_coach.player_state import PlayerStateStore
 from rust_coach.player_state.schemas import ScopeCreate, StateUpdate
 from rust_coach.player_state.schemas import FIELD_DEFINITIONS
 from rust_coach.runtime import ChatRuntime
+from rust_coach.progress import chat_events
 
 
 QUOTE = "An airlock separates the entrance from the rest of the base."
@@ -61,6 +62,27 @@ class FakeResearch:
         self.calls.append((topics, force))
         return {"documents": self.documents, "events": [], "warnings": [] if self.documents else ["没有取得可引用正文"],
                 "queries": [TOPICS[topic][0] for topic in topics], "cache_hit": False}
+
+
+@pytest.mark.parametrize("retrieve", [False, True])
+async def test_advice_progress_only_reports_retrieval_when_used(tmp_path, retrieve):
+    plan = copy.deepcopy(PLAN)
+    plan["topics"] = ["building"] if retrieve else []
+    plan["candidates"] = [plan["candidates"][0], {"id": "craft", "title": "准备火药", "kind": "craft",
+        "required_fields": [], "goals": {"gunpowder": 10}}]
+    model = ScriptedModel([plan, answer()])
+    research = FakeResearch()
+    settings = Settings(_env_file=None, api_key="test", search_provider="off", database_path=tmp_path / "progress.sqlite3")
+    store = ConversationStore(settings.database_path)
+    owner = store.create().id
+    runtime = ChatRuntime(settings, model, store, advice_service=AdviceService(model, research))
+    request = ChatRequest(request_id=uuid4(), message="/coach 比较下一步行动")
+    events = [json.loads(frame[6:]) async for frame in chat_events(runtime, owner, request) if frame.startswith("data: ")]
+    stages = [event["stage"] for event in events if event["type"] == "stage"]
+    assert ("retrieve" in stages) == retrieve
+    assert bool(research.calls) == retrieve
+    assert stages.index("plan") < stages.index("evaluate") < stages.index("calculate_craft") < stages.index("compose")
+    assert events[-1]["type"] == "result" and len(model.calls) == 2
 
 
 @pytest.fixture

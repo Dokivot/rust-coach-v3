@@ -3,11 +3,12 @@ from datetime import datetime, timezone
 from rust_coach.calculations.engine import Calculator
 from rust_coach.calculations.presentation import render_calculation
 from rust_coach.contracts import ModelReply
+from rust_coach.progress import report_stage
 from rust_coach.player_state.domain import project
 from rust_coach.player_state.schemas import FIELD_DEFINITIONS
 from rust_coach.presentation.contracts import AnswerBlock, AnswerEnvelope, ProtectedAssertion, ResponseContext
 from rust_coach.presentation.validation import check_envelope, narrative_issues, signature
-from rust_coach.vision.presentation import visual_summary
+from rust_coach.vision.presentation import visual_summary, visual_warnings
 from rust_coach.vision.context import visual_input
 from rust_coach.architecture.contracts import DecisionResult
 from rust_coach.architecture.generation import answer_spec_from_decision
@@ -25,27 +26,25 @@ RULE_LIMIT = ("依据为 PC 原版资料快照，未核验游戏 build，未经�
               "Based on a PC vanilla data snapshot; game build and in-game behavior are not verified.")
 EVIDENCE_LIMIT = ("网页原文匹配不等于事实或当前版本已验证；相关条件仍需核对。",
                   "Matching a source quote does not verify the claim or its applicability to the current game version.")
-WORKBENCH_TEXT = {
-    "unknown": ("尚未提供当前等级", "Current level not supplied"),
-    "satisfied": ("你提供的等级满足要求", "the supplied level meets the requirement"),
-    "blocked": ("你提供的等级还不够", "the supplied level is insufficient"),
-    "not_needed": ("无需工作台", "No workbench required"),
-}
-BLUEPRINT_TEXT = {
-    "not_checked": ("尚未核对可制作配方", "Craftable recipes have not been checked"),
-    "check_required": ("仍需核对可制作配方", "Craftable recipes still need checking"),
-    "declared_available": ("你提供的清单包含所需配方", "the supplied list includes the required recipes"),
-    "not_needed": ("本次无需制作配方", "No crafting recipes needed"),
-}
 
 
 def localized(context, chinese, english):
     return english if context.language == "en" else chinese
 
 
+def item_name(identifier, catalog, context):
+    if identifier == "explosive.timed" and (context.use_c4_alias or context.preferences.terminology == "game_terms"):
+        return "C4"
+    return catalog.items[identifier]["name"] if context.language == "zh" else identifier
+
+
 def quantities(values, catalog, context):
-    return localized(context, "、", ", ").join(f"{value} {catalog.items[key]['name'] if context.language == 'zh' else key}"
-                    for key, value in values.items()) or localized(context, "无", "none")
+    parts = []
+    for identifier, amount in values.items():
+        name = item_name(identifier, catalog, context)
+        unit = " 个 " if context.language == "zh" and name == "C4" else " "
+        parts.append(f"{amount}{unit}{name}")
+    return localized(context, "、", ", ").join(parts) or localized(context, "无", "none")
 
 
 def sentences(values, context):
@@ -54,55 +53,80 @@ def sentences(values, context):
     return localized(context, "", " ").join(value + ending for value in parts if value)
 
 
+def crafting_conditions(requirements, catalog, context):
+    explicit = context.answer_focus == "feasibility" or context.preferences.verbosity == "detailed"
+    workbench = requirements["workbench"]
+    status = requirements["workbench_status"]
+    needs_recipes = bool(requirements["blueprints_to_check"])
+    lines = []
+    if status == "blocked":
+        lines.append(localized(context, f"你目前的工作台等级还不够，需要 {workbench} 级工作台",
+            f"Your current workbench level is too low; a level {workbench} workbench is required"))
+    elif status == "unknown":
+        lines.append(localized(context, f"制作还需要 {workbench} 级工作台", f"Crafting also requires a level {workbench} workbench"))
+        if explicit:
+            lines.append(localized(context, "还需确认你是否具备", "Confirm whether you have one"))
+    elif explicit:
+        lines.append(localized(context, "你的工作台等级已满足要求" if status == "satisfied" else "本次无需工作台",
+            "Your supplied workbench level meets the requirement" if status == "satisfied" else "No workbench is needed"))
+    if needs_recipes:
+        if explicit:
+            names = localized(context, "、", ", ").join(item_name(identifier, catalog, context)
+                for identifier in requirements["blueprints_to_check"])
+            lines.append(localized(context, "还需确认能制作这些配方：", "Confirm you can craft these recipes: ") + names)
+        elif status == "unknown":
+            lines[-1] += localized(context, "，并确保相关配方能制作", ", and you need to be able to craft the required recipes")
+        else:
+            lines.append(localized(context, "制作前还要确保相关配方能制作", "Before crafting, confirm you can craft the required recipes"))
+    elif explicit and requirements["blueprints_status"] == "declared_available":
+        lines.append(localized(context, "所需配方已按你提供的清单核对", "The supplied list includes the required recipes"))
+    if requirements["mixing_table_to_check"]:
+        lines.append(localized(context, "还需要混合台", "A mixing table is also required"))
+    return sentences(lines, context)
+
+
 def calculation_summary(calculation, context):
     catalog = Calculator().catalog
     result = calculation["result"]
     if calculation["operation"] == "craft":
         goal = quantities(result["goals"], catalog, context)
         acquisition = quantities(result["acquisition"], catalog, context)
+        listed = len(result["acquisition"]) > 2
+        if listed:
+            acquisition = "\n" + "\n".join("• " + quantities({identifier: amount}, catalog, context)
+                for identifier, amount in result["acquisition"].items())
+        separator = localized(context, "：", ":") if listed else " "
         partial = result["inventory_known"] and not result.get("inventory_complete",True)
         if not result["inventory_known"]:
-            answer = localized(context, f"制作 {goal} 总共需要 {acquisition}；库存未知，不能判断实际缺口。",
-                f"Crafting {goal} requires {acquisition} in total. Inventory is unknown, so the actual shortfall is unknown.")
+            answer = localized(context, f"库存未知，不能判断实际缺口。制作 {goal} 的总需求是{separator}{acquisition}",
+                f"Inventory is unknown, so the actual shortfall is unknown. Total requirements for {goal}: {acquisition}")
         elif partial:
-            scope = "抵扣截图可见材料后" if calculation.get("visual_usage") else "抵扣已知材料后"
-            answer = localized(context, f"制作 {goal}，{scope}，尚需 {acquisition}。",
-                f"To craft {goal}, you still need {acquisition} after using known inventory.") if result["acquisition"] else localized(
-                    context, f"制作 {goal}，{scope}，这份材料预算已没有缺口。",
+            scope = "按截图里能确认的库存" if calculation.get("visual_usage") else "按目前能确认的库存"
+            answer = localized(context, f"{scope}，制作 {goal} 还差{separator}{acquisition}",
+                f"Based on the known inventory, crafting {goal} still needs{separator}{acquisition}") if result["acquisition"] else localized(
+                    context, f"{scope}，制作 {goal} 的材料已经够了",
                     f"The known inventory covers the material budget for {goal}.")
         elif result["acquisition"]:
-            answer = localized(context, f"按你提供的库存，制作 {goal} 还差 {acquisition}。",
-                f"Based on the inventory you supplied, crafting {goal} still needs {acquisition}.")
+            answer = localized(context, f"按你提供的库存，制作 {goal} 还差{separator}{acquisition}",
+                f"Based on the inventory you supplied, crafting {goal} still needs{separator}{acquisition}")
         else:
             answer = localized(context, f"按你提供的库存，制作 {goal} 不需要再补材料。",
                 f"Based on the inventory you supplied, no additional materials are needed for {goal}.")
-        requirements = result["requirements"]
-        lines = [answer]
-        if partial:
-            lines.append(localized(context,"未展示或读不清的物品未计入，实际缺口可能更少。",
-                "Unseen or unreadable items are excluded; the actual shortfall may be smaller."))
+        lines = [answer if listed else sentences([answer], context)]
+        conditions = crafting_conditions(result["requirements"], catalog, context)
+        if conditions:
+            lines.append(conditions)
+        if partial and result["acquisition"]:
+            lines.append(localized(context,"如果还有未计入的材料，实际缺口可能更少。",
+                "If you have other items that were not counted, the actual shortfall may be smaller."))
         visual_usage = calculation.get("visual_usage")
         if visual_usage and not result["inventory_known"]:
             excluded = "截图已过期或不是当前本人库存，未用于抵扣。" if not visual_usage.get("fresh",True) or visual_usage.get("subject") != "self" else "截图没有可用于计算的清晰读数，暂列总需求。"
             lines.append(localized(context,excluded,"The screenshot cannot supply current personal inventory; totals are shown."))
-        workbench = requirements["workbench"]
-        if requirements["workbench_status"] == "not_needed":
-            lines.append(localized(context, "本次无需工作台。", "No workbench is needed."))
-        else:
-            lines.append(localized(context, f"需要 {workbench} 级工作台，", f"A level {workbench} workbench is required; ") +
-                localized(context, *WORKBENCH_TEXT[requirements["workbench_status"]]) + localized(context, "。", "."))
-        if not requirements["blueprints_to_check"]:
-            lines.append(localized(context, "配方方面，", "For recipes, ") +
-                localized(context, *BLUEPRINT_TEXT[requirements["blueprints_status"]]) + localized(context, "。", "."))
-        if requirements["blueprints_to_check"]:
-            names = [catalog.items[key]["name"] if context.language == "zh" else key for key in requirements["blueprints_to_check"]]
-            lines.append(localized(context, "待核对配方（含默认配方，不等于都要研究）：", "Check recipes (includes defaults, not all require research): ") + "、".join(names))
-        if requirements["mixing_table_to_check"]:
-            lines.append(localized(context, "另需确认已有混合台。", "Also confirm a mixing table is available."))
         if result["reserved"]:
             lines.append(localized(context, "预算已保留 ", "The budget reserves ") +
                 quantities(result["reserved"], catalog, context) + localized(context, "。", "."))
-        return sentences(lines, context)
+        return "\n\n".join(lines)
     best = result["options"][0]
     side = localized(context, "硬面" if result["side"] == "hard" else "软面", result["side"] + " side")
     target = result["target_name"] if context.language == "zh" else result["target"]
@@ -140,6 +164,8 @@ def calculation_assertions(calculation):
 
 
 def finalize_response(state):
+    if state.get("calculation") or state.get("route") in {"player_state", "visual_observe"}:
+        report_stage("compose")
     context = ResponseContext.model_validate(state.get("response_context") or {})
     calculation, advice = state.get("calculation"), state.get("advice")
     blocks = []
@@ -247,7 +273,7 @@ def finalize_response(state):
                 "These alternatives have separate budgets; do not combine them into one execution plan."))
         if any(evaluation.get("calculation") for evaluation in evaluations.values()):
             budget_placement = "main" if selected_budget else detail
-            add("rule_limit", localized(context, *RULE_LIMIT), placement=budget_placement)
+            add("rule_limit", localized(context, *RULE_LIMIT), placement=detail)
             add("reserve_limit", localized(context, "预算未计维护与出行预留；实际执行前需核对保留资源。",
                                            "Budgets exclude upkeep and travel reserves; check reserved resources before acting."), placement=budget_placement)
         if advice["evidence"]["documents"]:
@@ -262,11 +288,11 @@ def finalize_response(state):
         payload = calculation
         assertions.extend(calculation_assertions(calculation))
         add("calculation_summary", calculation_summary(calculation, context), reference=calculation["calculation_id"])
-        add("rule_limit", localized(context, *RULE_LIMIT))
+        add("rule_limit", localized(context, *RULE_LIMIT), placement=detail)
         if calculation["operation"] == "raid":
             add("raid_assumptions", "\n".join(calculation["result"]["assumptions"]))
         add("original_report", state["reply"].content, placement=detail, reference=calculation["calculation_id"])
-        if context.teaching.get("mode") in {"guided", "practice"} and context.teaching.get("focus"):
+        if context.answer_focus != "resource_gap" and context.teaching.get("mode") in {"guided", "practice"} and context.teaching.get("focus"):
             add("teaching_focus", localized(context, "理解这次结果：", "Understanding this result: ") +
                 " ".join(context.teaching["focus"]) if context.language == "zh" else
                 "Use the report's stated inventory scope, requirements and assumptions; unknown inputs are not zero.", "narrative")
@@ -294,10 +320,11 @@ def finalize_response(state):
         payload = {"business":payload,"visual":visual}
         assertions.append(ProtectedAssertion(kind="observation",reference=visual["draft_id"],value=visual))
         business_answer = bool(calculation or advice)
-        if business_answer:
-            add("visual_context", visual_summary(visual, context.language, include_observations=False),
+        summarized_inventory = calculation and calculation.get("status") == "calculated" and calculation["operation"] == "craft"
+        if business_answer and not summarized_inventory:
+            add("visual_context", visual_warnings(visual, context.language),
                 reference=visual["draft_id"])
-        add("visual_scope",visual_summary(visual,context.language),reference=visual["draft_id"],
+        add("visual_scope",visual_summary(visual,context.language, include_unknowns=not business_answer),reference=visual["draft_id"],
             placement=detail if business_answer else "main" if state.get("visual_original_question") or state.get("route") == "visual_observe" else "detail")
         if not business_answer and blocks[-1].placement == "main":
             blocks.insert(0,blocks.pop())
@@ -306,6 +333,7 @@ def finalize_response(state):
                 if recommendation and recommendation.get("visual_citations"):
                     add("visual_reference." + recommendation["candidate_id"],localized(context,"图片区域依据：","Image region evidence: ") +
                         ", ".join(recommendation["visual_citations"]),reference=visual["draft_id"], placement=detail)
+    report_stage("check_answer")
     envelope = AnswerEnvelope(kind=kind, context=context, protected_payload=payload, blocks=tuple(blocks), assertions=tuple(assertions),
                               checks=tuple(checks), repair_count=repairs, fallback_reason=fallback)
     payload_hash = signature(payload)

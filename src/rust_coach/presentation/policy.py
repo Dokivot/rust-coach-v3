@@ -50,7 +50,13 @@ def resolve_context(message, preferences=None, capabilities=(), settings=None):
             break
     configuration = {key: getattr(settings, key) for key in ("base_url", "model", "api_mode", "instruction_role")} if settings else {}
     fingerprint = hashlib.sha256(json.dumps(configuration, sort_keys=True).encode()).hexdigest()[:16]
+    focus = "general"
+    if re.search(r"能不能|能否|能做|能制作|材料够|可以(?:直接|现在)?(?:做|制作|合成)|can I (?:craft|make)|ready to craft", message, re.I):
+        focus = "feasibility"
+    elif re.search(r"还差|还缺|缺口|差多少|缺多少|多少资源|多少材料|shortfall|how much.*(?:need|missing)", message, re.I):
+        focus = "resource_gap"
     return ResponseContext(preferences=preferences, language=language, scenario=scenario,
+        answer_focus=focus, use_c4_alias=bool(re.search(r"(?<![A-Za-z0-9])C4(?![A-Za-z0-9])", message, re.I)),
         scenario_reason="explicit_message_cue" if scenario != "normal" else "default",
         capabilities=tuple(capabilities), model_config_id=fingerprint)
 

@@ -104,7 +104,8 @@ def test_protected_values_and_scope_preserved_across_all_styles():
         blocks = result["presentation"]["blocks"]
         assert all(block["kind"] == "protected" for block in blocks)
         assert "100" in blocks[0]["text"] and "150" in blocks[0]["text"]
-        assert next(block for block in blocks if block["id"] == "rule_limit")["placement"] == "main"
+        placement = "main" if result["presentation"]["context"]["preferences"]["verbosity"] == "detailed" else "detail"
+        assert next(block for block in blocks if block["id"] == "rule_limit")["placement"] == placement
     assert results[0]["presentation"]["blocks"][-1]["placement"] == "detail"
     assert results[-1]["presentation"]["blocks"][-1]["placement"] == "main"
 
@@ -121,7 +122,7 @@ def test_concise_keeps_unknown_technology_and_mixing_table_conditions():
     calculation = calculator.calculate(CalculationRequest(operation="craft", goals={"gunpowder": 100}, gunpowder_recipe="mixing_table"))
     result = finalize_response({"calculation": calculation, "reply": ModelReply(content=render_calculation(calculation, calculator.catalog))})
     main = "\n".join(block["text"] for block in result["presentation"]["blocks"] if block["placement"] == "main")
-    assert "待核对配方" in main and "另需确认已有混合台" in main
+    assert "确保相关配方能制作" in main and "还需要混合台" in main
     assert "not_checked" not in main and "not_needed" not in main
 
 
@@ -208,13 +209,16 @@ def test_unselected_budgets_are_details_but_still_protected():
     assert outputs[1]["reply"].content.count("100 硫磺") == 1
 
 
-def test_english_summary_preserves_budget_and_unknown_conditions():
+def test_english_summary_preserves_budget_and_defers_satisfied_conditions():
     result = finalize_response(calculation_state(language="en", inventory=False))
     text = result["reply"].content
     assert "200 sulfur, 300 charcoal" in text
     assert "actual shortfall is unknown" in text
-    assert "level 1 workbench" in text
-    assert "game build" in text
+    assert "workbench" not in text
+    rule_limit = next(block for block in result["presentation"]["blocks"] if block["id"] == "rule_limit")
+    assert "game build" in rule_limit["text"] and rule_limit["placement"] == "detail"
+    requirements = next(assertion["value"] for assertion in result["presentation"]["assertions"] if assertion["kind"] == "feasibility")
+    assert requirements["workbench"] == 1 and requirements["workbench_status"] == "satisfied"
 
 
 def test_zero_material_gap_does_not_imply_technology_is_available():
@@ -224,9 +228,71 @@ def test_zero_material_gap_does_not_imply_technology_is_available():
     result = finalize_response({"calculation": calculation,
         "reply": ModelReply(content=render_calculation(calculation, calculator.catalog))})
     assert "不需要再补材料" in result["reply"].content
-    assert "尚未提供当前等级" in result["reply"].content
-    assert "待核对配方" in result["reply"].content
+    assert "制作还需要 1 级工作台，并确保相关配方能制作" in result["reply"].content
     assert "现在可以直接制作" not in result["reply"].content
+
+
+def test_craft_conditions_follow_question_focus_without_claiming_all_recipes_need_research():
+    calculator = Calculator()
+    calculation = calculator.calculate(CalculationRequest(operation="craft", goals={"explosive.timed": 2}))
+    state = {"calculation": calculation, "reply": ModelReply(content=render_calculation(calculation, calculator.catalog))}
+    state["response_context"] = resolve_context("合成两个C4还差多少资源？").model_dump()
+    budget = finalize_response(state)
+    assert budget["presentation"]["context"]["answer_focus"] == "resource_gap"
+    assert "2 个 C4" in budget["reply"].content
+    assert "制作还需要 3 级工作台，并确保相关配方能制作" in budget["reply"].content
+    assert "尚未提供" not in budget["reply"].content
+    assert "含默认配方" not in budget["reply"].content
+    state["response_context"] = resolve_context("我现在能不能制作两个C4？").model_dump()
+    feasibility = finalize_response(state)
+    assert feasibility["presentation"]["context"]["answer_focus"] == "feasibility"
+    assert "还需确认你是否具备" in feasibility["reply"].content
+    assert "还需确认能制作这些配方：火药、炸药、C4" in feasibility["reply"].content
+    assert "研究" not in feasibility["reply"].content
+    assert budget["presentation"]["protected_payload_hash"] == feasibility["presentation"]["protected_payload_hash"]
+    assert budget["presentation"]["assertions"] == feasibility["presentation"]["assertions"]
+
+
+def test_known_technology_blocker_remains_in_resource_answer():
+    calculator = Calculator()
+    calculation = calculator.calculate(CalculationRequest(operation="craft", goals={"explosive.timed": 2}, workbench=2))
+    result = finalize_response({"calculation": calculation,
+        "reply": ModelReply(content=render_calculation(calculation, calculator.catalog)),
+        "response_context": resolve_context("两个C4还缺多少材料？").model_dump()})
+    assert "你目前的工作台等级还不够，需要 3 级工作台" in result["reply"].content
+
+
+def test_resource_question_omits_satisfied_conditions_and_unrequested_teaching():
+    state = calculation_state()
+    context = resolve_context("还差多少材料？").model_copy(update={"teaching": {"mode": "guided", "focus": ["学习库存抵扣方法"]}})
+    state["response_context"] = context.model_dump()
+    result = finalize_response(state)
+    assert result["reply"].content == "按你提供的库存，制作 100 火药 还差 100 硫磺、150 木炭。"
+    report = next(block for block in result["presentation"]["blocks"] if block["id"] == "original_report")
+    assert "等级满足" in report["text"] and report["placement"] == "detail"
+
+
+def test_item_name_preference_is_display_only():
+    calculator = Calculator()
+    calculation = calculator.calculate(CalculationRequest(operation="craft", goals={"explosive.timed": 1}))
+    state = {"calculation": calculation, "reply": ModelReply(content=render_calculation(calculation, calculator.catalog))}
+    full_name = finalize_response(state)
+    state["response_context"] = resolve_context("How much do I need for one C4?").model_dump()
+    alias = finalize_response(state)
+    assert "定时炸弹" in full_name["reply"].content
+    assert "1 C4" in alias["reply"].content
+    assert alias["presentation"]["protected_payload_hash"] == full_name["presentation"]["protected_payload_hash"]
+    assert alias["presentation"]["assertions"] == full_name["presentation"]["assertions"]
+
+
+@pytest.mark.parametrize("fresh,subject", [(False, "self"), (True, "opponent")])
+def test_excluded_screenshot_scope_remains_in_main_answer(fresh, subject):
+    state = calculation_state(inventory=False)
+    state["calculation"]["visual_usage"] = {"fresh": fresh, "subject": subject}
+    result = finalize_response(state)
+    assert "截图已过期或不是当前本人库存，未用于抵扣" in result["reply"].content
+    assert "不能判断实际缺口" in result["reply"].content
+    assert "还差" not in result["reply"].content
 
 
 async def test_details_persist_but_followup_history_uses_short_answer(settings):

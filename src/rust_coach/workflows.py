@@ -13,6 +13,7 @@ from rust_coach.advice.service import is_advice
 from rust_coach.presentation.contracts import ResponseContext
 from rust_coach.presentation.rendering import finalize_response
 from rust_coach.presentation.service import generate_chat
+from rust_coach.progress import report_stage
 from rust_coach.architecture.contracts import (
     CoachTaskRepresentation,
     DecisionRequest,
@@ -110,6 +111,7 @@ def build_chat_graph(model: ChatModel, instruction_role="system", calculation_mo
             return {"visual":None, "parsed_input": parsed}
         if not vision_service:
             raise AppError("vision_unavailable","截图服务未接入，请转写关键文字。",503)
+        report_stage("image_context")
         history = [message.content[:1500] for message in state["messages"][:-1] if message.role == "user"
             and isinstance(message.content,str) and message.content != request.message
             and not message.content.startswith("玩家状态数据")][-4:]
@@ -152,6 +154,7 @@ def build_chat_graph(model: ChatModel, instruction_role="system", calculation_mo
                 "visual_original_question":bool(request.attachment_ids or request.message == (draft["payload"]["question"] or "查看截图识别结果"))}
 
     def route(state: ChatState):
+        report_stage("understand")
         visual = state.get("visual")
         text = state["messages"][-1].content.strip()
         parsed = ParsedInput.model_validate(state.get("parsed_input"))
@@ -241,6 +244,7 @@ def build_chat_graph(model: ChatModel, instruction_role="system", calculation_mo
         return {**result, **with_decision_result(state, decision_result)}
 
     def player_state(state: ChatState):
+        report_stage("player_state")
         reply = ModelReply(content=render_snapshot(state.get("player_snapshot")))
         task = CoachTaskRepresentation.model_validate(state["task"])
         result = DecisionResult(task_id=task.task_id, status="verified", result_kind="state",

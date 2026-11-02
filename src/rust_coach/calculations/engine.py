@@ -6,6 +6,7 @@ from decimal import Decimal, ROUND_CEILING
 from rust_coach.calculations.catalog import RuleCatalog
 from rust_coach.calculations.schemas import CalculationRequest
 from rust_coach.contracts import AppError
+from rust_coach.progress import report_stage
 
 
 class Calculator:
@@ -15,6 +16,7 @@ class Calculator:
         self.catalog = RuleCatalog()
 
     def calculate(self, request: CalculationRequest):
+        report_stage("calculate_craft" if request.operation == "craft" else "calculate_raid")
         catalog = self.catalog
         catalog.require_items([*request.goals, *(request.inventory or {}), *request.reserve,
                                *(request.blueprints or []), *request.methods])
