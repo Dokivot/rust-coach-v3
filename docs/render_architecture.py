@@ -62,10 +62,11 @@ def render():
         f'<svg xmlns="http://www.w3.org/2000/svg" width="{WIDTH}" height="{HEIGHT}" '
         f'viewBox="0 0 {WIDTH} {HEIGHT}" role="img" aria-labelledby="title description">'
     )
-    parts.append('<title id="title">Rust Coach v2 · Plan-and-Execute 与 Agentic RAG</title>')
+    parts.append('<title id="title">Rust Coach v2 · 六层架构与知识层</title>')
     parts.append(
-        '<desc id="description">包含输入、状态、Plan-and-Execute、Agentic RAG、生成、持久化、'
-        '知识发布与评测。蓝色为确定性组件，紫色为生成式组件，绿色为存储，金色为预留计算接口。'
+        '<desc id="description">包含输入、理解、结构化知识、向量检索、规划中的知识图谱、'
+        '工作/情景/语义记忆、Plan-and-Execute、Agentic RAG、生成、持久化、知识发布与评测。'
+        '蓝色为确定性组件，紫色为生成式组件，绿色为存储，金色为预留计算接口。'
         'RAG 包括向量语义检索和互联网实时搜索；两个循环支持中途持久澄清。</desc>'
     )
     parts.append(
@@ -101,17 +102,22 @@ def render():
     arrow("M1400 275 H1380 V235 H265 V245", "提示词、附件引用、补充回答", 700, 230)
     arrow("M460 293 H540", "UserInput", 474, 281)
 
-    panel(40, 410, 1280, 290, "02  理解层 · LangGraph 主图：State + Node + Conditional Edge")
-    box(70, 470, 350, 110, "D", "ParsedInput 接收", ["请求候选、状态候选、证据", "unknowns / provenance / 解析版本"])
-    box(500, 470, 340, 110, "D", "语义理解 / 状态合并", ["目标、实体、槽位与上下文", "范围、来源、新鲜度、冲突"])
-    box(920, 470, 350, 110, "D", "条件路由", ["事实 / 计算 / 决策", "缺信息 → 澄清；不支持 → 降级"])
-    box(920, 615, 350, 80, "D", "interrupt / resume", ["同任务恢复 · 按依赖重新评估"])
-    arrow("M680 340 V388 H245 V470", "ParsedInput", 264, 391)
-    arrow("M1100 340 V390 H670 V470", "运行时上下文", 900, 385)
-    arrow("M420 525 H500", "候选", 434, 513)
-    arrow("M840 525 H920", "执行规格", 846, 510)
-    arrow("M1095 580 V615", "缺字段", 1110, 604)
-    arrow("M920 655 H670 V580", "补充回答 → 恢复原子图", 680, 642)
+    panel(40, 410, 1280, 290, "02  理解层 · CoachTaskRepresentation 与条件路由")
+    box(70, 465, 280, 100, "D", "ParsedInput 校验", ["请求/状态候选、证据", "unknowns / 版本 / 引用"])
+    box(390, 465, 280, 100, "G", "意图识别", ["目标、子目标、实体候选", "硬/软约束与期望结果"])
+    box(710, 465, 280, 100, "D", "状态解析 / 合并", ["scope / revision / TTL", "来源、覆盖、新鲜度、冲突"])
+    box(1030, 465, 240, 100, "D", "任务表示", ["CoachTaskRepresentation", "证据 + 不确定性"])
+    box(390, 610, 280, 70, "D", "知识查询 / 重理解", ["KnowledgeQuery → 新 revision"])
+    box(710, 610, 280, 70, "D", "路由 / 澄清恢复", ["知识、计算、决策或 input"])
+    arrow("M680 340 V388 H210 V465", "ParsedInput", 230, 391)
+    arrow("M1100 340 V390 H850 V465", "运行时上下文", 900, 385)
+    arrow("M350 515 H390", "候选", 355, 503)
+    arrow("M670 515 H710", "实体与约束", 672, 503)
+    arrow("M990 515 H1030", "任务表示", 993, 503)
+    arrow("M1150 565 V592 H530 V610", "知识缺口", 1010, 586)
+    arrow("M670 645 H710", "已补充证据", 674, 633)
+    arrow("M850 565 V592 H1030 V565", "完成理解", 895, 586)
+    arrow("M850 680 V695 H1150 V565", "澄清/重理解", 930, 692)
 
     panel(1360, 410, 640, 700, "知识层 · Agentic RAG 子图")
     box(1400, 470, 540, 80, "G", "查询规划 / 缺口改写", ["围绕 EvidenceNeed，改写未覆盖需求"])
@@ -164,15 +170,15 @@ def render():
     arrow("M245 1330 V1375 H1095 V1330", "默认：确定性模板", 513, 1365)
     arrow("M1200 1330 V1420", "放行 / 安全模板回退", 991, 1405)
 
-    panel(1360, 1160, 640, 580, "State / Memory / Persistence")
-    box(1400, 1220, 540, 110, "S", "PostgreSQL Checkpointer", ["任务级 State · 中断 / 崩溃恢复", "thread_id = task_id；持久化不等于授权"])
-    box(1400, 1380, 540, 135, "S", "玩家状态 / 会话 / 长期记忆", ["快照：范围 / revision / wipe / 有效期", "会话：消息、指代、已确认假设", "记忆：已确认偏好，不能替代当前库存"])
-    box(1400, 1570, 540, 110, "S", "向量知识与任务证据", ["pgvector：策略 / 前置条件 / 反例", "网页快照 / 结果 / 预算账本 / outbox"])
+    panel(1360, 1160, 640, 580, "Knowledge Stores / Memory / Persistence")
+    box(1400, 1220, 540, 110, "S", "工作记忆 / Checkpointer", ["TaskState、EvidenceNeed、候选与假设", "任务级中断 / 崩溃恢复；不跨任务当事实"])
+    box(1400, 1380, 540, 135, "S", "玩家状态 / 会话 / 个人记忆", ["状态：范围 / revision / wipe / 有效期", "情景记忆：事件 / 结果 / scope / TTL", "语义记忆：偏好 / 习惯 / 学习进度 / 遗忘"])
+    box(1400, 1570, 540, 110, "S", "知识存储与证据", ["结构化库：规则 / 行动 / capability", "pgvector：chunks；知识图谱〔规划〕", "网页快照 / claims / 版本与发布指针"])
     arrow("M1270 300 H1338 V1138 H1920 V1220", "保存 checkpoint", 1400, 1130, True, "#368265")
     arrow("M1600 1330 V1350 H1350 V390 H1240 V340", "同任务恢复", 1400, 1344, True, "#368265")
-    arrow("M1400 1455 H1300 V590 H805 V580", "读取相关状态 / 历史 / 偏好", 680, 608, True, "#368265")
+    arrow("M1400 1455 H1300 V590 H805 V580", "读取状态 / 历史 / 偏好", 680, 608, True, "#368265")
     arrow("M1270 1470 H1380 V1615 H1400", "归档 + outbox", 1196, 1606, True, "#368265")
-    arrow("M1670 1570 V1515", "确认的偏好更新", 1690, 1546, True, "#368265")
+    arrow("M1670 1570 V1515", "知识 / 记忆更新", 1690, 1546, True, "#368265")
 
     panel(40, 1590, 1280, 150, "知识构建 · 实时结果不自动污染正式语料")
     box(70, 1645, 1200, 75, "D", "来源审核 → 条件化分块 → embedding → 回归 → 不可变 kb_release", ["新网页先保存任务快照，后经 staging 审核入库；计算规则不从网页临时生成执行"])

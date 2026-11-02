@@ -13,7 +13,24 @@ flowchart TB
         VISION --> FUSION
         FUSION --> PARSED
     end
-    STATE["D/G · 理解层<br/>语义消歧、状态合并与路由"]
+    subgraph UNDERSTAND["理解层：CoachTaskRepresentation 生成与路由"]
+        U_PARSE["D · ParsedInput 校验<br/>输入版本、引用和 unknowns"]
+        U_INTENT["G · 意图识别<br/>目标、子目标、实体候选"]
+        U_STATE["D · 状态解析与合并<br/>scope / revision / TTL / 冲突"]
+        STATE["D · CoachTaskRepresentation<br/>意图、约束、目标、状态、证据、不确定性"]
+        U_QUERY["D · KnowledgeQuery<br/>实体 / 背景 / 能力缺口"]
+        U_ROUTE["D · 请求路由门禁<br/>知识 / 计算 / 决策 / 澄清"]
+        U_CLARIFY["D · 澄清与重理解<br/>新 revision · 保留未失效成果"]
+        U_PARSE --> U_INTENT
+        U_PARSE --> U_STATE
+        U_INTENT --> STATE
+        U_STATE --> STATE
+        STATE --> U_QUERY
+        U_QUERY --> STATE
+        STATE --> U_ROUTE
+        U_ROUTE --> U_CLARIFY
+        U_CLARIFY --> STATE
+    end
     ASK["D · 共享澄清能力<br/>各图本地 clarify → interrupt → resume<br/>校验补充信息、按依赖失效、恢复原任务"]
 
     subgraph CALC["强计算短路径 · 仅预留接口"]
@@ -43,15 +60,20 @@ flowchart TB
         BUNDLE["D · EvidenceBundle<br/>声明-证据矩阵、缺口、冲突"]
     end
 
-    subgraph KNOW["知识构建与存储"]
-        INGEST["D · 来源审核 / 分块 / embedding / 发布<br/>模型抽取候选须审核"]
-        VDB[("S · PostgreSQL + pgvector<br/>策略、条件、反例；kb_release")]
+    subgraph KNOW["知识层：存储、索引、记忆与发布"]
+        INGEST["D · 来源审核 / 分块 / embedding / 关系抽取 / 发布<br/>模型抽取候选须审核"]
+        KDB[("S · 结构化知识库<br/>事实 / 规则 / 行动 / capability<br/>kb_release")]
+        VDB[("S · 向量数据库<br/>chunks / embeddings / metadata<br/>embedding_version")]
+        KG[("S · 知识图谱〔规划〕<br/>实体 / 关系 / 来源 / graph_release")]
         SNAP[("S · 实时正文快照<br/>web_snapshot / live_checked_at")]
+        WM[("S · 工作记忆<br/>TaskState / checkpoint / EvidenceNeed")]
+        EM[("S · 情景记忆<br/>玩家事件 / 结果 / scope / TTL")]
+        SM[("S · 语义记忆<br/>偏好 / 习惯 / 学习进度 / 遗忘")]
     end
 
-    subgraph PERSIST["State / Memory / Persistence"]
+    subgraph PERSIST["Task State / Persistence"]
         CP[("S · PostgreSQL Checkpointer<br/>主图和静态子图；任务级恢复")]
-        MEM[("S · 玩家快照 / 会话 / 长期偏好<br/>独立范围、revision、TTL")]
+        PLAYER[("S · 玩家状态 / 会话<br/>独立范围、revision、TTL")]
         RESULTS[("S · 结果 / 预算账本 / outbox")]
     end
 
@@ -62,8 +84,10 @@ flowchart TB
 
     USER --> API
     API -->|prompt + attachment_ids| INGRESS
-    PARSED -->|统一结构化结果| STATE
-    MEM -->|相关状态与偏好| STATE
+    PARSED -->|统一结构化结果| U_PARSE
+    PLAYER -->|当前状态上下文| U_STATE
+    EM -->|历史事件上下文| U_STATE
+    SM -->|偏好与学习上下文| U_STATE
     STATE -->|关键缺口| ASK
     STATE -->|两类计算| SLOTS
     SLOTS -->|完整且能力匹配| PORTS
@@ -85,13 +109,22 @@ flowchart TB
     VERIFY -->|中途缺输入| ASK
     VERIFY -->|完成或明确部分结果| FINALIZE
     FINALIZE --> SPEC
-    STATE -->|独立知识问题| QUERY
+    STATE -->|KnowledgeQuery| QUERY
 
     QUERY --> SOURCES
+    SOURCES -->|exact / rules / capability| KDB
+    SOURCES -->|relations / multi-hop| KG
+    SOURCES -->|player history / preference| EM
+    SOURCES -->|task context / prior evidence| WM
     SOURCES -->|vector 或 both| VECTOR
     SOURCES -->|web 或 both；显式最新主动联网| WEB
     VECTOR -->|查询| VDB
     VDB -->|匹配片段| VECTOR
+    KDB -->|事实 / 规则 / 行动| NORMAL
+    KG -->|关系路径| NORMAL
+    EM -->|情景记忆| NORMAL
+    SM -->|语义记忆| NORMAL
+    WM -->|工作上下文| NORMAL
     VECTOR --> NORMAL
     WEB --> NORMAL
     NORMAL --> GRADE
@@ -116,9 +149,14 @@ flowchart TB
     API -.->|保存 / 恢复| CP
     CP -.->|嵌套中断状态| ASK
     OUTPUT -.->|幂等归档| RESULTS
+    API -.->|任务工作记忆| WM
+    OUTPUT -.->|OutcomeEvent / memory candidates| EM
+    OUTPUT -.->|偏好 / 学习更新候选| SM
     WEB -.->|正文快照| SNAP
     SNAP -.->|入库候选，审核后发布| INGEST
-    INGEST -.->|不可变 release| VDB
+    INGEST -.->|不可变 release| KDB
+    INGEST -.->|索引发布| VDB
+    INGEST -.->|关系发布〔规划〕| KG
     API -.->|全节点 / 模型 / 工具 spans| OBS
     COVER -.->|覆盖 / 冲突 / 时效| OBS
     VERIFY -.->|计划 / 结果 / 中断| OBS
@@ -128,7 +166,7 @@ flowchart TB
     classDef generative fill:#f1eaff,stroke:#8652b3,color:#45276b
     classDef storage fill:#e8f5ef,stroke:#368265,color:#174c39
     classDef reserved fill:#fff5df,stroke:#ad7b20,color:#684710,stroke-dasharray:6 4
-    class API,INGRESS,FUSION,PARSED,STATE,ASK,SLOTS,PREP,CHECK,EXEC,ACTION,VERIFY,FINALIZE,SOURCES,VECTOR,WEB,NORMAL,COVER,BUNDLE,INGEST,SPEC,OUTPUT,OBS deterministic
-    class TEXT,VISION,PLAN,REPLAN,QUERY,GRADE,STYLE generative
-    class VDB,SNAP,CP,MEM,RESULTS storage
+    class API,INGRESS,FUSION,PARSED,U_PARSE,U_STATE,STATE,U_QUERY,U_ROUTE,U_CLARIFY,ASK,SLOTS,PREP,CHECK,EXEC,ACTION,VERIFY,FINALIZE,SOURCES,VECTOR,WEB,NORMAL,COVER,BUNDLE,INGEST,SPEC,OUTPUT,OBS deterministic
+    class TEXT,VISION,U_INTENT,PLAN,REPLAN,QUERY,GRADE,STYLE generative
+    class KDB,VDB,KG,SNAP,WM,EM,SM,CP,PLAYER,RESULTS storage
     class PORTS reserved

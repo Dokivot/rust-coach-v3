@@ -1,6 +1,6 @@
 # Rust Coach：LangGraph 工程架构设计 v2
 
-修订日期：2026-11-03。本版在既有 LangGraph、计算、玩家状态、网页取证和视觉输入设计上补充六层架构总览，并先细化输入层。目标能力与当前实现边界分别见 [首版实施说明](scaffold.md)、[建议链路](advice.md) 和 [截图实施说明](multimodal-implementation.md)。
+修订日期：2026-11-03。本版在既有 LangGraph、计算、玩家状态、网页取证和视觉输入设计上补充六层架构总览，并先细化输入层和理解层。目标能力与当前实现边界分别见 [首版实施说明](scaffold.md)、[建议链路](advice.md) 和 [截图实施说明](multimodal-implementation.md)。
 
 ## 1. 六层架构总览
 
@@ -9,13 +9,13 @@
 | 层 | 负责 | 主要产物 |
 |---|---|---|
 | 输入层 | 接收用户提示词和可选图像等多模态附件；完成文本/视觉解析、融合和校验 | `ParsedInput` |
-| 理解层 | 处理结构化请求/状态候选；语义消歧、上下文合并与路由 | `IntentSpec`、有效状态引用 |
-| 知识层 | 规则、机制资料、实时证据、版本与引用 | `EvidenceBundle` |
+| 理解层 | 处理结构化请求/状态候选；语义消歧、上下文合并与路由 | `CoachTaskRepresentation`、有效状态引用 |
+| 知识层 | 结构化/向量/图谱知识与三类记忆的获取、存储、检索、推导、更新和追溯 | `KnowledgeContext`、`EvidenceBundle` |
 | 决策层 | 计算、计划、约束校验、行动取舍 | `ActionPlan`、`CalculationResult` |
 | 生成层 | 基于已验证结果组织解释、执行输出门禁 | `AnswerSpec`、最终回答 |
 | 评测与观测 | 跨层 trace、质量评测、成本、badcase 与回归发布 | 指标、评测样本、改进反馈 |
 
-本次先细化输入层，见 [输入层设计](architecture-input-layer.md)。输入层只接收 `UserInput = prompt + optional attachments`，并交付 `ParsedInput`；其中的请求候选、玩家状态候选和图像证据经过理解层语义消歧后，才进入后续业务链路。
+本版细化了 [输入层设计](architecture-input-layer.md) 和 [理解层设计](architecture-understanding-layer.md)。输入层只接收 `UserInput = prompt + optional attachments`，并交付 `ParsedInput`；理解层再把请求候选、玩家状态候选和图像证据转换为带来源和不确定性的 `CoachTaskRepresentation`，通过知识查询补充实体/背景，并将任务路由给决策层。知识层的详细设计见 [知识层设计](architecture-knowledge-layer.md)。
 
 ## 2. 需求分析与本次架构决策
 
@@ -65,6 +65,8 @@
 | API / Runtime | FastAPI、Pydantic、异步 I/O | 任务、鉴权、SSE、预算、依赖注入 |
 | 工作流 | LangGraph StateGraph + PostgreSQL Checkpointer | 分支、子图、中断、恢复 |
 | 向量数据库 | **PostgreSQL + pgvector，必备** | metadata 过滤与语义检索，无需首期独立向量服务 |
+| 结构化知识库 | PostgreSQL（开发期 SQLite） | 事实、规则、行动、工具能力和 release 的精确查询 |
+| 知识图谱 | 当前仅设计；先用关系表/JSON 边表验证 | 配方、科技、行动前置等多跳关系；从审核 release 生成 |
 | 文本召回 | 别名/关键词索引与语义融合 | 中文俗称需分词和别名，不假定英文全文检索足够 |
 | 实时网络 | WebSearchPort + WebFetchPort | 搜索发现页面，获取正文后形成证据；供应商可替换 |
 | 计算 | 两个 CalculatorPort + capability registry | 当前无 provider；后续选型不影响图 |
@@ -84,7 +86,7 @@
 | State | 本任务意图、计划、检索、中断、结果引用与版本 | 不存密钥、连接对象、图片二进制 |
 | Player State | 观测范围、冲突、新鲜度、revision、当前快照 | 不将“建议执行”写成“已执行” |
 | Memory | 会话指代、确认信息、稳定偏好、长期目标 | 不将旧库存或模型推测当永久事实 |
-| Knowledge / RAG | 入库、向量检索、实时证据、覆盖与适用性评估 | 不临时执行网页公式，不替代玩家状态 |
+| Knowledge / RAG | 结构化/向量/图谱知识、三类记忆、实时证据、覆盖与适用性评估 | 不替代理解层语义消歧，不替决策层排序行动，不临时执行网页公式 |
 | Persistence | Repository、Checkpoint、事务、对象存储、outbox | 不决定玩家行动 |
 | Evaluation / Observability | 金标、回放、trace、指标、badcase、发布门禁 | 不在在线请求跑全量评测 |
 
@@ -92,7 +94,7 @@
 
 ## 5. 输入层、理解层与玩家状态
 
-输入层的独立设计和实际接入边界见 [输入层设计](architecture-input-layer.md)。输入层内部完成文本/视觉抽取和跨模态融合，向理解层交付 `ParsedInput`；理解层不再读取原始图片或解析原始多模态消息，只处理结构化候选和已有上下文。
+输入层的独立设计和实际接入边界见 [输入层设计](architecture-input-layer.md)，理解层的职责、协议和恢复流程见 [理解层设计](architecture-understanding-layer.md)。输入层内部完成文本/视觉抽取和跨模态融合，向理解层交付 `ParsedInput`；理解层不再读取原始图片或解析原始多模态消息，只处理结构化候选和已有上下文。
 
 ### 5.1 输入与意图
 
@@ -102,12 +104,14 @@ CoachRequest 包含 request_id、conversation_id、task_id（继续任务时）�
 
 处理顺序：**输入层接入与校验 → 文本/视觉抽取 → 跨模态融合 → 解析结果校验 → 理解层语义消歧与状态合并 → 意图/信息需求检查 → 路由**。结构化内部结果可跳过原始输入解析，但不能绕过统一的 `ParsedInput` 契约。
 
-IntentSpec 包含：
+理解层将候选整理为版本化的 `CoachTaskRepresentation`；其中的 `IntentSpec` 至少包含：
 
 - intents：raid.calculate、craft.plan_gap、decision.recommend、knowledge.lookup。
 - entities：规范 ID、原文表达、消歧状态。
 - objective：目标、资源优先级、时间、风险偏好。
 - required_slots、unknowns、conflicts、explicit_assumptions。
+
+理解层还要输出状态声明的来源/范围/新鲜度、不确定性维度和 `route`。它可以通过 `KnowledgeQuery → KnowledgeContext` 补充实体和背景，也可以响应决策层的 `needs_input` 或 `needs_reinterpretation`；详细契约和有限循环见 [理解层设计](architecture-understanding-layer.md)。
 
 多意图保留依赖，例如“先决定要不要拆，再算差额”以决策为主，内部调用计算接口。“最省”必须明确成本维度。初始 required_slots 不是所有字段：后续检索/工具发现新前置条件时，同样可以澄清。
 
@@ -257,6 +261,8 @@ assemble_recommendation 操作映射到 finalize_decision，不另外调用一�
 计划内顺序应用模拟资源变化，避免重复消耗同一份库存。采集/解锁等前置步骤尚未完成时，后续行动是 conditional。未接入计算工具时不能填写虚构成本。输出首选、备选、第一步、完成标准和改道条件；未来收益仍可能是范围或经验判断。
 
 ## 9. 面向决策的知识库设计
+
+本节是知识内容和 Agentic RAG 的既有设计摘要；结构化数据库、向量数据库、知识图谱、工作/情景/语义记忆、知识层接口和更新追溯流程见 [知识层设计](architecture-knowledge-layer.md)。知识层提供知识上下文，不替代理解层的语义消歧，也不替代决策层的计划与行动排序。
 
 ### 9.1 内容分层
 

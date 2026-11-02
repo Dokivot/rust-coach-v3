@@ -78,6 +78,7 @@ node --check src/rust_coach/static/vision.js
 下面保留早期完整目标设计。当前落地采用有界规划/取证/验证子图，暂不使用向量库，最新实现边界以 [当前建议架构](docs/advice.md) 为准；早期图中的向量检索、中断和持久恢复仍为后续能力。
 
 - [完整架构设计](docs/architecture.md)：需求分析、模块边界、知识与计算、状态记忆、工作流、工程化、评测和成本。
+- [六层架构：知识层设计](docs/architecture-knowledge-layer.md)：结构化数据库、向量数据库、知识图谱、工作/情景/语义记忆，以及知识层与理解层、决策层的交互和证据追溯。
 - [决策知识层调研](docs/decision-knowledge-research.md)：结合当前实现评估行动知识、策略证据与 Agentic RAG 的适用范围；包含对既有架构预设的调整建议，尚未实施。
 - [Rust 游戏来源与决策知识调研](docs/rust-domain-knowledge-research.md)：实际核查数据站、官方更新、攻略与社区，记录版本冲突、行动知识提取及落地顺序；附 [26 项来源审核记录](docs/rust-source-audit.json)。
 - [代码生成就绪度评审](docs/codegen-readiness.md)：当前可生成范围、实施前缺口、图文歧义及建议补充顺序。
