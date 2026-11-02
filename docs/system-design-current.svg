@@ -1,0 +1,181 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1984" height="1510" viewBox="0 0 1984 1510" role="img" aria-labelledby="title description">
+<title id="title">Rust Coach · 六层技术架构</title>
+<desc id="description">输入接入、理解路由、决策计算、生成审核构成从左向右的主链；知识层展示规则、证据、派生结果及检索和预计算位置；评测观测展示埋点、评测与 badcase 回流。D 蓝色表示确定性代码工具规则，G 紫色表示 LLM 或视觉模型，H 灰色表示人工复核。七条层间数据流无交叉；尚未实现的预计算、统一观测与发布闭环明确标为建议。</desc>
+<defs><marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0 1 L7 4 L0 7" fill="none" stroke="#7D8DA3" stroke-width="1.5"/></marker><marker id="feedback" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0 1 L7 4 L0 7" fill="none" stroke="#A7803B" stroke-width="1.5"/></marker></defs>
+<rect width="1984" height="1510" fill="#FFFFFF"/>
+<g font-family="PingFang SC, Microsoft YaHei, Noto Sans CJK SC, sans-serif">
+<text x="64" y="64" font-size="36" font-weight="700" fill="#172B45">Rust Coach</text>
+<text x="286" y="64" font-size="30" font-weight="500" fill="#42526A">六层技术架构</text>
+<text x="64" y="106" font-size="22" font-weight="400" fill="#516176">以层为边界，保留关键职责与数据流；不展开节点内部的重试、缓存与存储实现。</text>
+<rect x="1080" y="43" width="30" height="28" rx="6" fill="#EDF4FC" stroke="none" stroke-width="1.5"/>
+<text x="1087" y="64" font-size="18" font-weight="700" fill="#356493">D</text>
+<text x="1120" y="65" font-size="18" font-weight="400" fill="#516176">确定性 · 代码 / 工具 / 规则</text>
+<rect x="1470" y="43" width="30" height="28" rx="6" fill="#F3EEFC" stroke="none" stroke-width="1.5"/>
+<text x="1477" y="64" font-size="18" font-weight="700" fill="#73529D">G</text>
+<text x="1510" y="65" font-size="18" font-weight="400" fill="#516176">生成式 · LLM / VLM</text>
+<rect x="1770" y="43" width="30" height="28" rx="6" fill="#F2F4F6" stroke="none" stroke-width="1.5"/>
+<text x="1777" y="64" font-size="18" font-weight="700" fill="#556477">H</text>
+<text x="1810" y="65" font-size="18" font-weight="400" fill="#516176">人工复核</text>
+<rect x="64" y="154" width="1856" height="64" rx="12" fill="#F7F9FC" stroke="#DCE3EE" stroke-width="1.5"/>
+<rect x="84" y="172" width="30" height="28" rx="6" fill="#EDF4FC" stroke="none" stroke-width="1.5"/>
+<text x="91" y="193" font-size="18" font-weight="700" fill="#356493">D</text>
+<text x="126" y="195" font-size="24" font-weight="600" fill="#354D69">LangGraph / Agent Runtime</text>
+<text x="580" y="194" font-size="20" font-weight="400" fill="#516176">流程编排 · 上下文与任务状态 · 有界执行</text>
+<text x="1420" y="194" font-size="20" font-weight="400" fill="#516176">共享配置：规则 / 提示 / 校验策略</text>
+<rect x="64" y="260" width="416" height="440" rx="16" fill="#FFFFFF" stroke="#D9E2EE" stroke-width="1.5"/>
+<text x="88" y="302" font-size="19" font-weight="600" fill="#8191A6">01</text>
+<text x="129" y="303" font-size="27" font-weight="600" fill="#203852">输入层</text>
+<text x="88" y="337" font-size="18" font-weight="400" fill="#516176">多模态输入 → 统一请求与观测</text>
+<rect x="544" y="260" width="416" height="440" rx="16" fill="#FFFFFF" stroke="#D9E2EE" stroke-width="1.5"/>
+<text x="568" y="302" font-size="19" font-weight="600" fill="#8191A6">02</text>
+<text x="609" y="303" font-size="27" font-weight="600" fill="#203852">理解层</text>
+<text x="568" y="337" font-size="18" font-weight="400" fill="#516176">解析 → 合并有效状态 → 路由</text>
+<rect x="1024" y="260" width="416" height="440" rx="16" fill="#FFFFFF" stroke="#D9E2EE" stroke-width="1.5"/>
+<text x="1048" y="302" font-size="19" font-weight="600" fill="#8191A6">04</text>
+<text x="1089" y="303" font-size="27" font-weight="600" fill="#203852">决策层</text>
+<text x="1048" y="337" font-size="18" font-weight="400" fill="#516176">计划 → 工具结果 → 条件取舍</text>
+<rect x="1504" y="260" width="416" height="440" rx="16" fill="#FFFFFF" stroke="#D9E2EE" stroke-width="1.5"/>
+<text x="1528" y="302" font-size="19" font-weight="600" fill="#8191A6">05</text>
+<text x="1569" y="303" font-size="27" font-weight="600" fill="#203852">生成层</text>
+<text x="1528" y="337" font-size="18" font-weight="400" fill="#516176">人设约束 → 表达 → 审核与交付</text>
+<rect x="88" y="362" width="368" height="72" rx="9" fill="#EDF4FC" stroke="none" stroke-width="1.5"/>
+<text x="102" y="389" font-size="18" font-weight="700" fill="#356493">D</text>
+<text x="132" y="389" font-size="21" font-weight="600" fill="#356493">用户请求</text>
+<text x="132" y="417" font-size="18" font-weight="400" fill="#356493">聊天 API：文本、任务与请求 ID</text>
+<rect x="88" y="442" width="368" height="72" rx="9" fill="#EDF4FC" stroke="none" stroke-width="1.5"/>
+<text x="102" y="469" font-size="18" font-weight="700" fill="#356493">D</text>
+<text x="132" y="469" font-size="21" font-weight="600" fill="#356493">玩家状态</text>
+<text x="132" y="497" font-size="18" font-weight="400" fill="#356493">表单 / 确认观测 API → 状态档案</text>
+<rect x="88" y="522" width="368" height="72" rx="9" fill="#EDF4FC" stroke="none" stroke-width="1.5"/>
+<text x="102" y="549" font-size="18" font-weight="700" fill="#356493">D</text>
+<text x="132" y="549" font-size="21" font-weight="600" fill="#356493">图像接入</text>
+<text x="132" y="577" font-size="18" font-weight="400" fill="#356493">上传 API → 附件 ID → 视觉输入</text>
+<rect x="88" y="602" width="368" height="72" rx="9" fill="#EDF4FC" stroke="none" stroke-width="1.5"/>
+<text x="102" y="629" font-size="18" font-weight="700" fill="#356493">D</text>
+<text x="132" y="629" font-size="21" font-weight="600" fill="#356493">输入归一化</text>
+<text x="132" y="657" font-size="18" font-weight="400" fill="#356493">主体、时间、范围与来源标记</text>
+<rect x="568" y="362" width="368" height="72" rx="9" fill="#F3EEFC" stroke="none" stroke-width="1.5"/>
+<text x="582" y="389" font-size="18" font-weight="700" fill="#73529D">G</text>
+<text x="612" y="389" font-size="21" font-weight="600" fill="#73529D">意图识别与观测解析</text>
+<text x="612" y="417" font-size="18" font-weight="400" fill="#73529D">LLM 提取目标；VLM 提取可见状态</text>
+<rect x="568" y="442" width="368" height="72" rx="9" fill="#EDF4FC" stroke="none" stroke-width="1.5"/>
+<text x="582" y="469" font-size="18" font-weight="700" fill="#356493">D</text>
+<text x="612" y="469" font-size="21" font-weight="600" fill="#356493">状态解析与上下文合并</text>
+<text x="612" y="497" font-size="18" font-weight="400" fill="#356493">当前观测 + 档案 + 历史 / 记忆</text>
+<rect x="568" y="522" width="368" height="72" rx="9" fill="#EDF4FC" stroke="none" stroke-width="1.5"/>
+<text x="582" y="549" font-size="18" font-weight="700" fill="#356493">D</text>
+<text x="612" y="549" font-size="21" font-weight="600" fill="#356493">有效状态投影</text>
+<text x="612" y="577" font-size="18" font-weight="400" fill="#356493">scope / revision / TTL；未知不作零</text>
+<rect x="568" y="602" width="368" height="72" rx="9" fill="#EDF4FC" stroke="none" stroke-width="1.5"/>
+<text x="582" y="629" font-size="18" font-weight="700" fill="#356493">D</text>
+<text x="612" y="629" font-size="21" font-weight="600" fill="#356493">请求路由</text>
+<text x="612" y="657" font-size="18" font-weight="400" fill="#356493">解析结果 → 计算 / 建议 / 普通对话</text>
+<rect x="1048" y="362" width="368" height="72" rx="9" fill="#F3EEFC" stroke="none" stroke-width="1.5"/>
+<text x="1062" y="389" font-size="18" font-weight="700" fill="#73529D">G</text>
+<text x="1092" y="389" font-size="21" font-weight="600" fill="#73529D">候选规划</text>
+<text x="1092" y="417" font-size="18" font-weight="400" fill="#73529D">目标与约束 → 行动候选 / 检索主题</text>
+<rect x="1048" y="442" width="368" height="72" rx="9" fill="#EDF4FC" stroke="none" stroke-width="1.5"/>
+<text x="1062" y="469" font-size="18" font-weight="700" fill="#356493">D</text>
+<text x="1092" y="469" font-size="21" font-weight="600" fill="#356493">工具调用与结果校验</text>
+<text x="1092" y="497" font-size="18" font-weight="400" fill="#356493">按候选分派检索、计算；返回证据</text>
+<rect x="1048" y="522" width="368" height="72" rx="9" fill="#EDF4FC" stroke="none" stroke-width="1.5"/>
+<text x="1062" y="549" font-size="18" font-weight="700" fill="#356493">D</text>
+<text x="1092" y="549" font-size="21" font-weight="600" fill="#356493">确定性计算引擎</text>
+<text x="1092" y="577" font-size="18" font-weight="400" fill="#356493">配方 DAG / 拆除数量 / 资源缺口</text>
+<rect x="1048" y="602" width="368" height="72" rx="9" fill="#F3EEFC" stroke="none" stroke-width="1.5"/>
+<text x="1062" y="629" font-size="18" font-weight="700" fill="#73529D">G</text>
+<text x="1092" y="629" font-size="21" font-weight="600" fill="#73529D">基于结果推理与取舍</text>
+<text x="1092" y="657" font-size="18" font-weight="400" fill="#73529D">读取预算及证据；不自行生成数值</text>
+<rect x="1528" y="362" width="368" height="72" rx="9" fill="#EDF4FC" stroke="none" stroke-width="1.5"/>
+<text x="1542" y="389" font-size="18" font-weight="700" fill="#356493">D</text>
+<text x="1572" y="389" font-size="21" font-weight="600" fill="#356493">人设约束</text>
+<text x="1572" y="417" font-size="18" font-weight="400" fill="#356493">固定教练原则、能力边界与偏好</text>
+<rect x="1528" y="442" width="368" height="72" rx="9" fill="#F3EEFC" stroke="none" stroke-width="1.5"/>
+<text x="1542" y="469" font-size="18" font-weight="700" fill="#73529D">G</text>
+<text x="1572" y="469" font-size="21" font-weight="600" fill="#73529D">建议解释与表达</text>
+<text x="1572" y="497" font-size="18" font-weight="400" fill="#73529D">原因、取舍、行动及切换条件</text>
+<rect x="1528" y="522" width="368" height="72" rx="9" fill="#EDF4FC" stroke="none" stroke-width="1.5"/>
+<text x="1542" y="549" font-size="18" font-weight="700" fill="#356493">D</text>
+<text x="1572" y="549" font-size="21" font-weight="600" fill="#356493">安全审核</text>
+<text x="1572" y="577" font-size="18" font-weight="400" fill="#356493">数值 / 引用检查；防注入与虚假回执</text>
+<rect x="1528" y="602" width="368" height="72" rx="9" fill="#EDF4FC" stroke="none" stroke-width="1.5"/>
+<text x="1542" y="629" font-size="18" font-weight="700" fill="#356493">D</text>
+<text x="1572" y="629" font-size="21" font-weight="600" fill="#356493">回答组装</text>
+<text x="1572" y="657" font-size="18" font-weight="400" fill="#356493">受保护事实 + 叙述 → 可执行回答</text>
+<path d="M 485 488 H 537" fill="none" stroke="#7D8DA3" stroke-width="2" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<text x="495" y="446" font-size="16" font-weight="400" fill="#516176">请求</text>
+<text x="488" y="469" font-size="16" font-weight="400" fill="#516176">与观测</text>
+<path d="M 965 488 H 1017" fill="none" stroke="#7D8DA3" stroke-width="2" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<text x="975" y="446" font-size="16" font-weight="400" fill="#516176">任务</text>
+<text x="968" y="469" font-size="16" font-weight="400" fill="#516176">与状态</text>
+<path d="M 1445 488 H 1497" fill="none" stroke="#7D8DA3" stroke-width="2" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<text x="1455" y="446" font-size="16" font-weight="400" fill="#516176">结果</text>
+<text x="1448" y="469" font-size="16" font-weight="400" fill="#516176">与证据</text>
+<rect x="64" y="850" width="1376" height="470" rx="16" fill="#FFFFFF" stroke="#D9E2EE" stroke-width="1.5"/>
+<text x="88" y="892" font-size="19" font-weight="600" fill="#8191A6">03</text>
+<text x="129" y="893" font-size="27" font-weight="600" fill="#203852">知识层</text>
+<text x="88" y="927" font-size="18" font-weight="400" fill="#516176">分层知识提供依据；数值推导由决策层计算引擎执行</text>
+<text x="88" y="972" font-size="22" font-weight="600" fill="#354D69">知识库分层</text>
+<text x="560" y="972" font-size="22" font-weight="600" fill="#354D69">检索链路与推导位置</text>
+<rect x="88" y="994" width="432" height="72" rx="9" fill="#EDF4FC" stroke="none" stroke-width="1.5"/>
+<text x="102" y="1021" font-size="18" font-weight="700" fill="#356493">D</text>
+<text x="132" y="1021" font-size="21" font-weight="600" fill="#356493">L1 · 结构化规则</text>
+<text x="132" y="1049" font-size="18" font-weight="400" fill="#356493">配方、伤害、适用条件与来源哈希</text>
+<rect x="88" y="1074" width="432" height="72" rx="9" fill="#EDF4FC" stroke="none" stroke-width="1.5"/>
+<text x="102" y="1101" font-size="18" font-weight="700" fill="#356493">D</text>
+<text x="132" y="1101" font-size="21" font-weight="600" fill="#356493">L2 · 文本机制证据</text>
+<text x="132" y="1129" font-size="18" font-weight="400" fill="#356493">官方更新 / Wiki / 攻略正文快照</text>
+<rect x="88" y="1154" width="432" height="72" rx="9" fill="#EDF4FC" stroke="none" stroke-width="1.5"/>
+<text x="102" y="1181" font-size="18" font-weight="700" fill="#356493">D</text>
+<text x="132" y="1181" font-size="21" font-weight="600" fill="#356493">L3 · 派生结果</text>
+<text x="132" y="1209" font-size="18" font-weight="400" fill="#356493">计算报告、算法版本及规则引用</text>
+<rect x="560" y="994" width="856" height="72" rx="9" fill="#EDF4FC" stroke="none" stroke-width="1.5"/>
+<text x="574" y="1021" font-size="18" font-weight="700" fill="#356493">D</text>
+<text x="604" y="1021" font-size="21" font-weight="600" fill="#356493">实体查询 → 规则查表</text>
+<text x="604" y="1049" font-size="18" font-weight="400" fill="#356493">物品 / 目标 ID + 条件 → L1 精确匹配 → 规则</text>
+<rect x="560" y="1074" width="856" height="72" rx="9" fill="#EDF4FC" stroke="none" stroke-width="1.5"/>
+<text x="574" y="1101" font-size="18" font-weight="700" fill="#356493">D</text>
+<text x="604" y="1101" font-size="21" font-weight="600" fill="#356493">主题查询 → 搜索 → 正文读取</text>
+<text x="604" y="1129" font-size="18" font-weight="400" fill="#356493">来源与相关性过滤 → L2 快照 → 引用匹配 → 证据</text>
+<rect x="560" y="1154" width="856" height="72" rx="9" fill="#EDF4FC" stroke="none" stroke-width="1.5"/>
+<text x="574" y="1181" font-size="18" font-weight="700" fill="#356493">D</text>
+<text x="604" y="1181" font-size="21" font-weight="600" fill="#356493">规则 + 条件 → 上方计算引擎 → L3</text>
+<text x="604" y="1209" font-size="18" font-weight="400" fill="#356493">动态推导：合成展开 / 阈值计算；LLM 只解释结果</text>
+<rect x="88" y="1244" width="1328" height="53" rx="8" fill="#FFFAF0" stroke="#E3D4B7" stroke-width="1.5"/>
+<text x="104" y="1277" font-size="20" font-weight="400" fill="#87662C">D · 预计算〔建议〕：知识层缓存常见条件派生值，以规则版本为键；未命中仍调用计算引擎。</text>
+<rect x="1504" y="850" width="416" height="470" rx="16" fill="#FFFFFF" stroke="#D9E2EE" stroke-width="1.5"/>
+<text x="1528" y="892" font-size="19" font-weight="600" fill="#8191A6">06</text>
+<text x="1569" y="893" font-size="27" font-weight="600" fill="#203852">评测与观测</text>
+<text x="1528" y="927" font-size="18" font-weight="400" fill="#516176">埋点 → 评测 → 归因 → 回归发布</text>
+<rect x="1528" y="952" width="368" height="72" rx="9" fill="#EDF4FC" stroke="none" stroke-width="1.5"/>
+<text x="1542" y="979" font-size="18" font-weight="700" fill="#356493">D</text>
+<text x="1572" y="979" font-size="21" font-weight="600" fill="#356493">监控埋点</text>
+<text x="1572" y="1007" font-size="18" font-weight="400" fill="#356493">节点 / 版本 / 耗时 / 错误与修复</text>
+<rect x="1528" y="1032" width="368" height="72" rx="9" fill="#EDF4FC" stroke="none" stroke-width="1.5"/>
+<text x="1542" y="1059" font-size="18" font-weight="700" fill="#356493">D</text>
+<text x="1572" y="1059" font-size="21" font-weight="600" fill="#356493">离线评测链路</text>
+<text x="1572" y="1087" font-size="18" font-weight="400" fill="#356493">案例回放 → 真值 / 引用 / 行动检查</text>
+<rect x="1528" y="1112" width="368" height="72" rx="9" fill="#F2F4F6" stroke="none" stroke-width="1.5"/>
+<text x="1542" y="1139" font-size="18" font-weight="700" fill="#556477">H</text>
+<text x="1572" y="1139" font-size="21" font-weight="600" fill="#556477">badcase 归因复核</text>
+<text x="1572" y="1167" font-size="18" font-weight="400" fill="#556477">纠错 / 失败样本 → 归因与修复</text>
+<rect x="1528" y="1192" width="368" height="72" rx="9" fill="#EDF4FC" stroke="none" stroke-width="1.5"/>
+<text x="1542" y="1219" font-size="18" font-weight="700" fill="#356493">D</text>
+<text x="1572" y="1219" font-size="21" font-weight="600" fill="#356493">回归验证与发布〔建议〕</text>
+<text x="1572" y="1247" font-size="18" font-weight="400" fill="#356493">通过门禁 → 规则 / 提示 / 校验策略</text>
+<text x="1528" y="1301" font-size="17" font-weight="400" fill="#87662C">统一 trace / tokens 与独立真值待补齐</text>
+<path d="M 1120 706 V 842" fill="none" stroke="#7D8DA3" stroke-width="2" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<text x="955" y="778" font-size="18" font-weight="400" fill="#516176">检索主题 / 实体 ID</text>
+<path d="M 1330 842 V 706" fill="none" stroke="#7D8DA3" stroke-width="2" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<text x="1346" y="778" font-size="18" font-weight="400" fill="#516176">规则 / 证据</text>
+<path d="M 1712 706 V 842" fill="none" stroke="#7D8DA3" stroke-width="2" stroke-linejoin="round" stroke-dasharray="6 6" marker-end="url(#arrow)"/>
+<text x="1730" y="765" font-size="18" font-weight="400" fill="#516176">全链路记录</text>
+<text x="1730" y="792" font-size="17" font-weight="400" fill="#516176">汇总入口</text>
+<path d="M 1712 1326 V 1382 H 30 V 186 H 57" fill="none" stroke="#A7803B" stroke-width="2" stroke-linejoin="round" stroke-dasharray="6 6" marker-end="url(#feedback)"/>
+<text x="260" y="1370" font-size="21" font-weight="400" fill="#87662C">badcase 回流：归因修复 → 回归验证 → 发布规则 / 提示 / 校验配置〔建议闭环〕</text>
+<path d="M64 1425 H1920" stroke="#E7ECF2"/>
+<text x="64" y="1458" font-size="18" font-weight="400" fill="#516176">实线：业务数据流    灰虚线：观测记录    金虚线：改进回流</text>
+<text x="64" y="1488" font-size="18" font-weight="400" fill="#516176">各层内仅展示关键职责；不同请求按需调用，简易任务可走确定性短路径。</text>
+<text x="1120" y="1458" font-size="18" font-weight="400" fill="#87662C">〔建议〕尚未实现；规则快照尚未核验当前游戏 build。</text>
+<text x="1120" y="1488" font-size="18" font-weight="400" fill="#516176">安全审核为规则检查，不等同于事实语义已认证。</text>
+</g></svg>

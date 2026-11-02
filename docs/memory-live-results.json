@@ -1,0 +1,81 @@
+{
+  "recorded_at": "2026-11-01T21:18:24.567215+00:00",
+  "model": "gpt-5.6-sol",
+  "synthetic_data_only": true,
+  "results": [
+    {
+      "id": "hypothetical",
+      "passed": true,
+      "elapsed_seconds": 3.48,
+      "candidates": []
+    },
+    {
+      "id": "event",
+      "passed": true,
+      "elapsed_seconds": 3.86,
+      "candidates": [
+        {
+          "kind": "event",
+          "key": "raided",
+          "value": "玩家自报昨晚基地被偷家。",
+          "quote": "昨晚我的基地被偷家了",
+          "signal": "explicit"
+        }
+      ]
+    },
+    {
+      "id": "correct_explanation",
+      "passed": true,
+      "elapsed_seconds": 7.06,
+      "candidates": [
+        {
+          "kind": "learning",
+          "key": "inventory_scope",
+          "value": "能区分局部背包截图与完整库存盘点，理解未显示的材料属于未知而非零。",
+          "quote": "我理解了：因为截图只显示部分背包，所以没看到的材料不能直接当作零。",
+          "signal": "demonstrated"
+        }
+      ]
+    },
+    {
+      "id": "incorrect_explanation",
+      "passed": true,
+      "elapsed_seconds": 8.68,
+      "candidates": []
+    },
+    {
+      "id": "self_report",
+      "passed": true,
+      "elapsed_seconds": 11.93,
+      "candidates": [
+        {
+          "kind": "learning",
+          "key": "craft_batches",
+          "value": "玩家自报已理解合成批次概念",
+          "quote": "合成批次我明白了",
+          "signal": "self_reported"
+        }
+      ]
+    },
+    {
+      "id": "cross_conversation_recall",
+      "passed": true,
+      "receipt": "已记下有出处的个人偏好或历史；不会作为当前背包状态使用。",
+      "answer": "记得你曾报告：**昨晚你的基地被偷家了**。这是你当时的自述记录，不代表当前基地状态。"
+    },
+    {
+      "id": "forget_abstention",
+      "passed": true,
+      "answer": "我当前没有看到你之前报告过的个人经历记录，所以不能凭空猜测。\n\n你可以输入 `/memory` 查看已有记忆；要补充经历，可用 `/memory remember 你的经历`。"
+    },
+    {
+      "id": "teaching_modes",
+      "passed": true,
+      "guided_answer": "“合成批次”就是：**一次合成会固定产出一组，而不一定只产出 1 个**。\n\n计算时按这个顺序：\n\n1. **先扣已有成品**  \n   `待制作数量 = max(目标数量 - 可用成品, 0)`\n\n2. **再算需要几批**  \n   `批次数 = 待制作数量 ÷ 每批产出`，有余数就向上取整。  \n   原因是不能合成半批。\n\n3. **按批次计算材料**  \n   `材料需求 = 批次数 × 每批材料消耗`\n\n4. **算合成余量**  \n   `余量 = 批次数 × 每批产出 - 待制作数量`\n\n关键区别：**目标总量不等于净制作量**。已有成品要先扣除；最后一批即使只缺一部分，也通常仍要做完整一批。\n\n实际游戏数值不要心算：在本地计算器填写物品、目标数量和库存，它会统一处理批次、余量、共享材料及库存缺口。",
+      "independent_answer": "合成批次就是：**配方每次制作会固定产出一组物品，而不是任意数量。**\n\n计算顺序：\n\n1. **先扣已有成品**：待制作量 = `max(目标数量 - 已有成品, 0)`\n2. **再算批次并向上取整**：批次 = `待制作量 ÷ 每批产出量`，有小数就进一批\n3. **算实际产出**：实际产出 = `批次 × 每批产出量`\n4. **算余量**：余量 = `实际产出 - 待制作量`\n\n关键点：材料按**完整批次**消耗，所以即使只差一点，也可能需要再做一整批；不要直接拿目标总量算批次，否则会忽略库存里的现成品。预留量和共享材料则交给本地计算器统一核算。",
+      "note": "Modes and output checked; teaching quality requires human review."
+    }
+  ],
+  "passed": true,
+  "limitations": "Small synthetic smoke test, not a general accuracy or teaching-effectiveness estimate."
+}

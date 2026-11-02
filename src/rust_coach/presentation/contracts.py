@@ -23,6 +23,7 @@ class ResponseContext(BaseModel):
     scenario_reason: str = "default"
     capabilities: tuple[str, ...] = ()
     model_config_id: str = "unspecified"
+    teaching: dict = Field(default_factory=dict)
 
 
 class AnswerBlock(BaseModel):

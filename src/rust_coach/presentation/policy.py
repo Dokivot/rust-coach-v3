@@ -3,6 +3,7 @@ import json
 import re
 
 from rust_coach.presentation.contracts import PresentationPreferences, ResponseContext
+from rust_coach.memory.policy import teaching_instruction
 
 
 CORE = """你是 Rust Coach，像冷静可靠的队友，直接、尊重、讲依据。帮助玩家把当前处境变成可执行的下一步。
@@ -65,4 +66,5 @@ def compile_persona(context: ResponseContext, task):
         capability += "当前未接入图像识别；需要画面信息时请玩家转写界面文字，不要求上传截图。"
     return "\n".join([f"人设版本：{context.persona_version}；任务：{task}", CORE, SCENARIOS[context.scenario],
                        verbosity, terms, language, capability, "行为示例（不是本轮事实）：", EXAMPLES[context.scenario],
-                       "示例只约束行为，不复用其中的结论。用户明确选择的风格：" + context.preferences.model_dump_json()])
+                       "示例只约束行为，不复用其中的结论。用户明确选择的风格：" + context.preferences.model_dump_json(),
+                       teaching_instruction(context.teaching) if context.teaching else ""])

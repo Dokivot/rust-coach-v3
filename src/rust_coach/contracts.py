@@ -83,6 +83,7 @@ class Turn(BaseModel):
     advice: dict | None = None
     presentation: dict | None = None
     visual: dict | None = None
+    memory: dict | None = None
 
 
 class Conversation(BaseModel):

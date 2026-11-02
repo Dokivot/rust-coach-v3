@@ -35,7 +35,7 @@ function setError(message = "") {
 }
 
 function updateControls() {
-  const local = input.value.trim() === "/state" || input.value.trim().startsWith("/calc ");
+  const local = input.value.trim() === "/state" || input.value.trim().startsWith("/calc ") || /^\/memory(?:\s|$)/.test(input.value.trim());
   input.disabled = busy || !conversation;
   sendButton.disabled = busy || (!configured && !local) || !conversation || (!input.value.trim() && !VisionUI.hasImages());
   document.querySelector("#new-chat").disabled = busy;
@@ -106,7 +106,7 @@ async function createConversation() {
 document.querySelector("#chat-form").addEventListener("submit", async event => {
   event.preventDefault();
   const message = input.value.trim();
-  const local = message === "/state" || message.startsWith("/calc ");
+  const local = message === "/state" || message.startsWith("/calc ") || /^\/memory(?:\s|$)/.test(message);
   if ((!message && !VisionUI.hasImages()) || busy || (!configured && !local) || !conversation) return;
   busy = true;
   setError();

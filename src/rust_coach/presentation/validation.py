@@ -7,6 +7,7 @@ from rust_coach.presentation.contracts import AnswerEnvelope
 
 NUMERIC = re.compile(r"\d|[零一二三四五六七八九十百千万亿两]+\s*(?:个|颗|发|枚|层|级|秒|分钟|小时|点|倍|%|％|硫磺|碎片|木头|石头)")
 RULES = {
+    "false_memory_receipt": r"(?:我)?(?:已|已经)(?:记住|记下)|\bI(?:'ve| have) remembered\b",
     "abusive_voice": r"(?:你|玩家)(?:真|就是|太|是个|是)?(?:菜鸡|废物|蠢货|傻逼)|\byou(?:'re| are) (?:an? )?(?:idiot|moron|loser)\b",
     "unsupported_guarantee": r"包赢|稳赚|必胜|保证.{0,8}(?:赢|成功|不会被拆)|肯定(?:能赢|赢|成功)|\b(?:guaranteed (?:win|success)|you (?:will|definitely) win)\b",
     "fabricated_experience": r"我(?:亲自|亲身|本人).{0,12}(?:玩过|拆过|实战|经历)|我(?:已经)?玩了.{0,12}小时|我有.{0,12}(?:小时|职业选手)(?:经验|经历)?|\bI (?:have played|personally raided|have .{0,12}hours of)\b",

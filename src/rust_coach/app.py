@@ -26,13 +26,15 @@ from rust_coach.presentation.contracts import PresentationPreferences, ResponseC
 from rust_coach.attachments.api import RequestSizeLimit, attachment_router
 from rust_coach.attachments.store import AttachmentStore
 from rust_coach.vision.service import VisionService
+from rust_coach.memory.api import memory_router
 
 
 logger = logging.getLogger("rust_coach")
 STATIC = Path(__file__).parent / "static"
 
 
-def create_app(settings: Settings | None = None, model: ChatModel | None = None, vision_model: ChatModel | None = None) -> FastAPI:
+def create_app(settings: Settings | None = None, model: ChatModel | None = None, vision_model: ChatModel | None = None,
+               memory_model: ChatModel | None = None) -> FastAPI:
     settings = settings or Settings()
     calculator = Calculator()
 
@@ -51,16 +53,25 @@ def create_app(settings: Settings | None = None, model: ChatModel | None = None,
             advice_settings = settings.model_copy(update={"max_output_tokens": max(4096, settings.max_output_tokens)})
             advice = AdviceService(model or CompatibleChatModel(advice_settings, client, stream_responses=True),
                 WebResearch(settings, client, app.state.evidence_store), settings.instruction_role)
+            memory_adapter = memory_model or (
+                CompatibleChatModel(settings.model_copy(update={"max_output_tokens": 2048}), client, stream_responses=True)
+                if model is None and settings.configured else None)
             app.state.runtime = ChatRuntime(settings, model or CompatibleChatModel(settings, client, stream_responses=True), store,
-                calculation_model=model or CompatibleChatModel(settings, client, stream_responses=True), advice_service=advice,vision_service=vision)
+                calculation_model=model or CompatibleChatModel(settings, client, stream_responses=True), advice_service=advice,
+                vision_service=vision, memory_model=memory_adapter)
             app.state.state_model = model or CompatibleChatModel(settings, client, stream_responses=True)
-            yield
+            app.state.runtime.memory.schedule()
+            try:
+                yield
+            finally:
+                await app.state.runtime.memory.close()
 
     app = FastAPI(title="Rust Coach", version="0.1.0", lifespan=lifespan, docs_url=None, redoc_url=None)
     app.add_middleware(TrustedHostMiddleware, allowed_hosts=["localhost", "127.0.0.1", "[::1]", "testserver"])
     app.add_middleware(RequestSizeLimit,limit=settings.attachment_max_bytes + 65536)
     app.include_router(player_state_router(calculator, settings))
     app.include_router(attachment_router(settings))
+    app.include_router(memory_router())
 
     @app.middleware("http")
     async def local_request_guard(request: Request, call_next):
@@ -105,7 +116,7 @@ def create_app(settings: Settings | None = None, model: ChatModel | None = None,
             "configured": settings.configured,
             "capabilities": {"chat": settings.configured, "knowledge": settings.search_provider != "off",
                              "web_search": settings.search_configured, "decision": settings.configured,
-                             "calculators": True, "player_state": True},
+                             "calculators": True, "player_state": True, "memory": True, "adaptive_teaching": True},
             "search_provider": settings.search_provider,
             "history_turns": settings.history_turns,
             "presentation": {"persona_version": ResponseContext().persona_version,

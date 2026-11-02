@@ -13,6 +13,10 @@ from rust_coach.player_state import PlayerStateStore
 from rust_coach.player_state.domain import model_context
 from rust_coach.advice.service import is_advice
 from rust_coach.presentation.policy import compile_persona, resolve_context
+from rust_coach.presentation.contracts import PresentationPreferences
+from rust_coach.memory.service import MemoryService
+from rust_coach.memory.store import now_iso
+from rust_coach.memory.policy import deterministic_candidates, validate_candidate
 
 
 logger = logging.getLogger("rust_coach")
@@ -33,10 +37,17 @@ SYSTEM_PROMPT = """你是 Rust Coach，使用清楚、友好的中文回应，�
 你不能在普通聊天中保存或修改状态，不得声称“已更新背包”。请引导用户打开玩家状态页录入，文本解析需核对后保存。
 可以正常闲聊、解释一般概念、帮助整理问题。一般问候不用反复重复能力说明。"""
 
+SYSTEM_PROMPT += """
+应用已接入跨会话个人记忆和按知识点调整的讲解。个人记忆仅用于偏好、历史与学习衔接，不能充当当前库存或游戏规则。
+用户本轮明确要求优先于记忆。不存在的历史要说明没有记录，不能猜测。历史讨论过不等于已掌握。
+普通回复不声称“已记住”；保存由应用处理，没有成功回执不得承诺。用户可输入 /memory 查看与管理记忆，
+/memory remember 个人经历 可立即提取并保存；/memory forget 标识 删除；/memory off 关闭。
+玩家状态页用于当前状态，不用于保存个人经历或学习进度。"""
+
 
 class ChatRuntime:
     def __init__(self, settings: Settings, model: ChatModel, store: ConversationStore,
-                 calculation_model: ChatModel | None = None, advice_service=None, vision_service=None):
+                 calculation_model: ChatModel | None = None, advice_service=None, vision_service=None, memory_model=None):
         self.settings = settings
         self.store = store
         self.player_states = PlayerStateStore(store)
@@ -44,6 +55,7 @@ class ChatRuntime:
         self.advice_service = advice_service
         self.vision_service = vision_service
         self.lock = asyncio.Lock()
+        self.memory = MemoryService(store, settings, memory_model)
 
     async def chat(self, conversation_id: str, request: ChatRequest) -> Turn:
         if self.lock.locked():
@@ -62,12 +74,49 @@ class ChatRuntime:
             if len(conversation.turns) >= 100:
                 raise AppError("conversation_full", "当前会话已达到 100 轮，请创建新对话。", 409)
             scope_id = self.player_states.binding(conversation_id)
+            command = self.memory.command(request.message)
+            if command:
+                if request.attachment_ids or request.visual_draft_id:
+                    raise AppError("memory_command_images", "记忆管理命令请单独发送，图片可随后发送。", 422)
+                if command[0] == "remember":
+                    candidates = [item for item in deterministic_candidates(command[1]) if validate_candidate(item, command[1])]
+                    if not candidates and self.memory.model and self.memory.store.profile()["enabled"]:
+                        try:
+                            async with asyncio.timeout(self.settings.memory_timeout_seconds):
+                                candidates = await self.memory.extract(command[1], {})
+                        except (ValueError, AppError, TimeoutError):
+                            raise AppError("memory_extraction_failed", "这次未能可靠提取记忆，没有保存。请简短说明自己的经历或偏好后重试。", 502) from None
+                    command = ("remember", candidates)
+                with self.store.connection() as connection:
+                    connection.execute("BEGIN IMMEDIATE")
+                    source = {"conversation_id": conversation_id, "request_id": str(request.request_id),
+                              "created_at": now_iso(), "scope_id": scope_id, "concepts": []}
+                    content = self.memory.execute(connection, *command, source)
+                    presentation = {"request_preferences": request.presentation_preferences.model_dump() if request.presentation_preferences else None,
+                                    "blocks": [{"id": "memory_control", "kind": "protected", "placement": "main", "text": content}]}
+                    turn = self.store.append(conversation_id, str(request.request_id), request.message, content, False,
+                        player_state_ref={"scope_id": scope_id, "inventory_container": request.player_inventory_container},
+                        presentation=presentation, connection=connection)
+                    turn.memory = {"control": command[0], "version": "memory-v1"}
+                    connection.execute("UPDATE turns SET memory=? WHERE conversation_id=? AND request_id=?",
+                        (json.dumps(turn.memory), conversation_id, turn.request_id))
+                return turn
+            profile = self.memory.store.profile()
+            excluded = self.memory.store.history_exclusions(conversation_id)
+            conversation = conversation.model_copy(update={"turns": [turn for turn in conversation.turns
+                if turn.request_id not in excluded and turn.created_at > profile["history_floor"]]})
             snapshot = self.player_states.get(scope_id) if scope_id else None
             if request.player_inventory_container and snapshot is None:
                 raise AppError("player_scope_required", "请先为当前对话关联玩家状态档案。", 422)
             history: list[ModelMessage] = []
+            previous_teaching = (conversation.turns[-1].memory or {}).get("teaching") if conversation.turns and (
+                conversation.turns[-1].player_state_ref or {}).get("scope_id") == scope_id else None
+            prepared = self.memory.prepare(request.message, conversation_id, scope_id, previous_teaching)
+            prepared["conversation_id"] = conversation_id
+            followup = bool(previous_teaching and re.search(r"^(继续|那|懂了|明白|我理解|因为|所以|还是不懂|按你说的)", request.message))
+            prepared["teaching"]["lesson_id"] = previous_teaching.get("lesson_id", str(request.request_id)) if followup else str(request.request_id)
             state_context = json.dumps({"player_state": model_context(snapshot)}, ensure_ascii=False) if snapshot else None
-            used_chars = len(request.message) + len(state_context or "")
+            used_chars = len(request.message) + len(state_context or "") + len(json.dumps(prepared["context"], ensure_ascii=False))
             for turn in reversed(conversation.turns[-self.settings.history_turns:]):
                 if (turn.player_state_ref or {}).get("scope_id") != scope_id:
                     continue
@@ -84,8 +133,12 @@ class ChatRuntime:
                 capabilities.append("conditional_advice")
                 if self.settings.search_configured:
                     capabilities.append("web_research")
-            context = resolve_context(request.message, request.presentation_preferences or conversation.presentation_preferences,
+            preferences = {**prepared["preferences"], **self.store.presentation_override(conversation_id)}
+            if request.presentation_preferences:
+                preferences.update(request.presentation_preferences.model_dump(exclude_unset=True))
+            context = resolve_context(request.message, PresentationPreferences.model_validate(preferences),
                                       capabilities, self.settings)
+            context = context.model_copy(update={"teaching": prepared["teaching"]})
             messages = [ModelMessage(role=self.settings.instruction_role, content=SYSTEM_PROMPT + "\n" + compile_persona(context, "chat")),
                         *history, ModelMessage(role="user", content=request.message)]
             if snapshot:
@@ -112,6 +165,7 @@ class ChatRuntime:
                     result = await self.graph.ainvoke({"messages": messages,
                         "conversation_id":conversation_id,"chat_request":request,"visual_ref":visual_ref,
                         "response_context": context.model_dump(),
+                        "memory_context": prepared["context"],
                         "player_snapshot": snapshot, "inventory_container": request.player_inventory_container,
                         "previous_calculation": previous_input,
                         "previous_advice": previous_advice,
@@ -128,8 +182,14 @@ class ChatRuntime:
             visual = result.get("visual")
             if visual:
                 visual["request_identity"] = self.visual_identity(request)
-            return self.store.append(conversation_id, str(request.request_id), request.message,
-                                     reply.content, reply.truncated, result.get("calculation"), reference, result.get("advice"), presentation,visual)
+            with self.store.connection() as connection:
+                connection.execute("BEGIN IMMEDIATE")
+                turn = self.store.append(conversation_id, str(request.request_id), request.message,
+                    reply.content, reply.truncated, result.get("calculation"), reference, result.get("advice"), presentation, visual,
+                    connection=connection)
+                self.memory.commit(connection, turn, prepared, scope_id)
+            self.memory.schedule()
+            return turn
 
     @staticmethod
     def visual_identity(request):
@@ -196,4 +256,7 @@ class ChatRuntime:
         async with self.lock:
             if self.vision_service:
                 self.vision_service.attachments.delete_conversation(conversation_id)
-            self.store.delete(conversation_id)
+            with self.store.connection() as connection:
+                connection.execute("BEGIN IMMEDIATE")
+                self.memory.store.forget_conversation(conversation_id, connection)
+                connection.execute("DELETE FROM conversations WHERE id=?", (conversation_id,))

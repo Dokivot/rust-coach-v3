@@ -1,6 +1,6 @@
 import json
 import sqlite3
-from contextlib import contextmanager
+from contextlib import contextmanager, nullcontext
 from datetime import datetime, timezone
 from pathlib import Path
 from uuid import uuid4
@@ -35,6 +35,8 @@ class ConversationStore:
                 connection.execute("ALTER TABLE turns ADD COLUMN presentation TEXT")
             if "visual" not in columns:
                 connection.execute("ALTER TABLE turns ADD COLUMN visual TEXT")
+            if "memory" not in columns:
+                connection.execute("ALTER TABLE turns ADD COLUMN memory TEXT")
             conversation_columns = {row["name"] for row in connection.execute("PRAGMA table_info(conversations)")}
             if "presentation_preferences" not in conversation_columns:
                 connection.execute("ALTER TABLE conversations ADD COLUMN presentation_preferences TEXT")
@@ -62,7 +64,7 @@ class ConversationStore:
             if not exists:
                 raise AppError("conversation_not_found", "会话不存在，请创建新对话。", 404)
             rows = connection.execute(
-                "SELECT request_id, user, assistant, created_at, truncated, calculation, player_state_ref, advice, presentation, visual FROM turns "
+                "SELECT request_id, user, assistant, created_at, truncated, calculation, player_state_ref, advice, presentation, visual, memory FROM turns "
                 "WHERE conversation_id = ? ORDER BY sequence", (conversation_id,)
             ).fetchall()
         return Conversation(id=conversation_id, turns=[Turn(**(dict(row) | {
@@ -71,15 +73,16 @@ class ConversationStore:
             "advice": json.loads(row["advice"]) if row["advice"] else None,
             "presentation": json.loads(row["presentation"]) if row["presentation"] else None,
             "visual": json.loads(row["visual"]) if row["visual"] else None,
+            "memory": {key: value for key, value in json.loads(row["memory"]).items() if key != "extraction"} if row["memory"] else None,
         })) for row in rows], presentation_preferences=PresentationPreferences.model_validate_json(exists["presentation_preferences"] or "{}"))
 
     def append(self, conversation_id: str, request_id: str, user: str, assistant: str, truncated: bool,
                calculation: dict | None = None, player_state_ref: dict | None = None, advice: dict | None = None,
-               presentation: dict | None = None, visual: dict | None = None) -> Turn:
+               presentation: dict | None = None, visual: dict | None = None, *, connection=None) -> Turn:
         turn = Turn(request_id=request_id, user=user, assistant=assistant,
                     created_at=datetime.now(timezone.utc).isoformat(), truncated=truncated, calculation=calculation,
                     player_state_ref=player_state_ref, advice=advice, presentation=presentation, visual=visual)
-        with self.connection() as connection:
+        with nullcontext(connection) if connection is not None else self.connection() as connection:
             connection.execute(
                 "INSERT INTO turns(conversation_id, request_id, user, assistant, created_at, truncated, calculation, player_state_ref, advice, presentation, visual) "
                 "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
@@ -98,6 +101,11 @@ class ConversationStore:
             connection.execute("UPDATE conversations SET presentation_preferences=? WHERE id=?",
                                (preferences.model_dump_json(), conversation_id))
         return preferences
+
+    def presentation_override(self, conversation_id):
+        with self.connection() as connection:
+            row = connection.execute("SELECT presentation_preferences FROM conversations WHERE id=?", (conversation_id,)).fetchone()
+        return json.loads(row["presentation_preferences"]) if row and row["presentation_preferences"] else {}
 
     def delete(self, conversation_id: str) -> None:
         with self.connection() as connection:

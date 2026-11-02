@@ -29,6 +29,8 @@ class Settings(BaseSettings):
     evidence_ttl_hours: int = Field(default=6, ge=1, le=72)
     evidence_timeout_seconds: float = Field(default=25, ge=1, le=60)
     advice_timeout_seconds: float = Field(default=180, ge=10, le=300)
+    memory_context_char_limit: int = Field(default=3200, ge=1000, le=6000)
+    memory_timeout_seconds: float = Field(default=20, ge=1, le=60)
     vision_enabled: bool = True
     vision_model: str | None = None
     vision_base_url: str | None = None

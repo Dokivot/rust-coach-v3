@@ -226,6 +226,10 @@ def finalize_response(state):
         if calculation["operation"] == "raid":
             add("raid_assumptions", "\n".join(calculation["result"]["assumptions"]))
         add("original_report", state["reply"].content, placement=detail, reference=calculation["calculation_id"])
+        if context.teaching.get("mode") in {"guided", "practice"} and context.teaching.get("focus"):
+            add("teaching_focus", localized(context, "理解这次结果：", "Understanding this result: ") +
+                " ".join(context.teaching["focus"]) if context.language == "zh" else
+                "Use the report's stated inventory scope, requirements and assumptions; unknown inputs are not zero.", "narrative")
     elif state.get("route") == "player_state":
         kind = "state"
         payload = state.get("player_snapshot") or {}
