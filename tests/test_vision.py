@@ -735,7 +735,9 @@ def test_natural_c4_followup_uses_readable_partial_inventory(setup,monkeypatch,i
     assert turn["calculation"]["result"]["inventory_used"] == {"metal.fragments":200,"sulfur":140,"charcoal":4}
     assert turn["calculation"]["result"]["acquisition"] == {"techparts":2,"lowgradefuel":60,"sulfur":2060,"charcoal":2996,"cloth":5}
     main = "\n".join(block["text"] for block in turn["presentation"]["blocks"] if block["placement"] == "main")
-    assert "抵扣截图可见材料后" in main and "已抵扣" in main and "实际缺口可能更少" in main
+    assert "抵扣截图可见材料后" in main and "实际缺口可能更少" in main
+    details = "\n".join(block["text"] for block in turn["presentation"]["blocks"] if block["placement"] == "detail")
+    assert "已抵扣库存" in details
     assert "库存未知" not in main
     assert len(model.calls) == 1
 
@@ -781,7 +783,7 @@ def test_partial_inventory_advice_does_not_claim_complete_budget(setup):
 
 
 @pytest.mark.parametrize("explicit_status",[False,True])
-def test_same_turn_c4_uses_quality_flagged_counts_and_recognition_comes_first(setup,monkeypatch,explicit_status):
+def test_same_turn_c4_answers_first_with_quality_warning_and_recognition_details(setup,monkeypatch,explicit_status):
     client, application, model, owner = setup
     model.task = "craft"
     original = model.complete
@@ -802,9 +804,11 @@ def test_same_turn_c4_uses_quality_flagged_counts_and_recognition_comes_first(se
     assert turn["calculation"]["result"]["inventory_used"] == {"charcoal":4,"sulfur":140}
     assert turn["calculation"]["result"]["acquisition"]["charcoal"] == 2996
     assert turn["calculation"]["result"]["acquisition"]["sulfur"] == 2060
-    assert turn["presentation"]["blocks"][0]["id"] == "visual_scope"
-    assert turn["assistant"].startswith("截图识别结果")
-    assert turn["assistant"].index("• 木炭 × 4") < turn["assistant"].index("制作目标")
+    assert turn["presentation"]["blocks"][0]["id"] == "calculation_summary"
+    assert turn["assistant"].startswith("制作 1 定时炸弹")
+    recognition = next(block for block in turn["presentation"]["blocks"] if block["id"] == "visual_scope")
+    assert recognition["placement"] == "detail" and "• 木炭 × 4" in recognition["text"]
+    assert "• 木炭 × 4" not in turn["assistant"]
     assert "部分图标有画质提醒" in turn["assistant"]
     draft = application.state.vision.drafts.get(owner,turn["visual"]["draft_id"])
     for item in draft["payload"]["extraction"]["observations"]:
@@ -836,7 +840,9 @@ def test_unresolved_identity_is_excluded_and_displayed_as_unresolved(setup,monke
     monkeypatch.setattr(model,"complete",ambiguous)
     turn = analyze(client,owner,upload(client,owner),message="制作10火药还差什么？")
     assert turn["calculation"]["input"]["inventory"] is None
-    assert "物品身份未确定，未计入" in turn["assistant"]
+    assert "无法辨认的物品不计入" in turn["assistant"]
+    recognition = next(block for block in turn["presentation"]["blocks"] if block["id"] == "visual_scope")
+    assert "物品身份未确定，未计入" in recognition["text"]
 
 
 def test_automatic_subject_is_not_presented_as_an_explicit_unknown_owner(setup):

@@ -45,6 +45,7 @@ Responses 模式下，普通聊天、计算、建议和状态解析均使用上�
 - 玩家状态覆盖容器库存、科技、基地、阶段、时间、目标和偏好。支持表单与文本草稿确认、局部更新、观测有效期、事件失效、版本历史和冲突保护。未知不等于零，计算不会扣减真实背包。
 - 已接入按需网页取证与状态建议：规划候选、选择检索主题、调用本地工具、比较取舍、引用正文并保留快照。输入 `/coach 问题` 或 `/search 问题` 使用；无需向量库。详见 [建议链路与实际架构图](docs/advice.md)。
 - 已接入统一人设与表达校验；版本、检查、原始报告仍在 API 和 SQLite 留存，主聊天页不显示调试记录。可直接要求“简短一点”或“详细列出计算过程和来源”。早期设计与验证见 [人设实施说明](docs/persona-implementation.md)。
+- 计算与建议默认先给自然短答，完整计算、截图观测和来源可在回复下方展开；追问历史只带正文。事实保护与验证见 [自然回复修复说明](docs/natural-replies-fix.md)。
 - 图片无需填时间或逐项确认，默认当前本人；最近同会话图片自动用于后续自然语言提问。局部截图也会抵扣可读的材料，明确提示未展示/未知材料未计入，实际缺口可能更少。旧图、他人图、失效图不抵扣；不会自动写入长期档案。详见 [截图实施说明](docs/multimodal-implementation.md) 和 [本次修复验证](docs/chat-inventory-fix.md)。
 - 在线搜索使用 Tavily：在本地 `.env` 配置 `COACH_SEARCH_PROVIDER=tavily` 和 `COACH_SEARCH_API_KEY=你的Tavily密钥`，重启服务后生效；设为 `off` 可关闭联网。未配置密钥或搜索失败时明确降级为直接读取已登记资料。搜索摘要不作为事实依据；抓取时间不代表游戏版本已核验。
 - 已接入跨会话个人记忆：明确的表达偏好、自报习惯、关键历史与知识点进度。输入 `/memory` 查看，`/memory remember 个人经历` 立即记录，`/memory forget 标识` 删除，`/memory off` 暂停。按知识点选择逐步解释、适度提示或直接讨论条件；“讨论过”和“掌握”分开。详见 [记忆与循序讲解](docs/memory.md)。
@@ -59,9 +60,10 @@ node --check src/rust_coach/static/app.js
 node --check src/rust_coach/static/calculator.js
 node --check src/rust_coach/static/player-state.js
 node --check src/rust_coach/static/vision.js
+node --test tests/test_chat_ui.cjs
 ```
 
-测试使用替代模型及 HTTP MockTransport 验证 LangGraph、HTTP、上下文、持久化及异常处理，同时验证计算阈值、共享资源、批次、库存守恒与来源追溯。不调用付费模型，不代表游戏内规则认证或外部模型连接。Node 仅用于 JavaScript 语法检查。
+测试使用替代模型及 HTTP MockTransport 验证 LangGraph、HTTP、上下文、持久化及异常处理，同时验证计算阈值、共享资源、批次、库存守恒与来源追溯。不调用付费模型，不代表游戏内规则认证或外部模型连接。Node 用于 JavaScript 语法检查和聊天详情的 DOM 回归测试。
 
 另有 [真实模型、外部网页与浏览器验证记录](docs/advice-verification.md)，包含示例背包候选预算、条件建议、测试结果与界面截图。
 

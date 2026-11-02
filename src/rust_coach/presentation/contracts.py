@@ -16,7 +16,7 @@ class ResponseContext(BaseModel):
 
     persona_version: str = "rust-coach-core-v1"
     prompt_version: str = "coach-prompts-v1"
-    renderer_version: str = "coach-render-v1"
+    renderer_version: str = "coach-render-v2"
     preferences: PresentationPreferences = Field(default_factory=PresentationPreferences)
     language: Literal["zh", "en"] = "zh"
     scenario: Literal["normal", "urgent", "teaching", "recovery"] = "normal"

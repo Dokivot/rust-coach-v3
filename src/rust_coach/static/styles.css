@@ -62,6 +62,10 @@ h1 { margin: 24px 0 20px; font-size: clamp(32px, 3.8vw, 49px); line-height: 1.4;
 .message.user .message-content { background: #222a27; border: 1px solid #303b35; border-radius: 0 12px 12px 12px; padding: 12px 17px; }
 .message.pending .message-content { color: #b19f8f; }
 .message.pending .avatar { animation: pulse 1.5s ease-in-out infinite; }
+.answer-details { margin: 14px 0 0 36px; border-top: 1px solid var(--line); padding-top: 10px; color: var(--muted); font-size: 13px; line-height: 1.8; }
+.answer-details summary { cursor: pointer; color: var(--text); }
+.answer-details summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; border-radius: 3px; }
+.answer-detail-content { margin-top: 12px; white-space: pre-wrap; overflow-wrap: anywhere; }
 .message-notice { margin: 12px 0 0 36px; font-size: 11px; color: #e4b688; }
 .composer-area { flex-shrink: 0; width: min(820px, 100%); margin: 0 auto; padding: 10px 35px 20px; }
 .composer { border: 1px solid #48514b; background: #1d2320; border-radius: 13px; padding: 15px 16px 12px; }

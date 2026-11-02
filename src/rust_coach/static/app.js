@@ -88,8 +88,25 @@ function renderConversation() {
       image.loading = "lazy";
       userMessage.append(image);
     }
-    const main = turn.presentation?.blocks.filter(block => block.placement === "main").map(block => block.text).join("\n\n");
-    addMessage("assistant", main ?? turn.assistant, false, turn.truncated);
+    const blocks = turn.presentation?.blocks;
+    const main = blocks?.filter(block => block.placement === "main").map(block => block.text).join("\n\n");
+    const assistantMessage = addMessage("assistant", main || turn.assistant, false, turn.truncated);
+    const detailBlocks = blocks?.filter(block => block.placement === "detail" && block.text.trim()) || [];
+    if (detailBlocks.length) {
+      const details = document.createElement("details");
+      details.className = "answer-details";
+      const summary = document.createElement("summary");
+      summary.textContent = turn.presentation.context?.language === "en"
+        ? "View calculations, observations and sources" : "查看计算、观测与来源详情";
+      details.append(summary);
+      for (const block of detailBlocks) {
+        const content = document.createElement("div");
+        content.className = "answer-detail-content";
+        content.textContent = block.text;
+        details.append(content);
+      }
+      assistantMessage.append(details);
+    }
   }
   requestAnimationFrame(() => { scrollArea.scrollTop = scrollArea.scrollHeight; });
 }

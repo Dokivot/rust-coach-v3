@@ -2,7 +2,7 @@ from datetime import datetime, timezone
 from rust_coach.vision.context import item_identity_status, visual_input
 
 
-def visual_summary(visual,language="zh"):
+def visual_summary(visual,language="zh", *, include_observations=True):
     accepted = visual_input(visual)
     fresh = bool(accepted and visual["fresh"] and datetime.fromisoformat(accepted["expires_at"]) > datetime.now(timezone.utc))
     english = language == "en"
@@ -38,6 +38,10 @@ def visual_summary(visual,language="zh"):
         lines = ["Previous screenshot recognition." if english else "历史截图识别结果。"]
     if any(item["kind"] in {"base","equipment"} for item in visual["observations"]):
         lines.append("Only visible structures and equipment are known." if english else "仅能判断可见的结构和装备。")
+    if not include_observations:
+        if visual["unknowns"]:
+            lines.append(("Unknown: " if english else "尚不明确：") + "；".join(visual["unknowns"]))
+        return "\n".join(lines)
     for item in visual["observations"][:12]:
         quantity = str(item["quantity"]) if item["quantity"] is not None else ("unknown" if english else "未知")
         details = item["label"]

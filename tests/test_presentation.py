@@ -151,7 +151,7 @@ def test_advice_guard_keeps_budgets_and_discards_unsupported_confidence():
     original = copy.deepcopy(state["advice"])
     result = finalize_response(state)
     assert "材料完全够用" not in result["reply"].content
-    assert "硫磺 × 100" in result["reply"].content
+    assert "100 硫磺" in result["reply"].content
     assert result["presentation"]["fallback_reason"] == "narrative_rejected"
     assert state["advice"] == original
     assert result["presentation"]["assertions"][0]["value"]["candidate_ids"] == ["craft"]
@@ -163,8 +163,87 @@ def test_advice_concise_does_not_hide_prerequisites_or_switch():
     result = finalize_response(state)
     blocks = {block["id"]: block for block in result["presentation"]["blocks"]}
     assert blocks["craft.reason"]["placement"] == "detail"
-    assert blocks["craft.prerequisites"]["placement"] == blocks["craft.switch"]["placement"] == "main"
+    assert blocks["craft.plan"]["placement"] == "main"
+    assert all(text in result["reply"].content for text in recommendation()["prerequisites"])
+    assert recommendation()["switch_when"] in result["reply"].content
     assert blocks["craft.status"]["kind"] == "protected"
+
+
+def test_default_answers_lead_with_result_and_keep_reports_in_details():
+    result = finalize_response(calculation_state())
+    assert result["reply"].content.startswith("按你提供的库存，制作 100 火药 还差 100 硫磺、150 木炭")
+    assert "计算凭据" not in result["reply"].content
+    report = next(block for block in result["presentation"]["blocks"] if block["id"] == "original_report")
+    assert report["placement"] == "detail"
+    assert "已抵扣库存：硫磺 × 100、木炭 × 150" in report["text"]
+    assert "来源：" in report["text"] and "计算凭据" in report["text"]
+
+
+def test_advice_reads_as_prose_without_empty_or_repeated_fields():
+    state = advice_state()
+    state["advice"]["answer"]["recommendation"]["steps"] *= 2
+    result = finalize_response(state)
+    text = result["reply"].content
+    assert text.startswith("可以先考虑准备火药。")
+    assert all(label not in text for label in ("行动:", "理由:", "取舍:", "前置条件:", "下一步:", "需要补充:"))
+    assert text.count(recommendation()["steps"][0]) == 1
+    assert recommendation()["completion"] in text and recommendation()["switch_when"] in text
+    assert "材料或工作台条件未满足" in text
+    assert all(block["text"].strip() for block in result["presentation"]["blocks"])
+
+
+def test_unselected_budgets_are_details_but_still_protected():
+    state = advice_state()
+    state["advice"]["evaluations"]["other"] = copy.deepcopy(state["advice"]["evaluations"]["craft"])
+    outputs = []
+    for verbosity in ("concise", "standard", "detailed"):
+        state["response_context"] = resolve_context("建议", PresentationPreferences(verbosity=verbosity)).model_dump()
+        outputs.append(finalize_response(state))
+    assert len({output["presentation"]["protected_payload_hash"] for output in outputs}) == 1
+    assert all(output["presentation"]["assertions"] == outputs[0]["presentation"]["assertions"] for output in outputs)
+    blocks = {block["id"]: block for block in outputs[1]["presentation"]["blocks"]}
+    assert blocks["craft.budget"]["placement"] == "main"
+    assert blocks["other.budget"]["placement"] == "detail"
+    assert blocks["other.budget"]["kind"] == "protected"
+    assert outputs[1]["reply"].content.count("100 硫磺") == 1
+
+
+def test_english_summary_preserves_budget_and_unknown_conditions():
+    result = finalize_response(calculation_state(language="en", inventory=False))
+    text = result["reply"].content
+    assert "200 sulfur, 300 charcoal" in text
+    assert "actual shortfall is unknown" in text
+    assert "level 1 workbench" in text
+    assert "game build" in text
+
+
+def test_zero_material_gap_does_not_imply_technology_is_available():
+    calculator = Calculator()
+    calculation = calculator.calculate(CalculationRequest(operation="craft", goals={"gunpowder": 100},
+        inventory={"sulfur": 200, "charcoal": 300}))
+    result = finalize_response({"calculation": calculation,
+        "reply": ModelReply(content=render_calculation(calculation, calculator.catalog))})
+    assert "不需要再补材料" in result["reply"].content
+    assert "尚未提供当前等级" in result["reply"].content
+    assert "待核对配方" in result["reply"].content
+    assert "现在可以直接制作" not in result["reply"].content
+
+
+async def test_details_persist_but_followup_history_uses_short_answer(settings):
+    store = ConversationStore(settings.database_path)
+    identifier = store.create().id
+    model = Model(["先核对这次的目标。"])
+    runtime = ChatRuntime(settings, model, store)
+    request = ChatRequest(request_id=uuid4(), message='/calc {"operation":"craft","goals":{"gunpowder":100}}')
+    first = await runtime.chat(identifier, request)
+    restored = ConversationStore(settings.database_path).get(identifier).turns[0]
+    assert restored == first
+    assert any("计算凭据" in block["text"] for block in restored.presentation["blocks"] if block["placement"] == "detail")
+    assert "计算凭据" not in restored.assistant
+    await runtime.chat(identifier, ChatRequest(request_id=uuid4(), message="换个话题，你好"))
+    history = [message.content for message in model.calls[-1] if message.role == "assistant"]
+    assert first.assistant in history
+    assert all("计算凭据" not in text for text in history)
 
 
 async def test_shared_persona_preference_persistence_and_replay(settings):
