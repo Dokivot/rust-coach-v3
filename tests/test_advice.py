@@ -146,7 +146,8 @@ async def test_retrieval_privacy_cache_force_and_archive(stores):
         assert len(calls) == 6
         document = bundle["documents"][0]
         assert archive.get(document["id"])["text"] == document["text"]
-        assert archive.cached("web-v2:tavily:building", now=datetime.now(timezone.utc) + timedelta(days=1)) == []
+        assert archive.cached("web-v3:pc_vanilla:tavily:building")
+        assert archive.cached("web-v3:pc_vanilla:tavily:building", now=datetime.now(timezone.utc) + timedelta(days=1)) == []
 
 
 async def test_fetch_redirect_guard_and_private_dns(stores):
@@ -191,7 +192,7 @@ async def test_off_failure_and_direct_fallback_are_explicit(stores):
         result = await research.retrieve(["building"])
         assert result["documents"] and result["warnings"]
         assert result["events"][0]["type"] == "search_unavailable"
-        assert archive.cached("web-v2:tavily:building") == []
+        assert archive.cached("web-v3:pc_vanilla:tavily:building") == []
 
 
 async def test_tavily_filters_and_deduplicates_untrusted_links(stores):
@@ -233,7 +234,7 @@ async def test_tavily_errors_are_bounded_and_fall_back(stores, status, payload, 
     assert calls == ["api.tavily.com", "www.rustafied.com"]
     assert result["documents"] and result["warnings"]
     assert result["events"][0]["type"] == "search_unavailable"
-    assert stores[1].cached("web-v2:tavily:building") == []
+    assert stores[1].cached("web-v3:pc_vanilla:tavily:building") == []
     assert "test-search-key" not in json.dumps(result)
 
 
@@ -250,7 +251,7 @@ async def test_tavily_missing_key_is_explicit_without_search_request(stores):
         result = await WebResearch(settings, client, stores[1], public_resolver).retrieve(["building"])
     assert calls == ["www.rustafied.com"]
     assert any("COACH_SEARCH_API_KEY" in warning for warning in result["warnings"])
-    assert stores[1].cached("web-v2:tavily:building") == []
+    assert stores[1].cached("web-v3:pc_vanilla:tavily:building") == []
 
 
 @pytest.mark.parametrize("failure", ["timeout", "oversized", "content_type", "empty"])
@@ -275,7 +276,7 @@ async def test_tavily_transport_failure_and_empty_results_use_verified_fallback(
     assert calls == ["api.tavily.com", "www.rustafied.com"]
     assert result["documents"] and result["warnings"]
     assert result["events"][0]["type"] == "search_unavailable"
-    assert stores[1].cached("web-v2:tavily:building") == []
+    assert stores[1].cached("web-v3:pc_vanilla:tavily:building") == []
 
 
 def test_homepages_and_unrelated_body_not_used_as_strategy_evidence():

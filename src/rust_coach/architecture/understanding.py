@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from rust_coach.advice.intent import is_onboarding
 from rust_coach.architecture.contracts import (
     CoachTaskRepresentation,
     DecisionRequest,
@@ -54,7 +55,7 @@ class UnderstandingLayer:
             unknowns=parsed.unknowns,
             uncertainty=uncertainty,
             route=route,
-            required_evidence=("player_state",) if route == "plan_execute" else (),
+            required_evidence=(("first_day_guide",) if is_onboarding(candidate.text) else ("player_state",)) if route == "plan_execute" else (),
             provenance=parsed.provenance,
         )
         if task.route in {"simple_call", "plan_execute"}:

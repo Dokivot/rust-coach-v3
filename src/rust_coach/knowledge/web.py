@@ -12,8 +12,9 @@ from bs4 import BeautifulSoup
 
 logger = logging.getLogger("rust_coach")
 ALLOWED_HOSTS = {"rust.facepunch.com", "wiki.facepunch.com", "rust-data.com", "rusthelp.com",
-                 "www.rustafied.com", "rustafied.com"}
+                 "www.rustafied.com", "rustafied.com", "falconrust.com", "www.falconrust.com"}
 TOPICS = {
+    "first_day": ("Rust PC beginner first day survival guide tools sleeping bag starter base", "https://falconrust.com/guides/general/first-day/"),
     "building": ("Rust PC base building airlock doors soft side guide", "https://www.rustafied.com/building-in-rust/"),
     "upkeep": ("Rust PC tool cupboard upkeep group scaling decay", "https://wiki.facepunch.com/rust/the_tool_cupboard"),
     "progression": ("Rust PC workbench blueprint research tech tree progression update", "https://rust.facepunch.com/news/upgrade-hard-raid-harder"),
@@ -23,6 +24,7 @@ TOPICS = {
     "updates": ("Rust PC latest update Facepunch devblog", "https://rust.facepunch.com/news"),
 }
 TOPIC_TERMS = {
+    "first_day": ("wood", "stone", "food", "water", "sleeping bag", "base", "tool"),
     "building": ("airlock", "entrance", "foundation", "building", "door", "wall"),
     "upkeep": ("tool cupboard", "upkeep", "decay", "maintenance"),
     "progression": ("workbench", "blueprint", "tech tree", "research", "scrap"),
@@ -40,8 +42,20 @@ def specific_url(url):
 
 def relevant(document, topics):
     text = (document["title"] + " " + document["text"]).lower()
-    return specific_url(document["url"]) and any(
-        sum(term in text for term in TOPIC_TERMS[topic]) >= 2 for topic in topics)
+    for topic in topics:
+        if topic == "first_day":
+            path = urlsplit(document["url"]).path.rstrip("/")
+            title = document["title"].lower()
+            if path in {"/news", "/guides", "/guides/general", "/guides/getting-started"}:
+                continue
+            if not any(term in title for term in ("first day", "beginner", "getting started", "starter", "survival guide")):
+                continue
+            if len(document["text"]) < 600:
+                continue
+        threshold = 4 if topic == "first_day" else 2
+        if specific_url(document["url"]) and sum(term in text for term in TOPIC_TERMS[topic]) >= threshold:
+            return True
+    return False
 
 
 class RetrievalError(Exception):
@@ -148,12 +162,15 @@ class WebResearch:
         raise RetrievalError("redirect_limit")
 
     async def retrieve(self, topics, force=False):
-        topics = list(dict.fromkeys(topic for topic in topics if topic in TOPICS))[:2] or ["updates"]
+        topics = list(dict.fromkeys(topic for topic in topics if topic in TOPICS))[:2]
         bundle = {"documents": [], "events": [], "warnings": [], "queries": [], "cache_hit": False}
+        if not topics:
+            bundle["warnings"].append("尚未确定相关攻略主题，没有将版本新闻当作行动依据。")
+            return bundle
         if self.settings.search_provider == "off":
             bundle["warnings"].append("联网检索已关闭；没有使用模型记忆补充游戏事实。")
             return bundle
-        key = "web-v2:" + self.settings.search_provider + ":" + ",".join(sorted(topics))
+        key = "web-v3:pc_vanilla:" + self.settings.search_provider + ":" + ",".join(sorted(topics))
         cached = self.store.cached(key) if not force else []
         if cached:
             return {**bundle, "documents": cached, "cache_hit": True, "events": [{"type": "cache", "count": len(cached)}]}
@@ -171,7 +188,7 @@ class WebResearch:
                             bundle["warnings"].append("Tavily 搜索密钥未配置，请在本地 .env 设置 COACH_SEARCH_API_KEY。")
                         bundle["warnings"].append("搜索未返回可用可信来源，尝试直接读取已登记的相关资料；不代表已穷尽最新资料。")
                         found = [TOPICS[topic][1]]
-                    urls.extend([TOPICS[topic][1], *found[:1]])
+                    urls.extend([TOPICS[topic][1], *found[:3 if topic == "first_day" else 1]])
                 for url in list(dict.fromkeys(urls))[:4]:
                     try:
                         document = await self.fetch(url)
@@ -189,7 +206,7 @@ class WebResearch:
         if not bundle["documents"]:
             bundle["warnings"].append("没有取得可引用的网页正文，无法验证当前游戏机制。")
         bundle["warnings"] = list(dict.fromkeys(bundle["warnings"]))
-        if bundle["documents"] and not bundle["warnings"]:
+        if bundle["documents"] and (not bundle["warnings"] or topics == ["first_day"]):
             self.store.cache(key, bundle["documents"], self.settings.evidence_ttl_hours)
         logger.info("research_retrieved documents=%s cache=%s events=%s", len(bundle["documents"]),
                     bundle["cache_hit"], len(bundle["events"]))

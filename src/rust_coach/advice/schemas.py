@@ -6,7 +6,7 @@ from rust_coach.calculations.schemas import PositiveQuantity
 
 
 Text = Annotated[str, Field(min_length=1, max_length=500)]
-Topic = Literal["building", "upkeep", "progression", "recycling", "monuments", "combat", "updates"]
+Topic = Literal["first_day", "building", "upkeep", "progression", "recycling", "monuments", "combat", "updates"]
 
 
 class StrictModel(BaseModel):
@@ -62,3 +62,52 @@ class AdviceAnswer(StrictModel):
     alternative: Recommendation | None = None
     missing: list[Text] = Field(default_factory=list, max_length=5)
     uncertainty: Text
+
+
+class GuideDraftStage(StrictModel):
+    action: Text
+    completion: Text
+    evidence_refs: list[str] = Field(min_length=1, max_length=3)
+
+
+class GuideContent(StrictModel):
+    goal: Text
+    assumption: Text
+    stop_when: Text
+    followup: str = Field(default="", max_length=150)
+    limitations: list[Text] = Field(default_factory=list, max_length=3)
+
+
+class GuideDraft(GuideContent):
+    stages: list[GuideDraftStage] = Field(min_length=3, max_length=5)
+    stop_evidence_refs: list[str] = Field(default_factory=list, max_length=3)
+
+
+class GuideStage(StrictModel):
+    id: str = Field(pattern=r"^[a-z][a-z0-9_]{0,30}$")
+    action: Text
+    completion: Text
+    citations: list[Citation] = Field(min_length=1, max_length=3)
+
+
+class GuideAnswer(GuideContent):
+    stages: list[GuideStage] = Field(min_length=3, max_length=5)
+    stop_citations: list[Citation] = Field(default_factory=list, max_length=3)
+
+    @model_validator(mode="after")
+    def unique_stages(self):
+        if len({stage.id for stage in self.stages}) != len(self.stages):
+            raise ValueError("Duplicate stage IDs")
+        return self
+
+
+class GuideCorrection(StrictModel):
+    stage_id: str = Field(pattern=r"^[a-z][a-z0-9_]{0,30}$")
+    action: Text
+    completion: Text
+
+
+class GuideReview(StrictModel):
+    supported_stage_ids: list[str] = Field(max_length=5, description="无需改写即可由引用支持的阶段 ID")
+    corrections: list[GuideCorrection] = Field(default_factory=list, max_length=5, description="已根据原引用修正并核对的阶段")
+    issues: list[Text] = Field(default_factory=list, max_length=5)

@@ -190,12 +190,20 @@ def finalize_response(state):
 
     if advice:
         kind = "advice"
+        guide_mode = advice.get("mode") == "onboarding"
+        guide = advice.get("answer") if guide_mode else None
         repairs += advice.get("repairs", 0)
         evaluations = advice.get("evaluations", {})
         recommendations = [recommendation for recommendation in ((advice.get("answer") or {}).get("recommendation"),
                             (advice.get("answer") or {}).get("alternative")) if recommendation]
         payload = {"evaluations": evaluations, "selected_candidates": [item["candidate_id"] for item in recommendations],
                    "evidence": advice["evidence"], "state_revision": (state.get("player_snapshot") or {}).get("revision")}
+        if guide:
+            payload["guide"] = guide
+            payload["guide_review"] = advice.get("review")
+            assertions.append(ProtectedAssertion(kind="selection", reference="guide", value={
+                "stage_ids": [stage["id"] for stage in guide["stages"]], "stages": guide["stages"],
+                "assumption": guide["assumption"], "stop_when": guide["stop_when"]}))
         candidates = {candidate["id"]: candidate for candidate in (advice.get("plan") or {}).get("candidates", [])}
         snapshot = state.get("player_snapshot")
         stale = False
@@ -223,7 +231,24 @@ def finalize_response(state):
         if stale:
             add("delivery_stale", localized(context, "生成期间状态已过期；预算只描述此前快照，请重新核对当前条件。",
                                             "State expired during generation. Budgets describe the earlier snapshot; recheck current conditions."))
-        if not recommendations:
+        if guide:
+            add("guide.goal", guide["goal"], "narrative")
+            add("guide.assumption", guide["assumption"])
+            for index, stage in enumerate(guide["stages"], 1):
+                add("guide." + stage["id"], f"{index}. " + stage["action"], "narrative")
+                add("guide." + stage["id"] + ".completion", localized(context, "完成标志：", "Completion: ") + stage["completion"],
+                    placement=detail)
+                for citation_index, citation in enumerate(stage["citations"]):
+                    add(f"guide.{stage['id']}.citation.{citation_index}", citation["quote"], placement=detail,
+                        reference=citation["document_id"])
+            add("guide.completion", localized(context, "这一阶段做到这里就可以：", "Finish this phase when: ") + guide["stages"][-1]["completion"])
+            add("guide.stop", guide["stop_when"])
+            for index, citation in enumerate(guide.get("stop_citations", [])):
+                add(f"guide.stop.citation.{index}", citation["quote"], placement=detail, reference=citation["document_id"])
+            add("guide.followup", guide["followup"], "narrative")
+            add("guide.limitations", "\n".join(guide["limitations"]), placement=detail)
+            checks.append({"code": "guide_evidence_review", "status": "pass"})
+        if not recommendations and not guide:
             add("fallback", state["reply"].content)
             fallback = "advice_unavailable"
         for index, recommendation in enumerate(recommendations):
@@ -258,7 +283,7 @@ def finalize_response(state):
             if concise:
                 add(identifier + ".reason", sentences(explanation, context), "narrative", "detail", identifier)
             add_budget(identifier, evaluation, "main")
-        if advice.get("answer"):
+        if advice.get("answer") and not guide_mode:
             for field, chinese, english, text in [("missing", "需要补充", "Missing information", "；".join(advice["answer"]["missing"])),
                                                    ("uncertainty", "尚未确定", "Uncertainty", advice["answer"]["uncertainty"])]:
                 if text.strip() and not narrative_issues(text, forbid_numbers=True):
@@ -279,8 +304,13 @@ def finalize_response(state):
         if advice["evidence"]["documents"]:
             add("scope", localized(context, *EVIDENCE_LIMIT), placement=detail)
         for index, warning in enumerate(dict.fromkeys(advice["evidence"]["warnings"])):
-            add(f"retrieval_warning.{index}", warning)
+            add(f"retrieval_warning.{index}", warning, placement=detail if guide_mode else "main")
+        guide_sources = {citation["document_id"] for stage in (guide or {}).get("stages", []) for citation in stage["citations"]}
+        guide_sources.update(citation["document_id"] for citation in (guide or {}).get("stop_citations", []))
         for index, document in enumerate(advice["evidence"]["documents"]):
+            if document["id"] in guide_sources:
+                add(f"guide.source.{index}", localized(context, "参考：", "Source: ") + document["title"] + "\n" + document["url"],
+                    reference=document["id"])
             add(f"source.{index}", document["title"] + "\n" + document["url"] + "\n" + document["fetched_at"],
                 placement=detail, reference=document["id"])
     elif calculation and calculation.get("status") == "calculated":

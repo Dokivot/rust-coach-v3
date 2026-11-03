@@ -117,6 +117,9 @@ class DecisionLayer:
             "uncertainty": answer.get("uncertainty", ""),
             "evaluations": evaluations,
         }
+        if advice.get("mode") == "onboarding":
+            public_solution = {"mode": "onboarding", "guide": advice.get("answer"),
+                               "evidence_review": advice.get("review")}
         return DecisionResult(task_id=request.task_id, status=status, result_kind="recommendation",
                               solution=public_solution, evidence_refs=tuple(
                                   item.get("id", "") for item in (advice.get("evidence") or {}).get("documents", []) if item.get("id")

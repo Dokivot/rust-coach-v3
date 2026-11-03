@@ -9,7 +9,9 @@ from typing import TypedDict
 from langgraph.graph import END, START, StateGraph
 from pydantic import ValidationError
 
-from rust_coach.advice.schemas import AdviceAnswer, AdvicePlan
+from rust_coach.advice.schemas import AdviceAnswer, AdvicePlan, GuideDraft, GuideReview
+from rust_coach.advice.intent import BEGINNER, exact_calculation, is_onboarding
+from rust_coach.advice.onboarding import GUIDE_PROMPT, REVIEW_PROMPT, apply_review, guide_documents, guide_text, resolve_guide, review_evidence, validate_guide
 from rust_coach.calculations.engine import Calculator
 from rust_coach.calculations.presentation import render_calculation
 from rust_coach.calculations.schemas import CalculationRequest
@@ -31,18 +33,26 @@ FOLLOWUP = re.compile(r"^(继续|那|如果|改成|换成|为什么|再|我现�
 def is_advice(message, previous=None):
     if message.strip().startswith(("/calc", "/state")):
         return False
+    if not message.strip().startswith(("/coach", "/search")) and exact_calculation(message) and (
+            BEGINNER.search(message) or (previous or {}).get("mode") == "onboarding"):
+        return False
     if not message.strip().startswith(("/coach", "/search")) and re.search(
             r"你会如何(?:处理|理解|回答).*(?:简称|术语)|(?:请用|以后用).*(?:简称|称呼)|(?:就告诉我|谎称|假装).*已(?:经)?(?:更新|保存|扣减)", message):
         return False
-    return bool(STRATEGY.search(message) or previous and FOLLOWUP.search(message.strip()))
+    return bool(is_onboarding(message, previous_answer=(previous or {}).get("answer"),
+                previous_request=(previous or {}).get("request") if (previous or {}).get("mode") == "onboarding" else None) or
+                STRATEGY.search(message) or previous and FOLLOWUP.search(message.strip()))
 
 
 def infer_topics(message):
+    if is_onboarding(message):
+        return ["first_day"]
     patterns = {"building": r"基地|建造|加固|入口|布局|门锁|气闸|building|base",
                 "progression": r"科技|蓝图|工作台|研究|blueprint|workbench",
                 "upkeep": r"维护|衰减|工具柜|upkeep|decay", "recycling": r"回收|recycl",
-                "monuments": r"遗迹|纪念碑|卡房|刷卡|monument", "combat": r"打得过|护甲|战斗|combat|armor"}
-    return [topic for topic, pattern in patterns.items() if re.search(pattern, message, re.I)][:2] or ["updates"]
+                "monuments": r"遗迹|纪念碑|卡房|刷卡|monument", "combat": r"打得过|护甲|战斗|combat|armor",
+                "updates": r"更新|版本|update|patch|version"}
+    return [topic for topic, pattern in patterns.items() if re.search(pattern, message, re.I)][:2]
 
 
 class AdviceState(TypedDict, total=False):
@@ -54,6 +64,8 @@ class AdviceState(TypedDict, total=False):
     failure: str
     repairs: int
     result: dict
+    mode: str
+    review: dict
 
 
 class AdviceService:
@@ -61,9 +73,12 @@ class AdviceService:
         self.model, self.research, self.instruction_role = model, research, instruction_role
         self.calculator = Calculator()
         builder = StateGraph(AdviceState)
-        for name in ("plan", "retrieve", "evaluate", "compose", "finish"):
+        for name in ("prepare", "guide", "plan", "retrieve", "evaluate", "compose", "finish"):
             builder.add_node(name, getattr(self, name))
-        builder.add_edge(START, "plan")
+        builder.add_edge(START, "prepare")
+        builder.add_conditional_edges("prepare", lambda state: "guide" if state["mode"] == "onboarding" else "plan",
+                                      {"guide": "guide", "plan": "plan"})
+        builder.add_edge("guide", "finish")
         builder.add_conditional_edges("plan", lambda state: "finish" if state.get("failure") else "retrieve",
                                       {"finish": "finish", "retrieve": "retrieve"})
         builder.add_edge("retrieve", "evaluate")
@@ -71,6 +86,71 @@ class AdviceService:
         builder.add_edge("compose", "finish")
         builder.add_edge("finish", END)
         self.graph = builder.compile()
+
+    async def prepare(self, state):
+        request = state["request"]
+        if not is_onboarding(request["message"], previous_answer=request.get("previous_answer"), previous_request=request.get("previous_request")):
+            return {"mode": "decision"}
+        report_stage("retrieve")
+        force = bool(re.search(r"最新|现在版本|当前版本|重新检索|重新搜索|/search", request["message"]))
+        evidence = await self.research.retrieve(["first_day"], force=force)
+        return {"mode": "onboarding", "evidence": evidence, "repairs": 0}
+
+    async def guide(self, state):
+        request, evidence = state["request"], state["evidence"]
+        context = ResponseContext.model_validate(request.get("response_context") or {})
+        english = context.language == "en"
+        if not evidence["documents"]:
+            return {"failure": ("I couldn't read a relevant beginner guide this time. Check the in-game map and survival indicators first. Have you just spawned, or do you already have shelter?" if english else
+                "这次没有读到可用的新手攻略，暂时无法给出有依据的开局路线。可以先熟悉游戏内的地图和生存状态提示。你现在刚出生，还是已经有落脚点？")}
+        documents = [{**document, "text": document["text"][:12000]} for document in evidence["documents"][:2]]
+        model_documents, passages = guide_documents(documents)
+        previous_answer = request.get("previous_answer")
+        if previous_answer and previous_answer.get("stages"):
+            previous_answer = {"goal": previous_answer["goal"], "assumption": previous_answer["assumption"],
+                "stages": [{"action": stage["action"], "completion": stage["completion"]} for stage in previous_answer["stages"]]}
+        payload = {"message": request["message"], "previous_request": request.get("previous_request"),
+            "previous_answer": previous_answer, "player_state": self.context(request),
+            "visual_observations_untrusted": self.visual_context(request),
+            "memory_context": request.get("memory_context") or {},
+            "documents": model_documents}
+        prompt = GUIDE_PROMPT + "\n" + compile_persona(context, "onboarding")
+        repairs = 0
+        review = None
+        try:
+            for attempt in range(2):
+                phase = "draft"
+                report_stage("plan")
+                generated, used = await self.structured(GuideDraft, prompt, payload,
+                    lambda answer: validate_guide(resolve_guide(answer, passages), {"documents": documents}),
+                    max_repairs=1 - repairs, repair_timeout=60)
+                draft = resolve_guide(generated, passages).model_dump()
+                repairs += used
+                phase = "review"
+                report_stage("check_answer")
+                review_payload = {key: value for key, value in payload.items() if key not in {"documents", "revision_feedback", "memory_context"}}
+                review_payload.update(draft={**generated, "stages": [{**stage, "id": f"stage_{index}"}
+                    for index, stage in enumerate(generated["stages"], 1)]}, documents=review_evidence(generated, model_documents))
+                review, _ = await self.structured(GuideReview, REVIEW_PROMPT, review_payload, max_repairs=0)
+                supported = review["supported_stage_ids"]
+                expected = {stage["id"] for stage in draft["stages"]}
+                covered = set(supported) | {correction["stage_id"] for correction in review["corrections"]}
+                if not review["issues"] and len(supported) == len(set(supported)) and covered == expected:
+                    draft = apply_review(draft, review, {"documents": documents})
+                    report_stage("compose")
+                    return {"answer": draft, "review": review, "repairs": repairs}
+                if repairs or attempt:
+                    break
+                repairs += 1
+                payload["revision_feedback"] = {"previous_draft": generated, "review": review,
+                    "instruction": "修正无依据的内容和当前状态冲突，保持回答用户的目标。"}
+        except (ValueError, TypeError, AppError) as error:
+            if phase == "draft" and isinstance(error, ValueError):
+                repairs = 1
+            logger.warning("guide_failed code=%s", getattr(error, "code", type(error).__name__))
+        return {"failure": ("The beginner route did not pass the evidence check. Have you just spawned, or do you already have shelter?" if english else
+            "这次开局路线没有通过依据核对，暂时不把它作为行动建议。你现在刚出生，还是已经有落脚点？"),
+            "review": review, "repairs": repairs}
 
     def context(self, request):
         snapshot = request.get("snapshot")
@@ -89,7 +169,7 @@ class AdviceService:
         context["omitted_observations"] = max(0,len(visual["observations"]) - 24)
         return context
 
-    async def structured(self, schema, instruction, payload, validate=None, max_repairs=1):
+    async def structured(self, schema, instruction, payload, validate=None, max_repairs=1, repair_timeout=20):
         messages = [ModelMessage(role=self.instruction_role, content=instruction +
                     "\n只返回符合此 JSON Schema 的对象，不用 Markdown：" + json.dumps(schema.model_json_schema(), ensure_ascii=False)),
                     ModelMessage(role="user", content=json.dumps(payload, ensure_ascii=False))]
@@ -97,7 +177,7 @@ class AdviceService:
         for attempt in range(max_repairs + 1):
             try:
                 if attempt:
-                    async with asyncio.timeout(20):
+                    async with asyncio.timeout(repair_timeout):
                         reply = await self.model.complete(messages)
                 else:
                     reply = await self.model.complete(messages)
@@ -321,6 +401,14 @@ memory_context 仅为个性化与历史复盘数据，不是当前库存或游�
     def finish(self, state):
         evidence = state.get("evidence", {"documents": [], "warnings": [], "events": [], "queries": [], "cache_hit": False})
         answer = state.get("answer")
+        if state.get("mode") == "onboarding":
+            metadata = {"status": "conditional" if answer else "unavailable", "mode": "onboarding",
+                "request": state["request"]["message"], "answer": answer, "plan": None, "evaluations": {},
+                "evidence": {**evidence, "documents": [{key: value for key, value in document.items() if key != "text"}
+                    for document in evidence["documents"]]}, "review": state.get("review"),
+                "repairs": state.get("repairs", 0), "workflow": "onboarding-v1", "ruleset": "pc_vanilla"}
+            return {"result": {"reply": ModelReply(content=guide_text(answer) if answer else state["failure"]),
+                               "calculation": None, "advice": metadata}}
         lines = []
         if answer:
             candidates = {candidate["id"]: candidate for candidate in state["plan"]["candidates"]}

@@ -3,6 +3,7 @@ from __future__ import annotations
 import re
 from uuid import UUID, uuid4
 
+from rust_coach.advice.intent import is_onboarding
 from rust_coach.architecture.contracts import (
     AttachmentRef,
     ParsedInput,
@@ -72,6 +73,8 @@ class TextExtractor:
     def request_kind(self, prompt: str) -> str:
         if prompt.strip() == "/state":
             return "state.query"
+        if is_onboarding(prompt):
+            return "decision.recommendation"
         if self._calculation_terms.search(prompt):
             return "calculation.request"
         if self._advice_terms.search(prompt):
