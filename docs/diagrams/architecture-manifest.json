@@ -1,0 +1,1778 @@
+{
+  "width": 3000,
+  "height": 2440,
+  "layers": [
+    {
+      "index": 1,
+      "title": "输入层",
+      "x": 550,
+      "y": 350,
+      "width": 1840,
+      "height": 245
+    },
+    {
+      "index": 2,
+      "title": "理解层",
+      "x": 550,
+      "y": 640,
+      "width": 1840,
+      "height": 245
+    },
+    {
+      "index": 3,
+      "title": "知识层",
+      "x": 550,
+      "y": 930,
+      "width": 1840,
+      "height": 245
+    },
+    {
+      "index": 4,
+      "title": "决策层",
+      "x": 550,
+      "y": 1220,
+      "width": 1840,
+      "height": 245
+    },
+    {
+      "index": 5,
+      "title": "生成层",
+      "x": 550,
+      "y": 1510,
+      "width": 1840,
+      "height": 245
+    },
+    {
+      "index": 6,
+      "title": "评测与观测层",
+      "x": 550,
+      "y": 1800,
+      "width": 1840,
+      "height": 245
+    }
+  ],
+  "nodes": {
+    "input": {
+      "id": "input",
+      "title": "请求与附件接入",
+      "duty": "校验文字、截图与状态输入",
+      "x": 600,
+      "y": 440,
+      "width": 500,
+      "height": 120,
+      "kind": "D",
+      "status": "done"
+    },
+    "vision": {
+      "id": "vision",
+      "title": "多模态识别",
+      "duty": "提取截图中的物品与可见状态",
+      "x": 1210,
+      "y": 440,
+      "width": 500,
+      "height": 120,
+      "kind": "G",
+      "status": "done"
+    },
+    "context": {
+      "id": "context",
+      "title": "玩家状态与上下文",
+      "duty": "按范围、时效组织状态与记忆",
+      "x": 1820,
+      "y": 440,
+      "width": 500,
+      "height": 120,
+      "kind": "D",
+      "status": "done"
+    },
+    "route": {
+      "id": "route",
+      "title": "任务识别与路由",
+      "duty": "规则分流计算、建议、聊天与观察",
+      "x": 600,
+      "y": 730,
+      "width": 500,
+      "height": 120,
+      "kind": "D",
+      "status": "done"
+    },
+    "params": {
+      "id": "params",
+      "title": "语义参数提取",
+      "duty": "将复杂计算请求转为参数候选",
+      "x": 1210,
+      "y": 730,
+      "width": 500,
+      "height": 120,
+      "kind": "G",
+      "status": "done"
+    },
+    "understand": {
+      "id": "understand",
+      "title": "通用语义理解",
+      "duty": "处理多意图、实体消歧与上下文",
+      "x": 1820,
+      "y": 730,
+      "width": 500,
+      "height": 120,
+      "kind": "G",
+      "status": "planned"
+    },
+    "calculator": {
+      "id": "calculator",
+      "title": "确定性计算引擎",
+      "duty": "按规则计算配方、库存与拆除成本",
+      "x": 600,
+      "y": 1020,
+      "width": 500,
+      "height": 120,
+      "kind": "D",
+      "status": "done"
+    },
+    "evidence": {
+      "id": "evidence",
+      "title": "知识检索与证据",
+      "duty": "查询游戏规则并获取可追溯正文",
+      "x": 1210,
+      "y": 1020,
+      "width": 500,
+      "height": 120,
+      "kind": "D",
+      "status": "done"
+    },
+    "rag": {
+      "id": "rag",
+      "title": "知识推理与补充检索",
+      "duty": "评估证据缺口并规划有界补查",
+      "x": 1820,
+      "y": 1020,
+      "width": 500,
+      "height": 120,
+      "kind": "G",
+      "status": "planned"
+    },
+    "executor": {
+      "id": "executor",
+      "title": "工具执行与校验",
+      "duty": "校验参数、调用工具并整合结果",
+      "x": 600,
+      "y": 1310,
+      "width": 500,
+      "height": 120,
+      "kind": "D",
+      "status": "done"
+    },
+    "planner": {
+      "id": "planner",
+      "title": "任务规划",
+      "duty": "生成受限候选方案与行动计划",
+      "x": 1210,
+      "y": 1310,
+      "width": 500,
+      "height": 120,
+      "kind": "G",
+      "status": "done"
+    },
+    "task": {
+      "id": "task",
+      "title": "持久任务协调",
+      "duty": "管理步骤、预算、澄清与恢复",
+      "x": 1820,
+      "y": 1310,
+      "width": 500,
+      "height": 120,
+      "kind": "D",
+      "status": "planned"
+    },
+    "results": {
+      "id": "results",
+      "title": "结果整合与保护",
+      "duty": "锁定数值、条件与引用并安全回退",
+      "x": 600,
+      "y": 1600,
+      "width": 500,
+      "height": 120,
+      "kind": "D",
+      "status": "done"
+    },
+    "coach": {
+      "id": "coach",
+      "title": "Coach 回答生成",
+      "duty": "基于任务结果组织个性化表达",
+      "x": 1210,
+      "y": 1600,
+      "width": 500,
+      "height": 120,
+      "kind": "G",
+      "status": "done"
+    },
+    "claims": {
+      "id": "claims",
+      "title": "统一事实门禁",
+      "duty": "生成前约束声明，输出后核查保真",
+      "x": 1820,
+      "y": 1600,
+      "width": 500,
+      "height": 120,
+      "kind": "D",
+      "status": "planned"
+    },
+    "localobs": {
+      "id": "localobs",
+      "title": "日志与回归评测",
+      "duty": "记录局部事件并验证已有行为",
+      "x": 600,
+      "y": 1890,
+      "width": 500,
+      "height": 120,
+      "kind": "D",
+      "status": "done"
+    },
+    "telemetry": {
+      "id": "telemetry",
+      "title": "全链路观测",
+      "duty": "追踪任务、调用、延迟与成本",
+      "x": 1210,
+      "y": 1890,
+      "width": 500,
+      "height": 120,
+      "kind": "D",
+      "status": "planned"
+    },
+    "quality": {
+      "id": "quality",
+      "title": "质量评测与发布",
+      "duty": "用任务成功率与失败案例驱动改进",
+      "x": 1820,
+      "y": 1890,
+      "width": 500,
+      "height": 120,
+      "kind": "D",
+      "status": "planned"
+    },
+    "localstore": {
+      "id": "localstore",
+      "title": "本地会话与状态库",
+      "duty": "保存状态、记忆、附件与成功对话",
+      "x": 60,
+      "y": 440,
+      "width": 420,
+      "height": 120,
+      "kind": "D",
+      "status": "done"
+    },
+    "rules": {
+      "id": "rules",
+      "title": "游戏规则与证据库",
+      "duty": "供计算与检索共享规则和正文快照",
+      "x": 60,
+      "y": 1020,
+      "width": 420,
+      "height": 120,
+      "kind": "D",
+      "status": "done"
+    },
+    "checkpoint": {
+      "id": "checkpoint",
+      "title": "目标任务存储",
+      "duty": "持久保存步骤与中间结果",
+      "x": 60,
+      "y": 1310,
+      "width": 420,
+      "height": 120,
+      "kind": "D",
+      "status": "planned"
+    },
+    "model": {
+      "id": "model",
+      "title": "模型服务 · LLM / VLM",
+      "duty": "供紫色模块共享调用",
+      "x": 2490,
+      "y": 440,
+      "width": 450,
+      "height": 120,
+      "kind": "G",
+      "status": "done"
+    },
+    "search": {
+      "id": "search",
+      "title": "搜索与公开来源",
+      "duty": "提供检索链接与网页正文",
+      "x": 2490,
+      "y": 910,
+      "width": 450,
+      "height": 120,
+      "kind": "D",
+      "status": "done"
+    },
+    "knowledge": {
+      "id": "knowledge",
+      "title": "目标统一知识库",
+      "duty": "结构化数据、向量与关系索引",
+      "x": 2490,
+      "y": 1200,
+      "width": 450,
+      "height": 120,
+      "kind": "D",
+      "status": "planned"
+    }
+  },
+  "relations": [
+    {
+      "id": "request",
+      "source": "",
+      "target": "input",
+      "points": [
+        [
+          850,
+          320
+        ],
+        [
+          850,
+          436
+        ]
+      ],
+      "payload": "用户请求",
+      "kind": "data"
+    },
+    {
+      "id": "visual",
+      "source": "vision",
+      "target": "input",
+      "points": [
+        [
+          1210,
+          500
+        ],
+        [
+          1105,
+          500
+        ]
+      ],
+      "payload": "观察",
+      "kind": "data"
+    },
+    {
+      "id": "parsed",
+      "source": "input",
+      "target": "route",
+      "points": [
+        [
+          850,
+          560
+        ],
+        [
+          850,
+          726
+        ]
+      ],
+      "payload": "归一化输入",
+      "kind": "data"
+    },
+    {
+      "id": "parameters",
+      "source": "params",
+      "target": "route",
+      "points": [
+        [
+          1210,
+          790
+        ],
+        [
+          1105,
+          790
+        ]
+      ],
+      "payload": "参数",
+      "kind": "data"
+    },
+    {
+      "id": "route-task",
+      "source": "route",
+      "target": "executor",
+      "points": [
+        [
+          600,
+          820
+        ],
+        [
+          520,
+          820
+        ],
+        [
+          520,
+          1370
+        ],
+        [
+          595,
+          1370
+        ]
+      ],
+      "payload": "任务 / 参数",
+      "kind": "data"
+    },
+    {
+      "id": "call-calc",
+      "source": "executor",
+      "target": "calculator",
+      "points": [
+        [
+          600,
+          1330
+        ],
+        [
+          570,
+          1330
+        ],
+        [
+          570,
+          1110
+        ],
+        [
+          595,
+          1110
+        ]
+      ],
+      "payload": "调用",
+      "kind": "control"
+    },
+    {
+      "id": "calculation",
+      "source": "calculator",
+      "target": "executor",
+      "points": [
+        [
+          850,
+          1140
+        ],
+        [
+          850,
+          1306
+        ]
+      ],
+      "payload": "计算结果",
+      "kind": "data"
+    },
+    {
+      "id": "plan",
+      "source": "planner",
+      "target": "executor",
+      "points": [
+        [
+          1210,
+          1370
+        ],
+        [
+          1105,
+          1370
+        ]
+      ],
+      "payload": "计划",
+      "kind": "data"
+    },
+    {
+      "id": "retrieve",
+      "source": "planner",
+      "target": "evidence",
+      "points": [
+        [
+          1680,
+          1310
+        ],
+        [
+          1680,
+          1144
+        ]
+      ],
+      "payload": "取证",
+      "kind": "control"
+    },
+    {
+      "id": "evidence-result",
+      "source": "evidence",
+      "target": "planner",
+      "points": [
+        [
+          1460,
+          1140
+        ],
+        [
+          1460,
+          1306
+        ]
+      ],
+      "payload": "检索结果 / 证据集合",
+      "kind": "data"
+    },
+    {
+      "id": "task-result",
+      "source": "executor",
+      "target": "results",
+      "points": [
+        [
+          850,
+          1430
+        ],
+        [
+          850,
+          1596
+        ]
+      ],
+      "payload": "任务结果",
+      "kind": "data"
+    },
+    {
+      "id": "draft",
+      "source": "coach",
+      "target": "results",
+      "points": [
+        [
+          1210,
+          1660
+        ],
+        [
+          1105,
+          1660
+        ]
+      ],
+      "payload": "措辞",
+      "kind": "data"
+    },
+    {
+      "id": "answer",
+      "source": "results",
+      "target": "",
+      "points": [
+        [
+          850,
+          1720
+        ],
+        [
+          850,
+          1765
+        ],
+        [
+          520,
+          1765
+        ],
+        [
+          520,
+          2150
+        ],
+        [
+          595,
+          2150
+        ]
+      ],
+      "payload": "最终回答",
+      "kind": "data"
+    },
+    {
+      "id": "model-call",
+      "source": "vision",
+      "target": "model",
+      "points": [
+        [
+          1460,
+          440
+        ],
+        [
+          1460,
+          415
+        ],
+        [
+          2450,
+          415
+        ],
+        [
+          2450,
+          500
+        ],
+        [
+          2485,
+          500
+        ]
+      ],
+      "payload": "共享模型调用",
+      "kind": "control"
+    },
+    {
+      "id": "store",
+      "source": "localstore",
+      "target": "input",
+      "points": [
+        [
+          480,
+          500
+        ],
+        [
+          595,
+          500
+        ]
+      ],
+      "payload": "状态",
+      "kind": "data"
+    },
+    {
+      "id": "context-route",
+      "source": "context",
+      "target": "route",
+      "points": [
+        [
+          2070,
+          560
+        ],
+        [
+          2070,
+          615
+        ],
+        [
+          1000,
+          615
+        ],
+        [
+          1000,
+          726
+        ]
+      ],
+      "payload": "玩家状态 / 历史 / 记忆",
+      "kind": "data"
+    },
+    {
+      "id": "search-data",
+      "source": "search",
+      "target": "evidence",
+      "points": [
+        [
+          2490,
+          970
+        ],
+        [
+          2450,
+          970
+        ],
+        [
+          2450,
+          900
+        ],
+        [
+          1460,
+          900
+        ],
+        [
+          1460,
+          1016
+        ]
+      ],
+      "payload": "公开正文",
+      "kind": "data"
+    },
+    {
+      "id": "knowledge-data",
+      "source": "knowledge",
+      "target": "rag",
+      "points": [
+        [
+          2490,
+          1260
+        ],
+        [
+          2420,
+          1260
+        ],
+        [
+          2420,
+          1080
+        ],
+        [
+          2325,
+          1080
+        ]
+      ],
+      "payload": "知识 / 证据",
+      "kind": "data"
+    },
+    {
+      "id": "semantic-route",
+      "source": "understand",
+      "target": "route",
+      "points": [
+        [
+          2070,
+          850
+        ],
+        [
+          2070,
+          875
+        ],
+        [
+          1040,
+          875
+        ],
+        [
+          1040,
+          854
+        ]
+      ],
+      "payload": "目标语义任务",
+      "kind": "data"
+    },
+    {
+      "id": "rag-plan",
+      "source": "task",
+      "target": "rag",
+      "points": [
+        [
+          2070,
+          1310
+        ],
+        [
+          2070,
+          1144
+        ]
+      ],
+      "payload": "缺证：补查",
+      "kind": "control"
+    },
+    {
+      "id": "rag-result",
+      "source": "rag",
+      "target": "task",
+      "points": [
+        [
+          1930,
+          1140
+        ],
+        [
+          1930,
+          1306
+        ]
+      ],
+      "payload": "证据",
+      "kind": "data"
+    },
+    {
+      "id": "coordination",
+      "source": "task",
+      "target": "planner",
+      "points": [
+        [
+          1820,
+          1370
+        ],
+        [
+          1715,
+          1370
+        ]
+      ],
+      "payload": "重规划",
+      "kind": "control"
+    },
+    {
+      "id": "claims",
+      "source": "task",
+      "target": "claims",
+      "points": [
+        [
+          2070,
+          1430
+        ],
+        [
+          2070,
+          1596
+        ]
+      ],
+      "payload": "结果 / 证据 / 条件",
+      "kind": "data"
+    },
+    {
+      "id": "compose-input",
+      "source": "executor",
+      "target": "coach",
+      "points": [
+        [
+          1100,
+          1410
+        ],
+        [
+          1150,
+          1410
+        ],
+        [
+          1150,
+          1515
+        ],
+        [
+          1460,
+          1515
+        ],
+        [
+          1460,
+          1596
+        ]
+      ],
+      "payload": "任务结果 / 证据",
+      "kind": "data"
+    },
+    {
+      "id": "constrain",
+      "source": "claims",
+      "target": "coach",
+      "points": [
+        [
+          1820,
+          1660
+        ],
+        [
+          1715,
+          1660
+        ]
+      ],
+      "payload": "约束",
+      "kind": "data"
+    },
+    {
+      "id": "log",
+      "source": "results",
+      "target": "localobs",
+      "points": [
+        [
+          850,
+          1720
+        ],
+        [
+          850,
+          1886
+        ]
+      ],
+      "payload": "检查与日志",
+      "kind": "data"
+    },
+    {
+      "id": "quality",
+      "source": "telemetry",
+      "target": "quality",
+      "points": [
+        [
+          1710,
+          1950
+        ],
+        [
+          1815,
+          1950
+        ]
+      ],
+      "payload": "回放",
+      "kind": "data"
+    },
+    {
+      "id": "traces",
+      "source": "task",
+      "target": "telemetry",
+      "points": [
+        [
+          2390,
+          1267
+        ],
+        [
+          2460,
+          1267
+        ],
+        [
+          2460,
+          1855
+        ],
+        [
+          1460,
+          1855
+        ],
+        [
+          1460,
+          1886
+        ]
+      ],
+      "payload": "全链路事件 / 延迟 / 用量",
+      "kind": "data"
+    }
+  ],
+  "geometry": {
+    "nodes": [
+      {
+        "id": "input",
+        "title": "请求与附件接入",
+        "duty": "校验文字、截图与状态输入",
+        "x": 600,
+        "y": 440,
+        "width": 500,
+        "height": 120,
+        "kind": "D",
+        "status": "done"
+      },
+      {
+        "id": "vision",
+        "title": "多模态识别",
+        "duty": "提取截图中的物品与可见状态",
+        "x": 1210,
+        "y": 440,
+        "width": 500,
+        "height": 120,
+        "kind": "G",
+        "status": "done"
+      },
+      {
+        "id": "context",
+        "title": "玩家状态与上下文",
+        "duty": "按范围、时效组织状态与记忆",
+        "x": 1820,
+        "y": 440,
+        "width": 500,
+        "height": 120,
+        "kind": "D",
+        "status": "done"
+      },
+      {
+        "id": "route",
+        "title": "任务识别与路由",
+        "duty": "规则分流计算、建议、聊天与观察",
+        "x": 600,
+        "y": 730,
+        "width": 500,
+        "height": 120,
+        "kind": "D",
+        "status": "done"
+      },
+      {
+        "id": "params",
+        "title": "语义参数提取",
+        "duty": "将复杂计算请求转为参数候选",
+        "x": 1210,
+        "y": 730,
+        "width": 500,
+        "height": 120,
+        "kind": "G",
+        "status": "done"
+      },
+      {
+        "id": "understand",
+        "title": "通用语义理解",
+        "duty": "处理多意图、实体消歧与上下文",
+        "x": 1820,
+        "y": 730,
+        "width": 500,
+        "height": 120,
+        "kind": "G",
+        "status": "planned"
+      },
+      {
+        "id": "calculator",
+        "title": "确定性计算引擎",
+        "duty": "按规则计算配方、库存与拆除成本",
+        "x": 600,
+        "y": 1020,
+        "width": 500,
+        "height": 120,
+        "kind": "D",
+        "status": "done"
+      },
+      {
+        "id": "evidence",
+        "title": "知识检索与证据",
+        "duty": "查询游戏规则并获取可追溯正文",
+        "x": 1210,
+        "y": 1020,
+        "width": 500,
+        "height": 120,
+        "kind": "D",
+        "status": "done"
+      },
+      {
+        "id": "rag",
+        "title": "知识推理与补充检索",
+        "duty": "评估证据缺口并规划有界补查",
+        "x": 1820,
+        "y": 1020,
+        "width": 500,
+        "height": 120,
+        "kind": "G",
+        "status": "planned"
+      },
+      {
+        "id": "executor",
+        "title": "工具执行与校验",
+        "duty": "校验参数、调用工具并整合结果",
+        "x": 600,
+        "y": 1310,
+        "width": 500,
+        "height": 120,
+        "kind": "D",
+        "status": "done"
+      },
+      {
+        "id": "planner",
+        "title": "任务规划",
+        "duty": "生成受限候选方案与行动计划",
+        "x": 1210,
+        "y": 1310,
+        "width": 500,
+        "height": 120,
+        "kind": "G",
+        "status": "done"
+      },
+      {
+        "id": "task",
+        "title": "持久任务协调",
+        "duty": "管理步骤、预算、澄清与恢复",
+        "x": 1820,
+        "y": 1310,
+        "width": 500,
+        "height": 120,
+        "kind": "D",
+        "status": "planned"
+      },
+      {
+        "id": "results",
+        "title": "结果整合与保护",
+        "duty": "锁定数值、条件与引用并安全回退",
+        "x": 600,
+        "y": 1600,
+        "width": 500,
+        "height": 120,
+        "kind": "D",
+        "status": "done"
+      },
+      {
+        "id": "coach",
+        "title": "Coach 回答生成",
+        "duty": "基于任务结果组织个性化表达",
+        "x": 1210,
+        "y": 1600,
+        "width": 500,
+        "height": 120,
+        "kind": "G",
+        "status": "done"
+      },
+      {
+        "id": "claims",
+        "title": "统一事实门禁",
+        "duty": "生成前约束声明，输出后核查保真",
+        "x": 1820,
+        "y": 1600,
+        "width": 500,
+        "height": 120,
+        "kind": "D",
+        "status": "planned"
+      },
+      {
+        "id": "localobs",
+        "title": "日志与回归评测",
+        "duty": "记录局部事件并验证已有行为",
+        "x": 600,
+        "y": 1890,
+        "width": 500,
+        "height": 120,
+        "kind": "D",
+        "status": "done"
+      },
+      {
+        "id": "telemetry",
+        "title": "全链路观测",
+        "duty": "追踪任务、调用、延迟与成本",
+        "x": 1210,
+        "y": 1890,
+        "width": 500,
+        "height": 120,
+        "kind": "D",
+        "status": "planned"
+      },
+      {
+        "id": "quality",
+        "title": "质量评测与发布",
+        "duty": "用任务成功率与失败案例驱动改进",
+        "x": 1820,
+        "y": 1890,
+        "width": 500,
+        "height": 120,
+        "kind": "D",
+        "status": "planned"
+      },
+      {
+        "id": "localstore",
+        "title": "本地会话与状态库",
+        "duty": "保存状态、记忆、附件与成功对话",
+        "x": 60,
+        "y": 440,
+        "width": 420,
+        "height": 120,
+        "kind": "D",
+        "status": "done"
+      },
+      {
+        "id": "rules",
+        "title": "游戏规则与证据库",
+        "duty": "供计算与检索共享规则和正文快照",
+        "x": 60,
+        "y": 1020,
+        "width": 420,
+        "height": 120,
+        "kind": "D",
+        "status": "done"
+      },
+      {
+        "id": "checkpoint",
+        "title": "目标任务存储",
+        "duty": "持久保存步骤与中间结果",
+        "x": 60,
+        "y": 1310,
+        "width": 420,
+        "height": 120,
+        "kind": "D",
+        "status": "planned"
+      },
+      {
+        "id": "model",
+        "title": "模型服务 · LLM / VLM",
+        "duty": "供紫色模块共享调用",
+        "x": 2490,
+        "y": 440,
+        "width": 450,
+        "height": 120,
+        "kind": "G",
+        "status": "done"
+      },
+      {
+        "id": "search",
+        "title": "搜索与公开来源",
+        "duty": "提供检索链接与网页正文",
+        "x": 2490,
+        "y": 910,
+        "width": 450,
+        "height": 120,
+        "kind": "D",
+        "status": "done"
+      },
+      {
+        "id": "knowledge",
+        "title": "目标统一知识库",
+        "duty": "结构化数据、向量与关系索引",
+        "x": 2490,
+        "y": 1200,
+        "width": 450,
+        "height": 120,
+        "kind": "D",
+        "status": "planned"
+      }
+    ],
+    "lines": [
+      {
+        "id": "legend-data",
+        "source": "",
+        "target": "",
+        "points": [
+          [
+            1460,
+            182
+          ],
+          [
+            1550,
+            182
+          ]
+        ],
+        "payload": "数据流",
+        "kind": "data"
+      },
+      {
+        "id": "legend-control",
+        "source": "",
+        "target": "",
+        "points": [
+          [
+            1770,
+            182
+          ],
+          [
+            1860,
+            182
+          ]
+        ],
+        "payload": "调用 / 控制",
+        "kind": "control"
+      },
+      {
+        "id": "request",
+        "source": "",
+        "target": "input",
+        "points": [
+          [
+            850,
+            320
+          ],
+          [
+            850,
+            436
+          ]
+        ],
+        "payload": "用户请求",
+        "kind": "data"
+      },
+      {
+        "id": "visual",
+        "source": "vision",
+        "target": "input",
+        "points": [
+          [
+            1210,
+            500
+          ],
+          [
+            1105,
+            500
+          ]
+        ],
+        "payload": "观察",
+        "kind": "data"
+      },
+      {
+        "id": "parsed",
+        "source": "input",
+        "target": "route",
+        "points": [
+          [
+            850,
+            560
+          ],
+          [
+            850,
+            726
+          ]
+        ],
+        "payload": "归一化输入",
+        "kind": "data"
+      },
+      {
+        "id": "parameters",
+        "source": "params",
+        "target": "route",
+        "points": [
+          [
+            1210,
+            790
+          ],
+          [
+            1105,
+            790
+          ]
+        ],
+        "payload": "参数",
+        "kind": "data"
+      },
+      {
+        "id": "route-task",
+        "source": "route",
+        "target": "executor",
+        "points": [
+          [
+            600,
+            820
+          ],
+          [
+            520,
+            820
+          ],
+          [
+            520,
+            1370
+          ],
+          [
+            595,
+            1370
+          ]
+        ],
+        "payload": "任务 / 参数",
+        "kind": "data"
+      },
+      {
+        "id": "call-calc",
+        "source": "executor",
+        "target": "calculator",
+        "points": [
+          [
+            600,
+            1330
+          ],
+          [
+            570,
+            1330
+          ],
+          [
+            570,
+            1110
+          ],
+          [
+            595,
+            1110
+          ]
+        ],
+        "payload": "调用",
+        "kind": "control"
+      },
+      {
+        "id": "calculation",
+        "source": "calculator",
+        "target": "executor",
+        "points": [
+          [
+            850,
+            1140
+          ],
+          [
+            850,
+            1306
+          ]
+        ],
+        "payload": "计算结果",
+        "kind": "data"
+      },
+      {
+        "id": "plan",
+        "source": "planner",
+        "target": "executor",
+        "points": [
+          [
+            1210,
+            1370
+          ],
+          [
+            1105,
+            1370
+          ]
+        ],
+        "payload": "计划",
+        "kind": "data"
+      },
+      {
+        "id": "retrieve",
+        "source": "planner",
+        "target": "evidence",
+        "points": [
+          [
+            1680,
+            1310
+          ],
+          [
+            1680,
+            1144
+          ]
+        ],
+        "payload": "取证",
+        "kind": "control"
+      },
+      {
+        "id": "evidence-result",
+        "source": "evidence",
+        "target": "planner",
+        "points": [
+          [
+            1460,
+            1140
+          ],
+          [
+            1460,
+            1306
+          ]
+        ],
+        "payload": "检索结果 / 证据集合",
+        "kind": "data"
+      },
+      {
+        "id": "task-result",
+        "source": "executor",
+        "target": "results",
+        "points": [
+          [
+            850,
+            1430
+          ],
+          [
+            850,
+            1596
+          ]
+        ],
+        "payload": "任务结果",
+        "kind": "data"
+      },
+      {
+        "id": "draft",
+        "source": "coach",
+        "target": "results",
+        "points": [
+          [
+            1210,
+            1660
+          ],
+          [
+            1105,
+            1660
+          ]
+        ],
+        "payload": "措辞",
+        "kind": "data"
+      },
+      {
+        "id": "answer",
+        "source": "results",
+        "target": "",
+        "points": [
+          [
+            850,
+            1720
+          ],
+          [
+            850,
+            1765
+          ],
+          [
+            520,
+            1765
+          ],
+          [
+            520,
+            2150
+          ],
+          [
+            595,
+            2150
+          ]
+        ],
+        "payload": "最终回答",
+        "kind": "data"
+      },
+      {
+        "id": "model-call",
+        "source": "vision",
+        "target": "model",
+        "points": [
+          [
+            1460,
+            440
+          ],
+          [
+            1460,
+            415
+          ],
+          [
+            2450,
+            415
+          ],
+          [
+            2450,
+            500
+          ],
+          [
+            2485,
+            500
+          ]
+        ],
+        "payload": "共享模型调用",
+        "kind": "control"
+      },
+      {
+        "id": "store",
+        "source": "localstore",
+        "target": "input",
+        "points": [
+          [
+            480,
+            500
+          ],
+          [
+            595,
+            500
+          ]
+        ],
+        "payload": "状态",
+        "kind": "data"
+      },
+      {
+        "id": "context-route",
+        "source": "context",
+        "target": "route",
+        "points": [
+          [
+            2070,
+            560
+          ],
+          [
+            2070,
+            615
+          ],
+          [
+            1000,
+            615
+          ],
+          [
+            1000,
+            726
+          ]
+        ],
+        "payload": "玩家状态 / 历史 / 记忆",
+        "kind": "data"
+      },
+      {
+        "id": "search-data",
+        "source": "search",
+        "target": "evidence",
+        "points": [
+          [
+            2490,
+            970
+          ],
+          [
+            2450,
+            970
+          ],
+          [
+            2450,
+            900
+          ],
+          [
+            1460,
+            900
+          ],
+          [
+            1460,
+            1016
+          ]
+        ],
+        "payload": "公开正文",
+        "kind": "data"
+      },
+      {
+        "id": "knowledge-data",
+        "source": "knowledge",
+        "target": "rag",
+        "points": [
+          [
+            2490,
+            1260
+          ],
+          [
+            2420,
+            1260
+          ],
+          [
+            2420,
+            1080
+          ],
+          [
+            2325,
+            1080
+          ]
+        ],
+        "payload": "知识 / 证据",
+        "kind": "data"
+      },
+      {
+        "id": "semantic-route",
+        "source": "understand",
+        "target": "route",
+        "points": [
+          [
+            2070,
+            850
+          ],
+          [
+            2070,
+            875
+          ],
+          [
+            1040,
+            875
+          ],
+          [
+            1040,
+            854
+          ]
+        ],
+        "payload": "目标语义任务",
+        "kind": "data"
+      },
+      {
+        "id": "rag-plan",
+        "source": "task",
+        "target": "rag",
+        "points": [
+          [
+            2070,
+            1310
+          ],
+          [
+            2070,
+            1144
+          ]
+        ],
+        "payload": "缺证：补查",
+        "kind": "control"
+      },
+      {
+        "id": "rag-result",
+        "source": "rag",
+        "target": "task",
+        "points": [
+          [
+            1930,
+            1140
+          ],
+          [
+            1930,
+            1306
+          ]
+        ],
+        "payload": "证据",
+        "kind": "data"
+      },
+      {
+        "id": "coordination",
+        "source": "task",
+        "target": "planner",
+        "points": [
+          [
+            1820,
+            1370
+          ],
+          [
+            1715,
+            1370
+          ]
+        ],
+        "payload": "重规划",
+        "kind": "control"
+      },
+      {
+        "id": "claims",
+        "source": "task",
+        "target": "claims",
+        "points": [
+          [
+            2070,
+            1430
+          ],
+          [
+            2070,
+            1596
+          ]
+        ],
+        "payload": "结果 / 证据 / 条件",
+        "kind": "data"
+      },
+      {
+        "id": "compose-input",
+        "source": "executor",
+        "target": "coach",
+        "points": [
+          [
+            1100,
+            1410
+          ],
+          [
+            1150,
+            1410
+          ],
+          [
+            1150,
+            1515
+          ],
+          [
+            1460,
+            1515
+          ],
+          [
+            1460,
+            1596
+          ]
+        ],
+        "payload": "任务结果 / 证据",
+        "kind": "data"
+      },
+      {
+        "id": "constrain",
+        "source": "claims",
+        "target": "coach",
+        "points": [
+          [
+            1820,
+            1660
+          ],
+          [
+            1715,
+            1660
+          ]
+        ],
+        "payload": "约束",
+        "kind": "data"
+      },
+      {
+        "id": "log",
+        "source": "results",
+        "target": "localobs",
+        "points": [
+          [
+            850,
+            1720
+          ],
+          [
+            850,
+            1886
+          ]
+        ],
+        "payload": "检查与日志",
+        "kind": "data"
+      },
+      {
+        "id": "quality",
+        "source": "telemetry",
+        "target": "quality",
+        "points": [
+          [
+            1710,
+            1950
+          ],
+          [
+            1815,
+            1950
+          ]
+        ],
+        "payload": "回放",
+        "kind": "data"
+      },
+      {
+        "id": "traces",
+        "source": "task",
+        "target": "telemetry",
+        "points": [
+          [
+            2390,
+            1267
+          ],
+          [
+            2460,
+            1267
+          ],
+          [
+            2460,
+            1855
+          ],
+          [
+            1460,
+            1855
+          ],
+          [
+            1460,
+            1886
+          ]
+        ],
+        "payload": "全链路事件 / 延迟 / 用量",
+        "kind": "data"
+      }
+    ]
+  }
+}

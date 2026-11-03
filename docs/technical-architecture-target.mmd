@@ -1,0 +1,159 @@
+flowchart TB
+    USER["玩家 · 请求、状态、截图、澄清"]
+    OUT["玩家 · 接收回答 / 澄清问题"]
+    subgraph L1["1 输入层"]
+        IN["D · 输入接入 / 附件处理<br/>校验、归属、规范化、来源记录"]
+        VIS("G · VLM 视觉抽取<br/>可见对象、数量、主体与未知项")
+        INPUT["D · ParsedInput<br/>当前规则候选与视觉融合"]
+        TEXT("G · 通用文本语义抽取<br/>目标 / 状态陈述候选；规划扩展")
+    end
+    subgraph L2["2 理解层"]
+        TASK["D · UnderstandingLayer + route<br/>现有任务表示、命令 / 规则路由"]
+        PARAM("G · 当前计算参数抽取<br/>复杂文本 / 续问 → JSON 候选")
+        INTENT("G · 语义理解扩展<br/>多意图、实体消歧、参数与上下文")
+        UGATE["D · 路由与重理解门禁<br/>能力、知识缺口、版本依赖"]
+    end
+    subgraph L3["3 知识层"]
+        CALC["D · Calculator + Catalog<br/>固定规则、DAG、精确数值与来源"]
+        WEB["D · WebResearch + EvidenceStore<br/>实时正文、快照、引用与缓存"]
+        QUERY("G · RAG 查询规划 / 改写<br/>只处理当前证据缺口")
+        RETRIEVE["D · 检索协调 / 混合检索<br/>结构化查询、关键词、向量、关系过滤"]
+        GRADE("G · 证据语义评估<br/>相关、支持、反驳、适用条件")
+        KGATE["D · EvidenceBundle 门禁<br/>覆盖、冲突、版本、预算与停止条件"]
+        INGEST["D · 知识发布管线<br/>来源审核、分块、嵌入、回归、release"]
+        EMBED("G · 嵌入 / 抽取模型<br/>文本向量与候选关系；须审核")
+        KDB[("S · PostgreSQL / pgvector / 关系边表<br/>事实、规则、行动、能力、知识图谱、索引")]
+    end
+    subgraph L4["4 决策层"]
+        SIMPLE["D · SimpleCall<br/>规则或模型解析后调用 Calculator"]
+        ADVICE["D · 当前 AdviceService 控制<br/>有界取证、evaluate、候选预算"]
+        CPLAN("G · 当前 plan / guide<br/>候选方案与攻略阶段")
+        PLAN("G · Planner / Replanner 扩展<br/>步骤依赖、成功标准、保留有效成果")
+        EXEC["D · 通用 Executor / 工具治理<br/>白名单、依赖、幂等、逐调用预算"]
+        VERIFY["D · 步骤验证 / 进度判定<br/>继续、重规划、澄清、partial 或结束"]
+        ASK["D · 同任务 NeedsInput / resume<br/>最少问题；按依赖失效重算"]
+        CP[("S · TaskState / Checkpointer<br/>工作记忆、游标、工具结果、预算账本")]
+    end
+    subgraph L5["5 生成层"]
+        RENDER["D · 当前结果整合与模板<br/>计算数值、条件、引用、hash 校验与回退"]
+        NARRATE("G · Coach 表达角色<br/>普通对话 / 条件建议 / 个性化讲解")
+        SPEC["D · 统一 AnswerSpec 前置门禁<br/>扩展：先锁定声明、再开放叙述槽位"]
+        OUTPUT["D · 统一输出门禁扩展<br/>断言 / 条件保真；失败返回确定性结果"]
+    end
+    subgraph L6["6 评测与观测层"]
+        LOCAL["D · 当前 trace / logs / tests<br/>局部事件、回归、离线人设评测"]
+        OBS["D · 完整 Tracing / Metrics / 成本<br/>真实调用 span、tokens、延迟、费用账本"]
+        EVAL["D · Eval / Badcase / 发布门禁<br/>金标、任务成功率、根因、回归与回滚"]
+        METRICS[("S · OpenTelemetry 后端 / 评测仓库<br/>脱敏采样、版本、看板与保留策略")]
+    end
+    subgraph SHARED["共享服务与外部依赖"]
+        RT["D · 当前 ChatRuntime<br/>锁、幂等、上下文、超时、事务保存"]
+        PM["D · PlayerState / MemoryService<br/>玩家观测 + 情景事件 + 语义偏好<br/>范围、TTL、revision、遗忘"]
+        DB[("S · 当前 SQLite / 本地附件<br/>会话、状态、证据、记忆、草稿、审计")]
+        PROD["D · 运行时生产扩展<br/>认证 / scope 权限、租约、取消、worker / outbox"]
+        OBJ[("S · 对象存储<br/>附件、正文、回放快照；规划迁移")]
+        MODEL("G · 外部模型服务<br/>LLM / VLM；G 角色经 CompatibleChatModel")
+        SEARCH["D · Tavily / 公开来源<br/>发现链接、读取正文；不直接生成规则"]
+        FUTURE["D · 领域能力研究边界<br/>战斗伤害 / 全基地拓扑 / 混搭全局最优<br/>待设计；不纳入本期工具"]
+    end
+    USER -->|用户请求 / 状态 / 图片| IN
+    RT -->|冻结玩家状态 / 历史| TASK
+    PM -->|有效状态 / 个人记忆| RT
+    DB -->|会话和持久投影| PM
+    IN -.->|图像输入| VIS
+    VIS -->|视觉候选| INPUT
+    IN -->|文字 / 附件引用| INPUT
+    IN -.->|规划：复杂文本抽取| TEXT
+    TEXT -->|带来源候选| INPUT
+    INPUT -->|ParsedInput| TASK
+    TASK -.->|规划：复杂语义| INTENT
+    INTENT -->|实体 / 意图 / 不确定性| UGATE
+    TASK -->|现有任务表示| UGATE
+    UGATE -.->|精确计算| SIMPLE
+    UGATE -.->|有界建议| ADVICE
+    ADVICE -.->|候选规划| CPLAN
+    CPLAN -->|候选行动| ADVICE
+    ADVICE -.->|取证| WEB
+    ADVICE -.->|确定性候选核算| CALC
+    SIMPLE -.->|规则未覆盖时| PARAM
+    PARAM -->|参数候选；代码校验后执行| SIMPLE
+    SIMPLE -.->|精确计算| CALC
+    TASK -.->|当前普通聊天短路径| NARRATE
+    NARRATE -->|当前聊天 / 建议措辞| RENDER
+    CALC -->|计算结果| RENDER
+    ADVICE -->|条件任务结果| RENDER
+    UGATE -.->|规划：多步骤任务| PLAN
+    PLAN -->|ExecutionPlan| EXEC
+    EXEC -.->|确定性工具| CALC
+    CALC -->|工具结果 / 版本| VERIFY
+    EXEC -->|KnowledgeQuery / EvidenceNeed| QUERY
+    UGATE -->|规划：实体 / 背景查询| QUERY
+    QUERY -->|查询与改写| RETRIEVE
+    RETRIEVE -.->|本地查询| KDB
+    KDB -->|规则 / 片段 / 图谱路径| GRADE
+    RETRIEVE -.->|实时取证| WEB
+    WEB -.->|搜索 / 正文获取| SEARCH
+    SEARCH -->|URL / 正文| WEB
+    WEB -->|检索结果| GRADE
+    GRADE -->|声明支持 / 反驳候选| KGATE
+    KGATE -.->|缺证据且有预算| QUERY
+    KGATE -->|EvidenceBundle / gaps| VERIFY
+    VERIFY -.->|尚有步骤| EXEC
+    VERIFY -.->|无进展或依赖变化| PLAN
+    VERIFY -.->|缺玩家条件| ASK
+    ASK -->|澄清问题| OUT
+    USER -->|原 task 补充回答| ASK
+    ASK -.->|重理解 / 恢复| UGATE
+    EXEC -->|步骤状态 / 工具结果| CP
+    CP -->|恢复点与工作记忆| ASK
+    VERIFY -->|DecisionResult / partial| SPEC
+    SPEC -->|受保护结果 / 风格约束| NARRATE
+    NARRATE -->|叙述候选| OUTPUT
+    SPEC -->|精确数值 / 引用 / 条件| OUTPUT
+    RENDER -->|当前最终回答| OUT
+    OUTPUT -->|目标最终回答 / 回退| OUT
+    WEB -->|网页候选快照| INGEST
+    INGEST -.->|嵌入 / 关系候选抽取| EMBED
+    EMBED -->|向量 / 候选关系| INGEST
+    EVAL -.->|质量达标才发布| INGEST
+    INGEST -->|审核后不可变 release| KDB
+    RT -->|成功 Turn / 局部 trace| DB
+    RENDER -->|局部检查与日志| LOCAL
+    LOCAL -->|开发期审计数据| DB
+    EXEC -->|目标逐调用 spans| OBS
+    OUTPUT -->|生成质量 / 最终状态| OBS
+    OBS -->|延迟 / tokens / 成本 / trace| METRICS
+    METRICS -->|回放和质量样本| EVAL
+    PROD -.->|任务调度与身份隔离| RT
+    PROD -->|附件 / 证据迁移| OBJ
+    OBJ -->|来源快照引用| INGEST
+    VIS -.->|所有 G 角色共享模型协议；仅示视觉| MODEL
+
+    subgraph LEGEND["图例 · 填色=组件类型；边框=实现状态；箭头=关系"]
+        LD["D 确定性代码 / 查询<br/>绿色实框：已实现"]:::d
+        LG("G 模型角色<br/>橙色虚框：已设计未实现"):::g
+        LT["灰色点框：待设计<br/>S 圆柱：确定性存储"]:::d
+        LD -->|实线：数据 / 结果| LG
+        LG -.->|虚线：调用 / 分支| LT
+    end
+    class LD done
+    class LG planned
+    class LT tbd
+
+
+    classDef d fill:#eaf4ff,color:#16334c
+    classDef g fill:#f4ecff,color:#42245d
+    classDef done stroke:#218c55,stroke-width:2px,stroke-dasharray:0
+    classDef planned stroke:#d97706,stroke-width:2px,stroke-dasharray:8 5
+    classDef tbd stroke:#777,stroke-width:2px,stroke-dasharray:2 5
+
+    class OUT,USER,IN,INPUT,TASK,CALC,WEB,SIMPLE,ADVICE,RENDER,LOCAL,RT,PM,DB,SEARCH d
+    class OUT,USER,IN,INPUT,TASK,CALC,WEB,SIMPLE,ADVICE,RENDER,LOCAL,RT,PM,DB,SEARCH done
+    class PARAM,VIS,CPLAN,NARRATE,MODEL g
+    class PARAM,VIS,CPLAN,NARRATE,MODEL done
+    class TEXT,INTENT,QUERY,GRADE,EMBED,PLAN g
+    class TEXT,INTENT,QUERY,GRADE,EMBED,PLAN planned
+    class UGATE,RETRIEVE,KGATE,INGEST,KDB,EXEC,VERIFY,ASK,CP,SPEC,OUTPUT,OBS,EVAL,METRICS,PROD,OBJ d
+    class UGATE,RETRIEVE,KGATE,INGEST,KDB,EXEC,VERIFY,ASK,CP,SPEC,OUTPUT,OBS,EVAL,METRICS,PROD,OBJ planned
+    class FUTURE d
+    class FUTURE tbd

@@ -72,6 +72,11 @@ node --test tests/test_chat_ui.cjs
 
 ## 目标架构
 
+- [完整技术设计文档](docs/technical-design.md)：基于当前代码和既有设计计划，统一说明六层架构、实现状态、差距与后续路线。
+- [六层核心架构总览](docs/technical-architecture-target.svg)：一张图展示核心模块、主要数据流、共享依赖及当前/目标状态；每层三个核心模块。
+- [总览图编辑源](docs/diagrams/build_architecture.py)与[验收记录](docs/technical-architecture-overview-validation.md)：固定网格、正交连线及实际浏览器渲染检查。
+- [技术设计原始验收记录](docs/technical-design-validation.md)：代码基线与已有回归结果；旧版细节图仅作历史资料。
+
 - [六层架构：输入层设计](docs/architecture-input-layer.md)：定义用户提示词和可选图像附件的接入、校验、归一化、来源，以及由此解析玩家状态的交接契约。
 - [六层架构：理解层设计](docs/architecture-understanding-layer.md)：定义意图识别、状态解析、请求路由、数据流向，以及确定性组件与 LLM/VLM 的职责边界。
 - [六层架构：生成层设计](docs/architecture-generation-layer.md)：定义决策结果、人设约束、受保护断言、叙述组装、输出门禁和确定性回退。

@@ -1,0 +1,137 @@
+flowchart TB
+    USER["玩家 · 发起请求 / 继续补充"]
+    OUT["玩家 · 接收回答 / 澄清 / 错误"]
+    subgraph L1["1 输入层"]
+        IN["D · FastAPI + Runtime<br/>校验、幂等重放、锁、超时、状态 / 历史"]
+        VIS["D · visual_input / InputLayer<br/>无图直通；有图识别或复用草稿"]
+        VLM("G · 视觉抽取<br/>Schema / 一次裁图复核由代码控制")
+    end
+    subgraph L2["2 理解层"]
+        ROUTE{"D · UnderstandingLayer + route<br/>任务表示与分支选择"}
+        PARAM["D · 参数校验与解析选择<br/>/calc JSON / 标准拆墙快捷规则"]
+        EXTRACT("G · 复杂文本参数抽取<br/>一次结构修复上限")
+    end
+    subgraph L3["3 知识层"]
+        CALC["D · Calculator<br/>输入 / 来源门禁后做精确计算"]
+        EGRADE("G · 目标证据语义评估<br/>支持 / 反驳 / 条件；覆盖与停止由代码判定")
+        WEB["D · WebResearch<br/>主题搜索、正文抓取、快照 / 缓存"]
+    end
+    subgraph L4["4 决策层"]
+        LIGHT["D · 轻量执行<br/>状态 / 视觉观察直接渲染"]
+        ADVICE{"D · AdviceService.prepare<br/>普通取舍 / 新手引导"}
+        PLAN("G · 当前 Planner：plan<br/>生成受限候选 / 主题 / 所需字段")
+        PGATE["D · Schema / 字段白名单<br/>规划失败直接结束；修复最多一次"]
+        EXEC["D · 当前 Executor：evaluate<br/>候选独立预算、TTL、缺字段与科技"]
+        GUIDE("G · guide<br/>先读攻略再生成阶段与停止条件")
+        REVIEW("G · GuideReview<br/>仅新手链路：逐阶段依据复核")
+        GGATE{"D · 新手复核门禁<br/>引用 / 阶段覆盖 / 一次修订预算"}
+        TEXEC["D · 目标通用 Executor<br/>依赖就绪、逐调用预算、工具结果归档"]
+        FUTURE["D · 目标 Agent Loop 门禁<br/>缺证据 / 缺玩家输入 / 无进展 / 已完成"]
+        REPLAN("G · 通用 Planner / Replanner<br/>依赖、步骤标准、仅重做失效成果")
+        ASK["D · 目标 NeedsInput + Checkpointer<br/>持久保存任务、补充后校验 revision"]
+        FALL["D · 本轮诚实降级<br/>needs_input / unavailable / 条件说明"]
+    end
+    subgraph L5["5 生成层"]
+        CHAT("G · 普通聊天<br/>人设约束；表达失败最多一次修复")
+        COMPOSE("G · compose<br/>基于候选、检索证据和计算结果组织建议")
+        GATE{"D · validate_answer<br/>候选、逐字引用、数字、条件检查"}
+        FIN["D · finalize_response<br/>固定数值 / 来源、AnswerEnvelope<br/>AnswerSpec 为同步审计投影"]
+        SAVE["D · Runtime 原子保存<br/>Turn + 记忆写入 / 待提取任务"]
+    end
+    subgraph L6["6 评测与观测层"]
+        OBS["D · Trace / Logging / SSE / 测试<br/>局部阶段与结果留痕，失败记录错误码"]
+    end
+    ERROR["D · API / SSE 错误出口<br/>未处理的模型 / 视觉 / 超时错误<br/>不保存半轮；可重试 request_id"]
+    USER -->|用户请求 / 玩家状态 / 图片| IN
+    IN -->|同 ID 已保存回答| OUT
+    IN -->|新请求 / 冻结上下文| VIS
+    VIS -.->|新图无有效缓存| VLM
+    VLM -->|视觉观察 / unknowns| VIS
+    VIS -->|ParsedInput / 视觉任务| ROUTE
+    ROUTE -.->|chat| CHAT
+    ROUTE -.->|state / visual_observe| LIGHT
+    ROUTE -.->|calculate → simple_call| PARAM
+    PARAM -.->|规则未覆盖的文本| EXTRACT
+    EXTRACT -->|参数候选| PARAM
+    PARAM -->|合法 CalculationRequest| CALC
+    PARAM -.->|抽取返回 chat=true| CHAT
+    PARAM -.->|缺字段 / 不支持 / 解析失败| FALL
+    ROUTE -.->|visual_calculate：使用 VLM 已抽取参数| CALC
+    CALC -->|计算结果 / 来源 / 适用条件| FIN
+    ROUTE -.->|advice → plan_execute 适配器| ADVICE
+    ADVICE -.->|普通取舍| PLAN
+    PLAN -->|AdvicePlan| PGATE
+    PGATE -.->|修复预算未用：重新生成| PLAN
+    PGATE -.->|仍失败| FALL
+    PGATE -->|topics；观察或本地计算可跳过网络| WEB
+    WEB -->|decision：证据集合 / 警告| EXEC
+    EXEC -.->|craft 候选| CALC
+    CALC -->|独立预算结果| EXEC
+    EXEC -->|evaluations / evidence / 缺口| COMPOSE
+    COMPOSE -->|AdviceAnswer| GATE
+    GATE -.->|未通过且全流程修复预算尚有| COMPOSE
+    GATE -.->|仍失败| FALL
+    GATE -->|通过：conditional 任务结果| FIN
+    ADVICE -.->|onboarding：先取证| WEB
+    WEB -->|onboarding：攻略证据| GUIDE
+    GUIDE -->|草案和引用片段| REVIEW
+    REVIEW -->|支持阶段 / corrections / issues| GGATE
+    GGATE -.->|不通过且有修订预算| GUIDE
+    GGATE -.->|无证据或仍失败| FALL
+    GGATE -->|通过：conditional 阶段计划| FIN
+    CHAT -->|回复或表达回退| FIN
+    LIGHT -->|状态 / 观察文本| FIN
+    FALL -->|澄清 / 限制条件文本| FIN
+    FIN -->|主回答 + detail + 审计元数据| SAVE
+    SAVE -->|保存后最终回答| OUT
+    USER -->|当前：新请求 ID 补充；读取上一轮结果| IN
+    GATE -.->|规划扩展：替代固定结束路径| FUTURE
+    FUTURE -.->|缺证据且有预算：补充检索| WEB
+    FUTURE -.->|计划失效且有预算| REPLAN
+    REPLAN -->|ExecutionPlan / 步骤依赖| TEXEC
+    TEXEC -.->|确定性工具| CALC
+    TEXEC -.->|检索工具| WEB
+    CALC -->|目标扩展：计算结果| FUTURE
+    WEB -->|目标扩展：检索结果 / 证据集合| EGRADE
+    EGRADE -->|支持 / 冲突候选及缺口| FUTURE
+    FUTURE -.->|还有就绪步骤| TEXEC
+    FUTURE -.->|缺玩家输入| ASK
+    ASK -->|同 task 澄清问题| OUT
+    USER -->|目标：resume 数据| ASK
+    ASK -.->|验证后恢复游标 / 依赖重算| FUTURE
+    FUTURE -->|充分或预算耗尽：结果 / partial| FIN
+    IN -.->|入口 / 未捕获异常| ERROR
+    VIS -.->|视觉 / provider 异常| ERROR
+    EXTRACT -.->|未捕获 provider 异常| ERROR
+    CHAT -.->|首次调用失败 / 超时| ERROR
+    ERROR -->|错误响应；不伪装业务成功| OUT
+    IN -->|请求 / 阶段事件| OBS
+    FIN -->|检查 / 结果事件| OBS
+    ERROR -->|脱敏错误码日志| OBS
+
+    subgraph LEGEND["图例 · 填色=组件类型；边框=实现状态；箭头=关系"]
+        LD["D 确定性代码 / 查询<br/>绿色实框：已实现"]:::d
+        LG("G 模型角色<br/>橙色虚框：已设计未实现"):::g
+        LT["灰色点框：待设计<br/>S 圆柱：确定性存储"]:::d
+        LD -->|实线：数据 / 结果| LG
+        LG -.->|虚线：调用 / 分支| LT
+    end
+    class LD done
+    class LG planned
+    class LT tbd
+
+
+    classDef d fill:#eaf4ff,color:#16334c
+    classDef g fill:#f4ecff,color:#42245d
+    classDef done stroke:#218c55,stroke-width:2px,stroke-dasharray:0
+    classDef planned stroke:#d97706,stroke-width:2px,stroke-dasharray:8 5
+    classDef tbd stroke:#777,stroke-width:2px,stroke-dasharray:2 5
+
+    class OUT,USER,IN,VIS,ROUTE,PARAM,CALC,WEB,LIGHT,ADVICE,PGATE,EXEC,GGATE,FALL,GATE,FIN,SAVE,OBS,ERROR d
+    class OUT,USER,IN,VIS,ROUTE,PARAM,CALC,WEB,LIGHT,ADVICE,PGATE,EXEC,GGATE,FALL,GATE,FIN,SAVE,OBS,ERROR done
+    class VLM,EXTRACT,PLAN,GUIDE,REVIEW,CHAT,COMPOSE g
+    class VLM,EXTRACT,PLAN,GUIDE,REVIEW,CHAT,COMPOSE done
+    class TEXEC,FUTURE,ASK d
+    class TEXEC,FUTURE,ASK planned
+    class EGRADE,REPLAN g
+    class EGRADE,REPLAN planned

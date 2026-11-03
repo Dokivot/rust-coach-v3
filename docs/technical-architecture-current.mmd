@@ -1,0 +1,126 @@
+flowchart TB
+    USER["玩家 · 文字、截图、状态录入与追问"]
+    OUT["玩家 · 接收最终回答"]
+    SAVE["D · ChatRuntime 交付阶段<br/>原子保存成功轮次；返回响应"]
+    subgraph L1["1 输入层"]
+        API["D · FastAPI / ChatRequest<br/>同源、格式、请求体与会话校验"]
+        IMAGE["D · AttachmentStore + VisionService 控制<br/>归属、探测、缓存、一次裁图复核"]
+        VLM("G · 视觉模型<br/>物品 / 数量 / 区域 / 主体候选")
+        PARSED["D · InputLayer<br/>规则文本候选 + 视觉候选 → ParsedInput"]
+    end
+    subgraph L2["2 理解层"]
+        ROUTE["D · UnderstandingLayer + route<br/>任务表示、命令 / 历史 / 视觉分流"]
+        FAST["D · 参数捷径<br/>/calc JSON 或标准拆墙整句规则"]
+        EXTRACT("G · CalculationService 参数模型<br/>复杂请求 / 续问 → JSON 候选")
+    end
+    subgraph L3["3 知识层"]
+        RULES[("S · rules.json / Catalog<br/>固定规则、来源与快照 hash")]
+        CALC["D · Calculator<br/>制作 DAG、批次、库存抵扣、爆炸物阈值"]
+        WEB["D · WebResearch<br/>主题检索、白名单正文获取、TTL"]
+        EVIDENCE[("S · EvidenceStore / SQLite<br/>正文、URL、hash、抓取时间")]
+    end
+    subgraph L4["4 决策层"]
+        DL["D · DecisionLayer 适配器<br/>登记两类服务；外层步骤 / 调用计数"]
+        CS["D · CalculationService / VisionService.calculate<br/>Schema、库存来源、时效和工具调用"]
+        AGENT["D · AdviceService 子图<br/>prepare 分流；检索与候选执行"]
+        PLAN("G · plan / guide<br/>候选方案或新手行动阶段")
+        EVALUATE["D · evaluate<br/>独立候选预算、缺字段与科技前置"]
+        RESULT["D · 结果归一<br/>from_calculation / from_advice → DecisionResult"]
+        VIEW["D · 状态 / 视觉观察短路径<br/>只展示有效状态或可见观察"]
+    end
+    subgraph L5["5 生成层"]
+        CHAT("G · generate_chat<br/>普通对话、概念解释、人设约束")
+        COMPOSE("G · compose / GuideReview<br/>条件建议；新手分支额外依据复核")
+        CHECK["D · 业务输出检查<br/>Schema、候选 ID、quote 匹配、有界修复"]
+        FINAL["D · finalize_response<br/>固定数值、条件与引用区块、回退<br/>同时生成 AnswerSpec 审计投影"]
+    end
+    subgraph L6["6 评测与观测层"]
+        EVENTS["D · emit_trace / Logging / SSE<br/>局部事件、阶段进度、建议总耗时"]
+        TEST["D · pytest / presentation.evaluate<br/>软件回归、路由评分、人设案例评测"]
+    end
+    subgraph SHARED["跨层共享 · 同一个本地 Python 进程"]
+        RT["D · ChatRuntime<br/>幂等重放、单请求锁、超时、上下文冻结"]
+        PM["D · PlayerState / MemoryService<br/>scope、revision、TTL、确认更新、遗忘"]
+        READ[("S · SQLite 读取视图<br/>与归档库相同；历史 / 视觉草稿")]
+        DB[("S · SQLite + 附件目录<br/>成功 turns / 状态 / 记忆 / 视觉草稿<br/>图片二进制存本地文件")]
+        PROVIDER["D · CompatibleChatModel<br/>所有 G 节点复用此协议适配<br/>外部 Responses / Chat Completions"]
+        SEARCH["D · Tavily + 已登记公开网页<br/>链接发现与正文；不是生成式答案"]
+    end
+    USER -->|用户请求 / 玩家状态 / 图片| API
+    API -.->|聊天请求| RT
+    PM -->|有效玩家状态 / 个人记忆| RT
+    READ -->|同 scope 历史 / 草稿| RT
+    RT -->|prompt / 历史 / 附件引用| IMAGE
+    IMAGE -.->|有新图且无有效缓存| VLM
+    VLM -->|VisualExtraction| IMAGE
+    IMAGE -->|视觉证据或无图输入| PARSED
+    PARSED -->|ParsedInput| ROUTE
+    RT -->|状态快照引用| ROUTE
+    ROUTE -.->|calculate / advice| DL
+    DL -.->|simple_call| CS
+    CS -.->|先尝试确定性解析| FAST
+    FAST -.->|未匹配时| EXTRACT
+    FAST -->|结构化参数| CS
+    EXTRACT -->|JSON 候选| CS
+    ROUTE -.->|visual_calculate：不再文本解析| CS
+    CS -.->|校验通过| CALC
+    RULES -->|配方 / 伤害 / 版本| CALC
+    CALC -->|CalculationResult| CS
+    CS -->|计算结果或 needs_input| RESULT
+    CS -.->|抽取结果 chat=true：回到普通对话| CHAT
+    DL -.->|plan_execute| AGENT
+    AGENT -.->|decision 先规划；onboarding 先取证| PLAN
+    PLAN -->|候选 / 阶段草案| AGENT
+    AGENT -.->|主题 / force 策略| WEB
+    WEB -.->|搜索和抓取| SEARCH
+    SEARCH -->|URL / 正文| WEB
+    WEB -->|写入正文快照| EVIDENCE
+    EVIDENCE -->|缓存正文| WEB
+    WEB -->|documents / events / warnings| AGENT
+    AGENT -.->|decision 分支| EVALUATE
+    EVALUATE -.->|craft 候选| CALC
+    CALC -->|独立计算结果| EVALUATE
+    EVALUATE -->|evaluations| COMPOSE
+    AGENT -->|证据集合 / guide 草案| COMPOSE
+    COMPOSE -->|建议 / 新手复核结果| CHECK
+    CHECK -->|answer 或 failure| RESULT
+    ROUTE -.->|state / visual_observe| VIEW
+    VIEW -->|展示文本 / 状态引用| FINAL
+    ROUTE -.->|chat| CHAT
+    CHAT -->|ModelReply| FINAL
+    RESULT -->|任务结果 + 原业务数据| FINAL
+    RT -->|ResponseContext / 记忆偏好| FINAL
+    FINAL -->|主答案 / 详情 / presentation| SAVE
+    SAVE -->|原子保存成功轮次| DB
+    SAVE -->|保存完成后的最终回答| OUT
+    RT -.->|/memory 绕过主图；成功回复后调度提取| PM
+    PM -->|确认状态 / 记忆记录| DB
+    RT -->|请求 / 路由 / 结果局部事件| EVENTS
+    FINAL -->|生成事件 / 检查报告| EVENTS
+    EVENTS -->|trace 随成功 Turn 归档| DB
+    API -.->|独立 /api/calculations| CALC
+    API -.->|状态 / 记忆管理 API| PM
+    VLM -.->|所有 G 角色调用此适配器；仅示视觉| PROVIDER
+
+    subgraph LEGEND["图例 · 填色=组件类型；边框=实现状态；箭头=关系"]
+        LD["D 确定性代码 / 查询<br/>绿色实框：已实现"]:::d
+        LG("G 模型角色<br/>橙色虚框：已设计未实现"):::g
+        LT["灰色点框：待设计<br/>S 圆柱：确定性存储"]:::d
+        LD -->|实线：数据 / 结果| LG
+        LG -.->|虚线：调用 / 分支| LT
+    end
+    class LD done
+    class LG planned
+    class LT tbd
+
+
+    classDef d fill:#eaf4ff,color:#16334c
+    classDef g fill:#f4ecff,color:#42245d
+    classDef done stroke:#218c55,stroke-width:2px,stroke-dasharray:0
+    classDef planned stroke:#d97706,stroke-width:2px,stroke-dasharray:8 5
+    classDef tbd stroke:#777,stroke-width:2px,stroke-dasharray:2 5
+
+    class READ,OUT,SAVE,USER,API,IMAGE,PARSED,ROUTE,FAST,RULES,CALC,WEB,EVIDENCE,DL,CS,AGENT,EVALUATE,RESULT,VIEW,CHECK,FINAL,EVENTS,TEST,RT,PM,DB,PROVIDER,SEARCH d
+    class READ,SAVE,OUT,USER,API,IMAGE,PARSED,ROUTE,FAST,RULES,CALC,WEB,EVIDENCE,DL,CS,AGENT,EVALUATE,RESULT,VIEW,CHECK,FINAL,EVENTS,TEST,RT,PM,DB,PROVIDER,SEARCH done
+    class VLM,EXTRACT,PLAN,CHAT,COMPOSE g
+    class VLM,EXTRACT,PLAN,CHAT,COMPOSE done
