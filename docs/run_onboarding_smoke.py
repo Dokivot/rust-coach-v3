@@ -41,7 +41,7 @@ class CountedModel:
         return result
 
 
-async def run(output):
+async def run(output, repeat=1):
     configured = Settings()
     if not configured.configured:
         raise RuntimeError("Configure COACH_API_KEY locally before running the live smoke test.")
@@ -57,10 +57,12 @@ async def run(output):
             runtime = ChatRuntime(settings, model, store, advice_service=service)
             owner = store.create().id
             for name, message in [
-                ("new_player", "我是新手，什么都不懂，应该优先做什么？"),
+                *[(f"new_player_{index}", "我是新手，什么都不懂，应该优先做什么？") for index in range(1, repeat + 1)],
                 ("existing_base", "我已经有上锁的小家、睡袋、石斧和石镐了，接下来优先做什么？"),
                 ("exact_budget", '/calc {"operation":"craft","goals":{"explosive.timed":2}}'),
             ]:
+                if name.startswith("new_player_"):
+                    owner = store.create().id
                 before = model.calls
                 turn = await runtime.chat(owner, ChatRequest(request_id=uuid4(), message=message))
                 advice = turn.advice or {}
@@ -71,18 +73,22 @@ async def run(output):
                     "events": (advice.get("evidence") or {}).get("events"),
                     "warnings": (advice.get("evidence") or {}).get("warnings"),
                     "review": advice.get("review"), "repairs": advice.get("repairs"),
+                    "answer_source": advice.get("answer_source"), "diagnostics": advice.get("diagnostics"),
                     "guide": advice.get("answer"), "calculation": turn.calculation,
                     "model_responses": model.responses[before:]}
                 reports.append(report)
-                print(json.dumps({key: value for key, value in report.items() if key != "model_responses"}, ensure_ascii=False), flush=True)
+                print(json.dumps({key: report[key] for key in ("case", "answer", "model_calls", "status", "answer_source", "diagnostics")}, ensure_ascii=False), flush=True)
+                output.write_text(json.dumps({"checked_at": datetime.now(timezone.utc).isoformat(), "results": reports},
+                    ensure_ascii=False, indent=2), encoding="utf-8")
                 if name != "exact_budget" and not advice.get("answer"):
                     break
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(json.dumps({"checked_at": datetime.now(timezone.utc).isoformat(), "results": reports},
                                 ensure_ascii=False, indent=2), encoding="utf-8")
-    assert all(report["mode"] == "onboarding" and report["status"] == "conditional" and
-               report["guide"] and report["review"] and not report["review"]["issues"] for report in reports[:2])
-    assert all("档案待确认" not in report["answer"] for report in reports[:2])
+    assert len(reports) == repeat + 2
+    assert all(report["mode"] == "onboarding" and report["status"] == "conditional" and report["guide"] and
+        (report["answer_source"] == "curated_baseline" or report["review"] and not report["review"]["issues"]) for report in reports[:-1])
+    assert all("档案待确认" not in report["answer"] for report in reports[:-1])
     assert reports[-1]["model_calls"] == 0 and reports[-1]["calculation"]["status"] == "calculated"
 
 
@@ -93,7 +99,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Exercise live web retrieval and the configured model with synthetic beginner questions.")
     parser.add_argument("--live", action="store_true", help="Allow real web and model requests, which may incur API charges.")
     parser.add_argument("--output", type=Path, default=Path("data/onboarding-smoke-results.json"))
+    parser.add_argument("--repeat", type=int, choices=range(1, 6), default=1, help="Repeat the beginner question in separate conversations before testing follow-ups.")
     arguments = parser.parse_args()
     if not arguments.live:
         parser.error("Pass --live to call the configured model and search services.")
-    asyncio.run(run(arguments.output))
+    asyncio.run(run(arguments.output, arguments.repeat))

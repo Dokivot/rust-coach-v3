@@ -100,7 +100,7 @@ class VisionService:
         attachments = list(unique.values())
         key = signature({"hashes":[attachment["sha256"] for attachment in attachments],"message":request["message"],
             "context":request["image_context"],"history":state.get("context_history",[]),
-            "snapshot":state.get("snapshot"),"config":self.config_id})
+            "snapshot":state.get("snapshot"),"config":self.config_id,"extraction_policy":"inventory-default-v1"})
         cached = self.drafts.cache(conversation_id,key)
         output = {"attachments":attachments,"cache_key":key,"cache_hit":bool(cached),"repairs":0,"usage":[]}
         if cached:
@@ -124,6 +124,7 @@ class VisionService:
 只描述图中实际可见内容，无法辨认写 unknown 或 null，不猜数字、不从缺失数字推断数量为1。
 quantity 只有数量文字清晰可读才填，否则 null。1k 等缩写若不能证明精确值也保持未知并保留 raw_quantity。
 区分背包/快捷栏/装备/箱子/工具柜/制作目录，制作需求不是库存，快捷栏物品不代表穿戴。
+截图中可见的库存格子默认是玩家当前库存；无法确定具体容器时仍用 kind=inventory、region_kind=unknown，保留物品、数量和独立槽位，不因此丢弃读数。
 库存 kind=inventory，穿戴栏 kind=equipment，场景 kind=base。关门不等于上锁；局部墙不等于全基地；看不见不等于没有。
 装备/基地只描述可见对象，不能推断隐藏配件、弹种、数值耐久、权限、墙的软硬面或突破路径。
 同一区域每个格子的 slot 用 row_1_col_1 这种局部位置；多图不能假定同一容器或时点。
@@ -135,6 +136,7 @@ quantity 只有数量文字清晰可读才填，否则 null。1k 等缩写若不
 inventory_coverage 仅当一个容器全部边界、格子均在图内且无遮挡时 full_view，否则 partial/unknown。
 特别注意：只显示一行库存、上下边缘贴着图片边界、或看不到面板完整下边界，都不能判断 full_view。工具柜维护面板下面的一行库存裁图必须 partial，不能因这一行显示完整就认为整个工具柜完整。宁可 unknown，不补全范围。
 只用目录中明确对应的规范 item_id；未收录/不确定则 null 并保留 label，不把相似物品强行代替。
+分别核对物品图标与数字：石头 stones、金属碎片 metal.fragments、布 cloth 容易混淆，不因数字清楚就认为身份已确定。
 item_status 单独表示物品身份：identified 表示已辨认，ambiguous 表示具体物品仍有歧义，unknown 表示未知。
 画面低分辨率或裁切等一般画质提醒写入 uncertainty，不等同于物品未知；已辨认且数量清晰的物品仍填 identified 与 readable。
 如果确实不能区分物品，必须填 ambiguous/unknown 和 item_id=null，不能一边猜一个物品 ID，一边只在备注里说明无法确认。
@@ -144,7 +146,7 @@ calculation 仅在 task 为 craft/raid 且用户目标明确时填写目标参�
 craft 只填写 operation 和 goals 以及明确的科技条件，target 必须 null，不填写拆墙字段。raid 的 goals 必须 {}，target 仅填写建筑目录 ID。
 不把视觉数量填入计算库存。工作台/蓝图仅用户明确给出时填写，不明时留空，不重复写进 unknowns。
 unknowns 只记录影响当前问题的观测缺失，不重复用户目标，不判断能否计算资源缺口。局部库存仍可用于条件计算，计算结论由下游工具给出。
-若目标墙的材质、硬软面、血量不确定，不要输出默认满血硬面结论，保留 calculation=null 请求确认。
+玩家文字明确指定拆除目标且未提受损时，hp=null、side=hard，由计算器按目录满血值作条件计算，不要求先提供血量。若仅凭图片无法确定目标材质，或明确受损但血量不明，保留 calculation=null 请求确认。
 输出字段 description 只描述观察，不写建议。全部文字简短中文。最多识别当前问题相关的区域。
 只返回此 Schema JSON：""" + json.dumps(VisualExtraction.model_json_schema(),ensure_ascii=False)
         catalog = {key:value["name"] for key,value in self.calculator.catalog.items.items()}

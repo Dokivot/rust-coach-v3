@@ -318,3 +318,68 @@ async def test_unsupported_request_keeps_pending_context_across_restart(tmp_path
     result = await ChatRuntime(settings, model, restored).chat(identifier,
         ChatRequest(request_id=uuid4(), message="原版"))
     assert result.calculation["result"]["options"][0]["count"] == 2
+
+
+@pytest.mark.parametrize("question,target,count", [
+    ("拆一面石墙最省资源的方案是什么？", "building:base-wall:stone", 1),
+    ("请问拆两面石墙最省硫磺的方法是什么？", "building:base-wall:stone", 2),
+    ("石墙怎么炸最省？", "building:base-wall:stone", 1),
+    ("帮我算一下拆3扇金属门最省材料的方案", "item:door.hinged.metal", 3),
+    ("车库门用什么拆最省资源？", "item:wall.frame.garagedoor", 1),
+])
+async def test_standard_raid_uses_catalog_defaults_without_model_refusal(tmp_path, question, target, count):
+    class RefusingModel:
+        async def complete(self, messages):
+            raise AssertionError("Standard raid comparison should not need model extraction")
+
+    settings = Settings(_env_file=None, database_path=tmp_path / "chat.sqlite3")
+    store = ConversationStore(settings.database_path)
+    owner = store.create().id
+    runtime = ChatRuntime(settings, RefusingModel(), store)
+    await runtime.chat(owner, ChatRequest(request_id=uuid4(), message='/calc {"operation":"craft","goals":{"explosive.timed":10}}'))
+    turn = await runtime.chat(owner, ChatRequest(request_id=uuid4(), message=question))
+    assert turn.calculation["status"] == "calculated"
+    assert turn.calculation["input"]["target"] == target
+    assert turn.calculation["input"]["count"] == count
+    assert turn.calculation["input"]["hp"] is None
+    assert turn.calculation["input"]["goals"] == {}
+    assert turn.calculation["result"]["hp_each"] == Calculator().catalog.targets[target]["hp"]
+    assert "暂按满血计算" in turn.assistant
+
+
+@pytest.mark.parametrize("condition", ["受损但不知道血量", "修改服", "混搭最优", "软面用镐子", "不同血量的两面墙"])
+async def test_special_raid_conditions_are_not_replaced_by_defaults(tmp_path, condition):
+    class ConditionalModel:
+        async def complete(self, messages):
+            context = json.loads(messages[-1].content)
+            assert context["previous_request"] is None
+            assert condition in context["message"]
+            return ModelReply(content=json.dumps({"unsupported": condition}))
+
+    settings = Settings(_env_file=None, database_path=tmp_path / "chat.sqlite3")
+    store = ConversationStore(settings.database_path)
+    owner = store.create().id
+    runtime = ChatRuntime(settings, ConditionalModel(), store)
+    await runtime.chat(owner, ChatRequest(request_id=uuid4(), message='/calc {"operation":"craft","goals":{"explosive.timed":10}}'))
+    turn = await runtime.chat(owner, ChatRequest(request_id=uuid4(), message="拆一面石墙最省资源的方案是什么？" + condition))
+    assert turn.calculation["status"] == "needs_input"
+    assert turn.calculation["input"] is None
+    assert condition in turn.calculation["pending_message"]
+
+
+async def test_explicit_hp_followup_keeps_raid_target(tmp_path):
+    class HpModel:
+        async def complete(self, messages):
+            context = json.loads(messages[-1].content)
+            assert context["previous_request"]["operation"] == "raid"
+            return ModelReply(content=json.dumps({**context["previous_request"], "hp": 250}))
+
+    settings = Settings(_env_file=None, database_path=tmp_path / "chat.sqlite3")
+    store = ConversationStore(settings.database_path)
+    owner = store.create().id
+    runtime = ChatRuntime(settings, HpModel(), store)
+    await runtime.chat(owner, ChatRequest(request_id=uuid4(), message="拆一面石墙最省资源的方案是什么？"))
+    turn = await runtime.chat(owner, ChatRequest(request_id=uuid4(), message="它还剩250血"))
+    assert turn.calculation["result"]["hp_each"] == 250
+    assert turn.calculation["result"]["options"][0]["count"] == 1
+    assert "暂按满血计算" not in turn.assistant

@@ -41,7 +41,7 @@ def resolve_screenshots(extraction, request, attachments):
                     subject = "teammate"
         if declared.get("subject", "unknown") != "unknown":
             subject = declared["subject"]
-        if subject == "unknown" and temporal == "current" and not candidate:
+        if subject == "unknown" and temporal == "current":
             subject = "self"
         observed_at = declared.get("captured_at") or attachment["created_at"]
         if datetime.fromisoformat(observed_at) > datetime.now(timezone.utc) + timedelta(minutes=1):
@@ -68,22 +68,38 @@ def automatic_input(extraction, contexts):
         and len(slots) == len(set(slots)) and not any(item["uncertainty"] for item in inventory_rows))
     inventory = Counter()
     included_observations = []
-    if len(contexts) == 1 and len(regions) <= 1:
-        slot_counts = Counter(slots)
-        for item in inventory_rows:
-            if (item["region_kind"] in {"backpack","hotbar","storage","tool_cupboard"}
-                    and item_identity_status(item) == "identified" and item["quantity"] is not None
-                    and item["quantity_status"] == "readable" and item["slot"]
-                    and slot_counts[item["slot"]] == 1):
-                inventory[item["item_id"]] += item["quantity"]
-                included_observations.append(item["id"])
-        if any(value > 1_000_000 for value in inventory.values()):
-            complete, inventory = False, Counter()
-            included_observations = []
+    excluded_observations = {}
+    slot_counts = Counter(slots)
+    for item in inventory_rows:
+        reason = None
+        if len(contexts) != 1:
+            reason = "multiple_images"
+        elif len(regions) > 1:
+            reason = "multiple_regions"
+        elif item["region_kind"] not in {"backpack", "hotbar", "storage", "tool_cupboard", "unknown"}:
+            reason = "not_inventory"
+        elif item_identity_status(item) != "identified":
+            reason = "identity_unknown"
+        elif item["quantity_status"] != "readable" or item["quantity"] is None:
+            reason = "quantity_unreadable"
+        elif not item["slot"]:
+            reason = "slot_missing"
+        elif slot_counts[item["slot"]] != 1:
+            reason = "slot_duplicate"
+        if reason:
+            excluded_observations[item["id"]] = reason
+        else:
+            inventory[item["item_id"]] += item["quantity"]
+            included_observations.append(item["id"])
+    if any(value > 1_000_000 for value in inventory.values()):
+        excluded_observations.update({identifier: "inventory_limit" for identifier in included_observations})
+        complete, inventory = False, Counter()
+        included_observations = []
     return {"source": "image_inferred", "confirmation_id": None, "observations": observations,
         "subject": subject, "observed_at": observed_at.isoformat(),
         "expires_at": (observed_at + timedelta(minutes=30)).isoformat(), "current_assumption": current,
         "inventory": dict(inventory), "inventory_complete": complete,
         "included_observations": included_observations,
+        "excluded_observations": excluded_observations,
         "container_id": inventory_rows[0]["region_kind"] if inventory_rows else "backpack",
         "calculation": extraction.get("calculation"), "saved": False, "state_revision": None}

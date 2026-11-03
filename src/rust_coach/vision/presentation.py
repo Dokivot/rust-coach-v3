@@ -2,6 +2,18 @@ from datetime import datetime, timezone
 from rust_coach.vision.context import item_identity_status, visual_input
 
 
+EXCLUSION_REASONS = {
+    "multiple_images": ("多张截图尚未去重", "multiple screenshots not deduplicated"),
+    "multiple_regions": ("多个库存区域尚未区分", "inventory regions unresolved"),
+    "not_inventory": ("不是可用库存区域", "not an inventory region"),
+    "identity_unknown": ("物品身份未确定", "identity unclear"),
+    "quantity_unreadable": ("数量未读清", "count unreadable"),
+    "slot_missing": ("槽位位置未确定", "slot position unresolved"),
+    "slot_duplicate": ("槽位重复", "duplicate slot"),
+    "inventory_limit": ("数量超过计算范围", "quantity exceeds calculation limit"),
+}
+
+
 def visual_warnings(visual, language="zh"):
     accepted = visual_input(visual)
     english = language == "en"
@@ -33,9 +45,12 @@ def visual_summary(visual,language="zh", *, include_observations=True, include_u
         lines = [("Screenshot recognition · " if english else "截图识别结果 · ") + scope]
         if accepted["inventory_complete"] and fresh and accepted["subject"] == "self":
             lines.append("Calculations use the recognized inventory counts." if english else "计算直接采用图中识别的库存读数。")
-        elif fresh and accepted["subject"] == "self" and any(item["kind"] == "inventory" for item in visual["observations"]):
+        elif fresh and accepted["subject"] == "self" and accepted.get("included_observations"):
             lines.append("Identified items with readable counts are used; unknown items are excluded." if english else "按已辨认物品和清晰数量计算；无法辨认的物品不计入。")
         included = set(accepted.get("included_observations",[]))
+        if any(item["id"] in included and item["region_kind"] == "unknown" for item in visual["observations"]):
+            lines.append("Container type is unknown; visible slots are treated as your partial inventory." if english else
+                "容器类型未确定，默认将可见格子作为你的局部库存。")
         if fresh and accepted["subject"] == "self" and any(item["id"] in included and item["uncertainty"] for item in visual["observations"]):
             lines.append("Some icons have image-quality warnings; calculations use the recognized identities and counts." if english else
                 "部分图标有画质提醒，本次按下列识别结果计算。")
@@ -63,7 +78,9 @@ def visual_summary(visual,language="zh", *, include_observations=True, include_u
             if not visual.get("accepted") and item_identity_status(item) != "identified":
                 details += " (identity unclear; excluded)" if english else "（物品身份未确定，未计入）"
             elif accepted and not visual.get("accepted") and "included_observations" in accepted and item["id"] not in accepted["included_observations"]:
-                details += " (count or slot unresolved; excluded)" if english else "（数量或槽位范围未确定，未计入）"
+                reason = EXCLUSION_REASONS.get(accepted.get("excluded_observations", {}).get(item["id"]),
+                    ("库存归属或读数未确定", "inventory scope or reading unresolved"))[int(english)]
+                details += " (" + reason + "; excluded)" if english else "（" + reason + "，未计入）"
         elif item["description"]:
             details += " · " + item["description"]
         lines.append("• " + details)

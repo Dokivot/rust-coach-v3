@@ -7,12 +7,13 @@ import httpx
 import pytest
 
 from rust_coach.advice.intent import is_onboarding
+from rust_coach.advice.baseline import BASELINE, SOURCE, baseline_guide
 from rust_coach.advice.onboarding import guide_documents, resolve_guide, review_evidence, validate_guide
 from rust_coach.advice.schemas import GuideAnswer
 from rust_coach.advice.service import AdviceService, infer_topics, is_advice
 from rust_coach.architecture.input import TextExtractor
 from rust_coach.config import Settings
-from rust_coach.contracts import ChatRequest, ModelReply
+from rust_coach.contracts import AppError, ChatRequest, ModelReply
 from rust_coach.knowledge.store import EvidenceStore
 from rust_coach.knowledge.web import TOPICS, WebResearch, extract_document, relevant
 from rust_coach.persistence import ConversationStore
@@ -45,8 +46,10 @@ class Model:
             self.before()
         self.calls.append(messages)
         output = self.outputs.pop(0)
+        if isinstance(output, Exception):
+            raise output
         if isinstance(output, dict) and "stages" in output:
-            payload = json.loads(messages[-1].content)
+            payload = json.loads(messages[1].content)
             passages = [passage for document in payload["documents"] for passage in document["passages"]]
             stages = []
             for stage in output["stages"]:
@@ -95,7 +98,14 @@ def review(draft):
 @pytest.mark.parametrize("text,allowed", [("下一步准备一级工作台。", True), ("Prepare a level 1 workbench.", True),
     ("Prepare a Workbench Level 1.", True), ("准备四级工作台。", False), ("一级工作台需要 50 废料。", False),
     ("建造一个简单、有气闸的起步基地。", True), ("你拥有一个封闭的小基地。", True),
-    ("消耗一个硫磺就能合成。", False)])
+    ("已经在所选位置建成一个小基地。", True), ("找到一个落脚点。", True),
+    ("建造一个带气闸的小基地；气闸是入口的双门缓冲区。", True),
+    ("先找到一个靠近树林而且能上锁的临时落脚点。", True),
+    ("如果你还没有一个基地，先准备睡袋。", True),
+    ("完成一个安全的起步基地。", True), ("准备一个工具柜。", True),
+    ("建造两个小基地。", False), ("建造一个2x2基地。", False),
+    ("消耗一个硫磺就能合成。", False), ("成本只需一个睡袋。", False),
+    ("一个基地需要50木头。", False), ("建造一个小基地只要十分钟。", False)])
 def test_named_workbenches_are_not_confused_with_material_costs(evidence, text, allowed):
     _, _, document = evidence
     draft = guide(document)
@@ -273,16 +283,125 @@ async def test_review_can_narrow_wording_without_changing_evidence_or_extra_gene
     checked["supported_stage_ids"] = ["stage_2", "stage_3"]
     checked["corrections"] = [{"stage_id": "stage_1", "action": "采集木头和石头，制作石斧和石镐。" if not invalid else "消耗 200 木头制作石斧。",
         "completion": "已有基础采集工具。"}]
-    model = Model([draft, checked])
+    corrected = {"stage_id": "stage_1", "action": "采集木头和石头，制作石斧和石镐。", "completion": "已有基础采集工具。"}
+    model = Model([draft, checked, corrected] if invalid else [draft, checked])
     result = await AdviceService(model, Research([document])).run("小白怎么玩")
-    assert len(model.calls) == 2
+    assert len(model.calls) == (3 if invalid else 2)
     if invalid:
-        assert result["advice"]["answer"] is None
+        assert result["advice"]["answer"]["stages"][0]["action"] == corrected["action"]
+        assert result["advice"]["repairs"] == 1
+        assert result["advice"]["diagnostics"] == [{"phase": "correction_validation",
+            "codes": ["numeric_prose_forbidden"], "field": "stage_1.action"}]
+        assert result["advice"]["answer"]["stages"][1:] == draft["stages"][1:]
+        assert "200" not in result["reply"].content
     else:
         stages = result["advice"]["answer"]["stages"]
         assert stages[0]["action"] == checked["corrections"][0]["action"]
         assert stages[0]["citations"] == draft["stages"][0]["citations"]
         assert stages[1:] == draft["stages"][1:]
+
+
+@pytest.mark.parametrize("prior_repair", [False, True])
+async def test_real_review_completion_with_singular_base_is_accepted(evidence, prior_repair):
+    _, _, document = evidence
+    draft = guide(document)
+    draft["stages"].extend([{**draft["stages"][0], "id": "stage_4"}, {**draft["stages"][1], "id": "stage_5"}])
+    checked = {"supported_stage_ids": ["stage_1", "stage_2", "stage_5"], "corrections": [
+        {"stage_id": "stage_3", "action": "用采到的布制作睡袋，并放在准备落脚的区域附近；睡袋可作为死亡后的复活地点。",
+         "completion": "睡袋已经放置，可在可用时选择该睡袋作为复活地点。"},
+        {"stage_id": "stage_4", "action": "选择内陆且附近有树木和石头的位置建造一个小基地；可靠近道路，但不要让基地直接暴露在路边。",
+         "completion": "已经在所选位置建成一个小基地。"}], "issues": []}
+    model = Model(["invalid json", draft, checked] if prior_repair else [draft, checked])
+    result = await AdviceService(model, Research([document])).run("我是新手，什么都不懂，应该优先做什么？")
+    assert result["advice"]["status"] == "conditional"
+    assert result["advice"]["answer"]["stages"][3]["completion"] == checked["corrections"][1]["completion"]
+    assert result["advice"]["answer_source"] == "generated"
+    assert len(model.calls) == (3 if prior_repair else 2)
+    assert result["advice"]["repairs"] == int(prior_repair)
+    if prior_repair:
+        assert result["advice"]["diagnostics"][0]["phase"] == "draft"
+
+
+@pytest.mark.parametrize("defect", ["changed_stage", "numeric", "guarantee"])
+async def test_local_repair_cannot_change_stage_or_bypass_claim_checks(evidence, defect):
+    _, _, document = evidence
+    draft = guide(document)
+    correction = {"stage_id": "stage_1", "action": "消耗 200 木头制作石斧。", "completion": "已有基础采集工具。"}
+    checked = {"supported_stage_ids": ["stage_2", "stage_3"], "corrections": [correction], "issues": []}
+    repaired = {**correction}
+    if defect == "changed_stage":
+        repaired.update(stage_id="stage_2", action="准备睡袋。")
+    elif defect == "guarantee":
+        repaired["action"] = "保证不会被拆。"
+    model = Model([draft, checked, repaired])
+    result = await AdviceService(model, Research([document])).run("小白怎么玩")
+    assert result["advice"]["answer"] is None
+    assert result["advice"]["diagnostics"][-1]["phase"] == "correction_repair"
+    assert len(model.calls) == 3
+    assert "没有通过依据核对" not in result["reply"].content
+
+
+@pytest.fixture
+def baseline_document(evidence):
+    _, archive, _ = evidence
+    return archive.put(extract_document(SOURCE, "<html><title>Your First Day in Rust</title><main>" +
+        " ".join(stage["quote"] for stage in BASELINE) + "</main></html>"))
+
+
+@pytest.mark.parametrize("english", [False, True])
+def test_curated_baseline_requires_exact_source_support(baseline_document, english):
+    document = baseline_document
+    answer = baseline_guide([document], english)
+    assert len(answer["stages"]) == 5
+    for stage in answer["stages"]:
+        assert stage["citations"][0]["quote"] in document["text"]
+        assert stage["citations"][0]["document_id"] == document["id"]
+    assert baseline_guide([{**document, "url": "https://example.com/"}], english) is None
+    assert baseline_guide([{**document, "text": document["text"].replace(BASELINE[0]["quote"], "")}], english) is None
+    assert baseline_guide([], english) is None
+
+
+@pytest.mark.parametrize("failure", ["invalid_draft", "transport", "review_rejected"])
+async def test_failed_generation_uses_cited_conditional_baseline(baseline_document, failure):
+    document = baseline_document
+    draft = guide(document)
+    if failure == "invalid_draft":
+        outputs = ["invalid json", "invalid json"]
+    elif failure == "transport":
+        outputs = [AppError("model_timeout", "Timed out", 504)]
+    else:
+        rejected = {"supported_stage_ids": [], "corrections": [], "issues": ["动作缺少支持。"]}
+        outputs = [draft, rejected, draft, rejected]
+    model = Model(outputs)
+    result = await AdviceService(model, Research([document])).run("我是新手，已经有基地和睡袋，应该优先做什么？")
+    assert result["advice"]["status"] == "conditional"
+    assert result["advice"]["answer_source"] == "curated_baseline"
+    assert result["advice"]["diagnostics"]
+    assert "就跳过" in result["reply"].content
+    assert "没有通过依据核对" not in result["reply"].content
+    rendered = finalize_response(result)
+    assert SOURCE in rendered["reply"].content
+    assert "一级工作台" in rendered["reply"].content
+    assert len(model.calls) == len(outputs)
+
+
+async def test_baseline_failure_diagnostics_and_sources_persist_through_runtime(evidence, baseline_document):
+    conversations, _, _ = evidence
+    model = Model([AppError("model_timeout", "Timed out", 504)])
+    settings = Settings(_env_file=None, api_key="test", database_path=conversations.path)
+    runtime = ChatRuntime(settings, model, conversations,
+        advice_service=AdviceService(model, Research([baseline_document])))
+    owner = conversations.create().id
+    request = ChatRequest(request_id=uuid4(), message="我是新手，什么都不懂，应该优先做什么？")
+    turn = await runtime.chat(owner, request)
+    assert turn.advice["answer_source"] == "curated_baseline"
+    assert turn.advice["review"] is None
+    assert turn.advice["diagnostics"] == [{"phase": "draft", "codes": ["model_timeout"], "field": None}]
+    assert "先准备采集工具" in turn.assistant and SOURCE in turn.assistant
+    assert "没有通过依据核对" not in turn.assistant
+    assert conversations.get(owner).turns[0].advice == turn.advice
+    assert await runtime.chat(owner, request) == turn
+    assert len(model.calls) == 1
 
 
 async def test_review_keeps_quote_context_without_resending_whole_documents(evidence):

@@ -121,7 +121,7 @@ def calculation_summary(calculation, context):
                 "If you have other items that were not counted, the actual shortfall may be smaller."))
         visual_usage = calculation.get("visual_usage")
         if visual_usage and not result["inventory_known"]:
-            excluded = "截图已过期或不是当前本人库存，未用于抵扣。" if not visual_usage.get("fresh",True) or visual_usage.get("subject") != "self" else "截图没有可用于计算的清晰读数，暂列总需求。"
+            excluded = "截图已过期或不是当前本人库存，未用于抵扣。" if not visual_usage.get("fresh",True) or visual_usage.get("subject") != "self" else "本次截图识别结果没有可抵扣的库存，暂列总需求；具体原因见截图识别详情。"
             lines.append(localized(context,excluded,"The screenshot cannot supply current personal inventory; totals are shown."))
         if result["reserved"]:
             lines.append(localized(context, "预算已保留 ", "The budget reserves ") +
@@ -137,6 +137,11 @@ def calculation_summary(calculation, context):
         localized(context, f"，需要新增 {best['new_sulfur']} 硫磺", f", requiring {best['new_sulfur']} additional sulfur"),
         localized(context, f"这是按 {result['target_count']} 个{target}、每个 {result['hp_each']} HP、{side}计算的",
                   f"This assumes {result['target_count']} {target}, each at {result['hp_each']} HP, attacked from the {side}"),
+        localized(context, "未提供当前血量，暂按满血计算", "Current HP was not supplied; full health is assumed")
+            if calculation["input"]["hp"] is None else "",
+        localized(context, "只抵扣已知库存，实际缺口和排序可能随未计入的物品变化",
+                  "Only known inventory is deducted; other items may change the shortfall and ranking")
+            if best["craft"]["inventory_known"] and not best["craft"]["inventory_complete"] else "",
         localized(context, "不是所有资源或混搭的全局最优；科技、发射器与其他材料仍需核对。",
                   "Not a global optimum over all resources or mixed methods; check technology, launchers and other materials."),
     ], context)

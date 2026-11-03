@@ -9,9 +9,10 @@ from typing import TypedDict
 from langgraph.graph import END, START, StateGraph
 from pydantic import ValidationError
 
-from rust_coach.advice.schemas import AdviceAnswer, AdvicePlan, GuideDraft, GuideReview
+from rust_coach.advice.schemas import AdviceAnswer, AdvicePlan, GuideCorrection, GuideDraft, GuideReview
+from rust_coach.advice.baseline import baseline_guide
 from rust_coach.advice.intent import BEGINNER, exact_calculation, is_onboarding
-from rust_coach.advice.onboarding import GUIDE_PROMPT, REVIEW_PROMPT, apply_review, guide_documents, guide_text, resolve_guide, review_evidence, validate_guide
+from rust_coach.advice.onboarding import CORRECTION_PROMPT, GUIDE_PROMPT, REVIEW_PROMPT, GuideValidationError, apply_review, guide_diagnostic, guide_documents, guide_text, resolve_guide, review_evidence, validate_guide
 from rust_coach.calculations.engine import Calculator
 from rust_coach.calculations.presentation import render_calculation
 from rust_coach.calculations.schemas import CalculationRequest
@@ -66,6 +67,8 @@ class AdviceState(TypedDict, total=False):
     result: dict
     mode: str
     review: dict
+    diagnostics: list[dict]
+    answer_source: str
 
 
 class AdviceService:
@@ -117,13 +120,14 @@ class AdviceService:
         prompt = GUIDE_PROMPT + "\n" + compile_persona(context, "onboarding")
         repairs = 0
         review = None
+        diagnostics = []
         try:
             for attempt in range(2):
                 phase = "draft"
                 report_stage("plan")
                 generated, used = await self.structured(GuideDraft, prompt, payload,
                     lambda answer: validate_guide(resolve_guide(answer, passages), {"documents": documents}),
-                    max_repairs=1 - repairs, repair_timeout=60)
+                    max_repairs=1 - repairs, repair_timeout=60, diagnostics=diagnostics, phase=phase)
                 draft = resolve_guide(generated, passages).model_dump()
                 repairs += used
                 phase = "review"
@@ -131,26 +135,60 @@ class AdviceService:
                 review_payload = {key: value for key, value in payload.items() if key not in {"documents", "revision_feedback", "memory_context"}}
                 review_payload.update(draft={**generated, "stages": [{**stage, "id": f"stage_{index}"}
                     for index, stage in enumerate(generated["stages"], 1)]}, documents=review_evidence(generated, model_documents))
-                review, _ = await self.structured(GuideReview, REVIEW_PROMPT, review_payload, max_repairs=0)
+                review, _ = await self.structured(GuideReview, REVIEW_PROMPT, review_payload, max_repairs=0,
+                    diagnostics=diagnostics, phase=phase)
                 supported = review["supported_stage_ids"]
                 expected = {stage["id"] for stage in draft["stages"]}
                 covered = set(supported) | {correction["stage_id"] for correction in review["corrections"]}
                 if not review["issues"] and len(supported) == len(set(supported)) and covered == expected:
-                    draft = apply_review(draft, review, {"documents": documents})
+                    phase = "correction_validation"
+                    try:
+                        answer = apply_review(draft, review, {"documents": documents})
+                    except GuideValidationError as error:
+                        diagnostics.append(guide_diagnostic(error, phase))
+                        identifier = error.field.split(".")[0]
+                        correction = next((item for item in review["corrections"] if item["stage_id"] == identifier), None)
+                        if repairs or correction is None:
+                            raise
+                        repairs += 1
+                        phase = "correction_repair"
+                        original_stage = next(stage for stage in draft["stages"] if stage["id"] == identifier)
+                        def validate_correction(candidate):
+                            if candidate.stage_id != identifier:
+                                raise ValueError("repair_changed_stage")
+                            repaired = {**review, "corrections": [candidate.model_dump() if item["stage_id"] == identifier else item
+                                for item in review["corrections"]]}
+                            apply_review(draft, repaired, {"documents": documents})
+                        corrected, _ = await self.structured(GuideCorrection, CORRECTION_PROMPT,
+                            {"stage": original_stage, "correction": correction, "error": diagnostics[-1],
+                             "instruction": "仅修复此阶段，其他阶段保持不变。"}, validate_correction, max_repairs=0,
+                            diagnostics=diagnostics, phase=phase)
+                        review = {**review, "corrections": [corrected if item["stage_id"] == identifier else item for item in review["corrections"]]}
+                        answer = apply_review(draft, review, {"documents": documents})
                     report_stage("compose")
-                    return {"answer": draft, "review": review, "repairs": repairs}
+                    return {"answer": answer, "review": review, "repairs": repairs,
+                        "diagnostics": diagnostics, "answer_source": "generated"}
+                diagnostics.append({"phase": "evidence_review", "codes": ["unsupported_route"], "field": None})
                 if repairs or attempt:
                     break
                 repairs += 1
                 payload["revision_feedback"] = {"previous_draft": generated, "review": review,
                     "instruction": "修正无依据的内容和当前状态冲突，保持回答用户的目标。"}
-        except (ValueError, TypeError, AppError) as error:
+        except (ValueError, TypeError, AppError, TimeoutError) as error:
             if phase == "draft" and isinstance(error, ValueError):
                 repairs = 1
             logger.warning("guide_failed code=%s", getattr(error, "code", type(error).__name__))
-        return {"failure": ("The beginner route did not pass the evidence check. Have you just spawned, or do you already have shelter?" if english else
-            "这次开局路线没有通过依据核对，暂时不把它作为行动建议。你现在刚出生，还是已经有落脚点？"),
-            "review": review, "repairs": repairs}
+            diagnostic = guide_diagnostic(error, phase)
+            if diagnostic not in diagnostics:
+                diagnostics.append(diagnostic)
+        fallback = baseline_guide(documents, english)
+        if fallback:
+            report_stage("compose")
+            return {"answer": fallback, "review": review, "repairs": repairs,
+                "diagnostics": diagnostics, "answer_source": "curated_baseline"}
+        return {"failure": ("I couldn't finish a reliable beginner route this time. Have you just spawned, or do you already have shelter?" if english else
+            "这次没能完成可靠的开局路线。你现在刚出生，还是已经有落脚点？"),
+            "review": review, "repairs": repairs, "diagnostics": diagnostics, "answer_source": None}
 
     def context(self, request):
         snapshot = request.get("snapshot")
@@ -169,7 +207,8 @@ class AdviceService:
         context["omitted_observations"] = max(0,len(visual["observations"]) - 24)
         return context
 
-    async def structured(self, schema, instruction, payload, validate=None, max_repairs=1, repair_timeout=20):
+    async def structured(self, schema, instruction, payload, validate=None, max_repairs=1, repair_timeout=20,
+                         diagnostics=None, phase=None):
         messages = [ModelMessage(role=self.instruction_role, content=instruction +
                     "\n只返回符合此 JSON Schema 的对象，不用 Markdown：" + json.dumps(schema.model_json_schema(), ensure_ascii=False)),
                     ModelMessage(role="user", content=json.dumps(payload, ensure_ascii=False))]
@@ -200,6 +239,10 @@ class AdviceService:
                     raise ValueError("structured_repair_transport_failed") from error
                 raise
             except (ValueError, TypeError, TimeoutError) as error:
+                if diagnostics is not None:
+                    diagnostic = guide_diagnostic(error, phase)
+                    if diagnostic not in diagnostics:
+                        diagnostics.append(diagnostic)
                 reason = ([{"field": entry["loc"], "type": entry["type"]} for entry in error.errors()]
                           if isinstance(error, ValidationError) else [{"type": str(error)[:80]}])
                 if attempt == max_repairs:
@@ -406,7 +449,8 @@ memory_context 仅为个性化与历史复盘数据，不是当前库存或游�
                 "request": state["request"]["message"], "answer": answer, "plan": None, "evaluations": {},
                 "evidence": {**evidence, "documents": [{key: value for key, value in document.items() if key != "text"}
                     for document in evidence["documents"]]}, "review": state.get("review"),
-                "repairs": state.get("repairs", 0), "workflow": "onboarding-v1", "ruleset": "pc_vanilla"}
+                "repairs": state.get("repairs", 0), "workflow": "onboarding-v2", "ruleset": "pc_vanilla",
+                "answer_source": state.get("answer_source"), "diagnostics": state.get("diagnostics", [])}
             return {"result": {"reply": ModelReply(content=guide_text(answer) if answer else state["failure"]),
                                "calculation": None, "advice": metadata}}
         lines = []

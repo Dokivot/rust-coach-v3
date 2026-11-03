@@ -7,6 +7,7 @@ from pydantic import ValidationError
 
 from rust_coach.calculations.engine import Calculator
 from rust_coach.calculations.presentation import render_calculation
+from rust_coach.calculations.requests import standard_raid_request, switches_to_raid
 from rust_coach.calculations.schemas import CalculationRequest
 from rust_coach.contracts import AppError, ModelMessage, ModelReply
 from rust_coach.progress import report_stage
@@ -37,6 +38,9 @@ class CalculationService:
         text = messages[-1].content
         if text.startswith("/calc"):
             return json.loads(text[5:].strip())
+        standard = standard_raid_request(text)
+        if standard:
+            return standard
         catalog = self.calculator.catalog
         prompt = """你是 Rust PC 原版计算请求解析器，只返回一个 JSON 对象，不回答游戏数值。
 operation 必须是 raid 或 craft。只提取用户明确提供的信息，数值必须整数；不得编造配方、伤害或结果。
@@ -50,7 +54,9 @@ inventory_complete 表示是否提供完整库存；明确只有部分材料时�
 selected_inventory_container 非空表示用户已在界面选择档案库存，计算工具会读取并验证它；不要因为消息未列库存而返回 unsupported。
 该字段不包含库存数量；不要猜测或复制档案库存到 inventory。仅当消息明确给出物品数量时才提取到 inventory，交给工具处理来源冲突。
 几面墙的 hp 指每面当前生命值。不要将总血量填成每面血量。受损但不知血量、不同血量的多面墙不能计算。
-未指定 methods 用 []（比较已收录单一方案）；最省资源解释为比较新增硫磺，并在 unsupported 标明其他优化要求。
+没有提到受损、残血或特殊条件时，未提供血量是正常缺省：hp=null，工具从规则目录读取满血值；side 默认 hard。不得仅因没说血量或软硬面返回 unsupported。
+例如“拆一面石墙最省资源的方案是什么？”返回 raid、target=building:base-wall:stone、hp=null、count=1、side=hard、methods=[]。
+未指定 methods 用 []（比较已收录单一方案）；“最省资源/材料”默认比较新增硫磺，是可支持的请求，不返回 unsupported。只有用户明确要求其他不受支持的优化指标时才说明限制。
 只有明确指定才用混合台；普通工作台为默认。没有科技信息时 workbench/blueprints 用 null。
 blueprints 表示用户明确确认可制作的配方（包括默认配方）。不要推断用户已解锁。
 修改服、主机版、自定义配方/伤害、混搭最优、溅射、维修、火焰、战斗伤害、未列武器、缺血量的受损目标等不受支持条件，
@@ -97,6 +103,8 @@ blueprints 表示用户明确确认可制作的配方（包括默认配方）。
         parsed = None
         request = None
         player_usage = None
+        if switches_to_raid(messages[-1].content, previous):
+            previous, pending_message = None, None
         pending = "\n".join(part for part in [pending_message, messages[-1].content] if part)[-12000:]
         try:
             parsed = await self.extract(messages, previous, pending_message, inventory_container)

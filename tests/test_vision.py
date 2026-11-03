@@ -841,7 +841,7 @@ def test_unresolved_identity_is_excluded_and_displayed_as_unresolved(setup,monke
     monkeypatch.setattr(model,"complete",ambiguous)
     turn = analyze(client,owner,upload(client,owner),message="制作10火药还差什么？")
     assert turn["calculation"]["input"]["inventory"] is None
-    assert "截图没有可用于计算的清晰读数，暂列总需求" in turn["assistant"]
+    assert "本次截图识别结果没有可抵扣的库存" in turn["assistant"]
     recognition = next(block for block in turn["presentation"]["blocks"] if block["id"] == "visual_scope")
     assert "物品身份未确定，未计入" in recognition["text"]
 
@@ -855,6 +855,76 @@ def test_automatic_subject_is_not_presented_as_an_explicit_unknown_owner(setup):
     assert "subject" not in context["images"][0]
     assert "captured_at" not in context["images"][0]
     assert turn["visual"]["automatic"]["subject"] == "self"
+
+
+@pytest.mark.parametrize("coverage", ["partial", "full_view"])
+def test_unknown_container_uses_readable_inventory_for_ten_c4_then_raid(setup, monkeypatch, coverage):
+    client, application, model, owner = setup
+    original = model.complete
+    rows = [("wood", 8147), ("metal.fragments", 550), ("cloth", 946), ("charcoal", 4), ("sulfur", 140)]
+    async def cropped_inventory(messages):
+        reply = await original(messages)
+        data = json.loads(reply.content)
+        template = data["observations"][0]
+        data.update(task="craft", inventory_coverage=coverage,
+            calculation={"operation": "craft", "goals": {"explosive.timed": 10}},
+            screenshot_context=[{"attachment_id": template["attachment_id"], "subject": "unknown", "temporal_context": "current"}])
+        data["observations"] = [{**template, "id": "item_" + str(index), "item_id": item, "label": item,
+            "quantity": quantity, "item_status": "identified", "region_kind": "unknown",
+            "slot": "row_1_col_" + str(index)} for index, (item, quantity) in enumerate(rows, 1)]
+        data["observations"].append({**template, "id": "unresolved", "item_id": None, "quantity": None,
+            "quantity_status": "unknown", "region_kind": "unknown", "slot": "row_2_col_1"})
+        return ModelReply(content=json.dumps(data))
+    monkeypatch.setattr(model, "complete", cropped_inventory)
+    first = analyze(client, owner, upload(client, owner), message="我还差多少资源才能造10个C4？")
+    assert first["calculation"]["input"]["inventory"] == dict(rows)
+    assert first["calculation"]["result"]["acquisition"] == {
+        "techparts": 20, "metal.fragments": 1450, "lowgradefuel": 600, "sulfur": 21860, "charcoal": 29996}
+    assert not first["visual"]["automatic"]["inventory_complete"]
+    assert first["visual"]["automatic"]["excluded_observations"] == {"unresolved": "identity_unknown"}
+    assert "按截图里能确认的库存" in first["assistant"]
+    assert "实际缺口可能更少" in first["assistant"]
+    assert "库存未知" not in first["assistant"]
+    details = next(block["text"] for block in first["presentation"]["blocks"] if block["id"] == "visual_scope")
+    assert "默认将可见格子作为你的局部库存" in details
+    assert "数量或槽位范围未确定" not in details
+    restored = application.state.vision.evidence(application.state.vision.drafts.get(owner, first["visual"]["draft_id"]))
+    assert restored["automatic"]["inventory"] == dict(rows)
+    response = client.post(f"/api/conversations/{owner}/messages", json={"request_id": str(uuid4()),
+        "message": "拆一面石墙最省资源的方案是什么？"})
+    assert response.status_code == 200, response.text
+    second = response.json()
+    assert second["calculation"]["operation"] == "raid"
+    assert second["calculation"]["input"]["goals"] == {}
+    assert second["calculation"]["result"]["hp_each"] == 500
+    assert second["calculation"]["result"]["options"][0]["count"] == 2
+    assert second["calculation"]["result"]["options"][0]["new_sulfur"] == 4260
+    assert "暂按满血计算" in second["assistant"]
+    assert len(model.calls) == 1
+
+
+@pytest.mark.parametrize("changes,reason,explanation", [
+    ({"region_kind": "crafting"}, "not_inventory", "不是可用库存区域"),
+    ({"slot": ""}, "slot_missing", "槽位位置未确定"),
+    ({"quantity": None, "quantity_status": "unknown"}, "quantity_unreadable", "数量未读清"),
+])
+def test_excluded_inventory_displays_actual_reason(setup, monkeypatch, changes, reason, explanation):
+    client, _, model, owner = setup
+    model.task, model.coverage = "craft", "partial"
+    original = model.complete
+    async def unusable_inventory(messages):
+        reply = await original(messages)
+        data = json.loads(reply.content)
+        data["observations"][0].update({"region_kind": "unknown", **changes})
+        return ModelReply(content=json.dumps(data))
+    monkeypatch.setattr(model, "complete", unusable_inventory)
+    turn = analyze(client, owner, upload(client, owner), message="制作10火药还差什么？")
+    assert turn["calculation"]["input"]["inventory"] is None
+    assert turn["visual"]["automatic"]["excluded_observations"] == {"item_a": reason}
+    details = next(block["text"] for block in turn["presentation"]["blocks"] if block["id"] == "visual_scope")
+    assert explanation in details
+    assert "按已辨认物品和清晰数量计算" not in details
+    assert "具体原因见截图识别详情" in turn["assistant"]
 
 
 def test_stream_reports_real_vision_and_calculation_stages_and_skips_cached_recognition(setup):
