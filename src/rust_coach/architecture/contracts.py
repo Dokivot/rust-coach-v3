@@ -103,6 +103,10 @@ class CoachTaskRepresentation(StrictModel):
     route: RouteKind
     required_evidence: tuple[str, ...] = ()
     provenance: tuple[Provenance, ...] = ()
+    action: Literal["new", "continue", "correct", "switch", "cancel", "clarify", "inspect"] = "new"
+    execution_node: str | None = None
+    routing_reason: str | None = None
+    previous_task_id: UUID | None = None
 
 
 class Budget(StrictModel):

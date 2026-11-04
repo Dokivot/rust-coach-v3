@@ -1,0 +1,3378 @@
+{
+  "dataset": "intent-state-v1",
+  "dataset_sha256": "df072b97c94d9a50b2ef2b90bb78a82ab926a3b7b7c75db146a738ecc2f934c9",
+  "source_sha256": "c7fbac24685bb6478d81a820288628937978d209251d418c1301c9444f30f264",
+  "mode": "scripted_http_sse",
+  "grader_sha256": "7959528536b4eacae96caa2471c20210fa7a50aca236f70dd5b152e12e7a9b94",
+  "rule_provenance": {
+    "snapshot_id": "rustdata-pc-vanilla-2026-11-01",
+    "retrieved_at": "2026-11-01",
+    "ruleset": "pc_vanilla",
+    "game_build": null,
+    "verification": "third_party_snapshot_not_ingame_verified",
+    "provider": "RustData",
+    "source_url": "https://rust-data.com/zh/tools/raid-calculator",
+    "source_versions": [
+      "v4:3:66a9a92f0d54f50e"
+    ],
+    "sha256": "11033e0ec886eb101a301c7e3e4ecc8fc9c30a23afeacc67679fecd710bbb3d5"
+  },
+  "rules": "既定PC原版规则快照；本评测不认证游戏build",
+  "case_count": 40,
+  "passed": 40,
+  "failed": 0,
+  "turn_count": 54,
+  "results": [
+    {
+      "case_id": "state_query",
+      "category": "route",
+      "passed": true,
+      "first_failed_turn": null,
+      "turns": [
+        {
+          "turn": 0,
+          "message": "查看我的状态",
+          "checks": [
+            {
+              "field": "route",
+              "expected": "state",
+              "actual": "state",
+              "passed": true
+            },
+            {
+              "field": "result_kind",
+              "expected": "state",
+              "actual": "state",
+              "passed": true
+            },
+            {
+              "field": "calls",
+              "expected": 0,
+              "actual": 0,
+              "passed": true
+            },
+            {
+              "field": "terminal_type",
+              "expected": "result",
+              "actual": "result",
+              "passed": true
+            }
+          ],
+          "elapsed_ms": 11,
+          "model_calls": 0,
+          "terminal_type": "result",
+          "actual": {
+            "route": "state",
+            "node": "player_state",
+            "action": "inspect",
+            "status": null,
+            "operation": null,
+            "hp": null,
+            "inventory": null,
+            "inventory_complete": null,
+            "source": null,
+            "event": null,
+            "profile_revision": 1,
+            "backpack": {
+              "sulfur": 1000
+            },
+            "storage": {
+              "sulfur": 5000
+            },
+            "continues_task": false,
+            "working_task": false,
+            "calls": 0,
+            "error": null,
+            "result_kind": "state",
+            "temporary_fields": [],
+            "task_id": "f27362ed-f23b-54db-a10b-e665be0f2f94",
+            "working_task_id": null
+          }
+        }
+      ]
+    },
+    {
+      "case_id": "state_after_craft",
+      "category": "route",
+      "passed": true,
+      "first_failed_turn": null,
+      "turns": [
+        {
+          "turn": 0,
+          "message": "/calc {\"operation\":\"craft\",\"goals\":{\"explosive.timed\":1}}",
+          "checks": [
+            {
+              "field": "route",
+              "expected": "simple_call",
+              "actual": "simple_call",
+              "passed": true
+            },
+            {
+              "field": "terminal_type",
+              "expected": "result",
+              "actual": "result",
+              "passed": true
+            }
+          ],
+          "elapsed_ms": 9,
+          "model_calls": 0,
+          "terminal_type": "result",
+          "actual": {
+            "route": "simple_call",
+            "node": "calculate",
+            "action": "new",
+            "status": "calculated",
+            "operation": "craft",
+            "hp": null,
+            "inventory": null,
+            "inventory_complete": true,
+            "source": "unknown",
+            "event": null,
+            "profile_revision": 1,
+            "backpack": {
+              "sulfur": 1000
+            },
+            "storage": {
+              "sulfur": 5000
+            },
+            "continues_task": false,
+            "working_task": true,
+            "calls": 0,
+            "error": null,
+            "result_kind": "calculation",
+            "temporary_fields": [],
+            "task_id": "6779cd7f-a8b4-5a5f-8c27-8dc4e9f041bb",
+            "working_task_id": "6779cd7f-a8b4-5a5f-8c27-8dc4e9f041bb"
+          }
+        },
+        {
+          "turn": 1,
+          "message": "查看玩家状态",
+          "checks": [
+            {
+              "field": "route",
+              "expected": "state",
+              "actual": "state",
+              "passed": true
+            },
+            {
+              "field": "calls",
+              "expected": 0,
+              "actual": 0,
+              "passed": true
+            },
+            {
+              "field": "terminal_type",
+              "expected": "result",
+              "actual": "result",
+              "passed": true
+            }
+          ],
+          "elapsed_ms": 7,
+          "model_calls": 0,
+          "terminal_type": "result",
+          "actual": {
+            "route": "state",
+            "node": "player_state",
+            "action": "inspect",
+            "status": null,
+            "operation": null,
+            "hp": null,
+            "inventory": null,
+            "inventory_complete": null,
+            "source": null,
+            "event": null,
+            "profile_revision": 1,
+            "backpack": {
+              "sulfur": 1000
+            },
+            "storage": {
+              "sulfur": 5000
+            },
+            "continues_task": false,
+            "working_task": true,
+            "calls": 0,
+            "error": null,
+            "result_kind": "state",
+            "temporary_fields": [],
+            "task_id": "a8bccd3b-6bcc-5c0a-a15b-39de0dee3c49",
+            "working_task_id": "6779cd7f-a8b4-5a5f-8c27-8dc4e9f041bb"
+          }
+        }
+      ]
+    },
+    {
+      "case_id": "greeting_after_craft",
+      "category": "route",
+      "passed": true,
+      "first_failed_turn": null,
+      "turns": [
+        {
+          "turn": 0,
+          "message": "/calc {\"operation\":\"craft\",\"goals\":{\"explosive.timed\":1}}",
+          "checks": [
+            {
+              "field": "operation",
+              "expected": "craft",
+              "actual": "craft",
+              "passed": true
+            },
+            {
+              "field": "terminal_type",
+              "expected": "result",
+              "actual": "result",
+              "passed": true
+            }
+          ],
+          "elapsed_ms": 8,
+          "model_calls": 0,
+          "terminal_type": "result",
+          "actual": {
+            "route": "simple_call",
+            "node": "calculate",
+            "action": "new",
+            "status": "calculated",
+            "operation": "craft",
+            "hp": null,
+            "inventory": null,
+            "inventory_complete": true,
+            "source": "unknown",
+            "event": null,
+            "profile_revision": 1,
+            "backpack": {
+              "sulfur": 1000
+            },
+            "storage": {
+              "sulfur": 5000
+            },
+            "continues_task": false,
+            "working_task": true,
+            "calls": 0,
+            "error": null,
+            "result_kind": "calculation",
+            "temporary_fields": [],
+            "task_id": "5c0fdae7-c771-5f54-9a26-b76996c19942",
+            "working_task_id": "5c0fdae7-c771-5f54-9a26-b76996c19942"
+          }
+        },
+        {
+          "turn": 1,
+          "message": "你好",
+          "checks": [
+            {
+              "field": "route",
+              "expected": "chat",
+              "actual": "chat",
+              "passed": true
+            },
+            {
+              "field": "result_kind",
+              "expected": "chat",
+              "actual": "chat",
+              "passed": true
+            },
+            {
+              "field": "calls",
+              "expected": 1,
+              "actual": 1,
+              "passed": true
+            },
+            {
+              "field": "terminal_type",
+              "expected": "result",
+              "actual": "result",
+              "passed": true
+            }
+          ],
+          "elapsed_ms": 7,
+          "model_calls": 1,
+          "terminal_type": "result",
+          "actual": {
+            "route": "chat",
+            "node": "chat",
+            "action": "continue",
+            "status": null,
+            "operation": null,
+            "hp": null,
+            "inventory": null,
+            "inventory_complete": null,
+            "source": null,
+            "event": null,
+            "profile_revision": 1,
+            "backpack": {
+              "sulfur": 1000
+            },
+            "storage": {
+              "sulfur": 5000
+            },
+            "continues_task": false,
+            "working_task": true,
+            "calls": 1,
+            "error": null,
+            "result_kind": "chat",
+            "temporary_fields": [],
+            "task_id": "748ec9bf-5a5b-5070-880a-de1a7d063d30",
+            "working_task_id": "5c0fdae7-c771-5f54-9a26-b76996c19942"
+          }
+        }
+      ]
+    },
+    {
+      "case_id": "concept_after_craft",
+      "category": "route",
+      "passed": true,
+      "first_failed_turn": null,
+      "turns": [
+        {
+          "turn": 0,
+          "message": "/calc {\"operation\":\"craft\",\"goals\":{\"explosive.timed\":1}}",
+          "checks": [
+            {
+              "field": "operation",
+              "expected": "craft",
+              "actual": "craft",
+              "passed": true
+            },
+            {
+              "field": "terminal_type",
+              "expected": "result",
+              "actual": "result",
+              "passed": true
+            }
+          ],
+          "elapsed_ms": 8,
+          "model_calls": 0,
+          "terminal_type": "result",
+          "actual": {
+            "route": "simple_call",
+            "node": "calculate",
+            "action": "new",
+            "status": "calculated",
+            "operation": "craft",
+            "hp": null,
+            "inventory": null,
+            "inventory_complete": true,
+            "source": "unknown",
+            "event": null,
+            "profile_revision": 1,
+            "backpack": {
+              "sulfur": 1000
+            },
+            "storage": {
+              "sulfur": 5000
+            },
+            "continues_task": false,
+            "working_task": true,
+            "calls": 0,
+            "error": null,
+            "result_kind": "calculation",
+            "temporary_fields": [],
+            "task_id": "948ac829-7d2c-596a-954e-b531d43498b0",
+            "working_task_id": "948ac829-7d2c-596a-954e-b531d43498b0"
+          }
+        },
+        {
+          "turn": 1,
+          "message": "解释一下合成批次",
+          "checks": [
+            {
+              "field": "route",
+              "expected": "chat",
+              "actual": "chat",
+              "passed": true
+            },
+            {
+              "field": "calls",
+              "expected": 1,
+              "actual": 1,
+              "passed": true
+            },
+            {
+              "field": "terminal_type",
+              "expected": "result",
+              "actual": "result",
+              "passed": true
+            }
+          ],
+          "elapsed_ms": 7,
+          "model_calls": 1,
+          "terminal_type": "result",
+          "actual": {
+            "route": "chat",
+            "node": "chat",
+            "action": "continue",
+            "status": null,
+            "operation": null,
+            "hp": null,
+            "inventory": null,
+            "inventory_complete": null,
+            "source": null,
+            "event": null,
+            "profile_revision": 1,
+            "backpack": {
+              "sulfur": 1000
+            },
+            "storage": {
+              "sulfur": 5000
+            },
+            "continues_task": false,
+            "working_task": true,
+            "calls": 1,
+            "error": null,
+            "result_kind": "chat",
+            "temporary_fields": [],
+            "task_id": "77147779-9e94-5418-870d-da8856e93f71",
+            "working_task_id": "948ac829-7d2c-596a-954e-b531d43498b0"
+          }
+        }
+      ]
+    },
+    {
+      "case_id": "parser_resolves_chat",
+      "category": "route",
+      "passed": true,
+      "first_failed_turn": null,
+      "turns": [
+        {
+          "turn": 0,
+          "message": "C4这个词读起来有趣",
+          "checks": [
+            {
+              "field": "route",
+              "expected": "chat",
+              "actual": "chat",
+              "passed": true
+            },
+            {
+              "field": "result_kind",
+              "expected": "chat",
+              "actual": "chat",
+              "passed": true
+            },
+            {
+              "field": "calls",
+              "expected": 2,
+              "actual": 2,
+              "passed": true
+            },
+            {
+              "field": "terminal_type",
+              "expected": "result",
+              "actual": "result",
+              "passed": true
+            }
+          ],
+          "elapsed_ms": 7,
+          "model_calls": 2,
+          "terminal_type": "result",
+          "actual": {
+            "route": "chat",
+            "node": "chat",
+            "action": "new",
+            "status": null,
+            "operation": null,
+            "hp": null,
+            "inventory": null,
+            "inventory_complete": null,
+            "source": null,
+            "event": null,
+            "profile_revision": 1,
+            "backpack": {
+              "sulfur": 1000
+            },
+            "storage": {
+              "sulfur": 5000
+            },
+            "continues_task": false,
+            "working_task": false,
+            "calls": 2,
+            "error": null,
+            "result_kind": "chat",
+            "temporary_fields": [],
+            "task_id": "ae9b626a-d4c3-5eef-be8c-b04482225793",
+            "working_task_id": null
+          }
+        }
+      ]
+    },
+    {
+      "case_id": "cancel_task",
+      "category": "task",
+      "passed": true,
+      "first_failed_turn": null,
+      "turns": [
+        {
+          "turn": 0,
+          "message": "拆一面石墙最省资源",
+          "checks": [
+            {
+              "field": "operation",
+              "expected": "raid",
+              "actual": "raid",
+              "passed": true
+            },
+            {
+              "field": "terminal_type",
+              "expected": "result",
+              "actual": "result",
+              "passed": true
+            }
+          ],
+          "elapsed_ms": 10,
+          "model_calls": 0,
+          "terminal_type": "result",
+          "actual": {
+            "route": "simple_call",
+            "node": "calculate",
+            "action": "new",
+            "status": "calculated",
+            "operation": "raid",
+            "hp": null,
+            "inventory": null,
+            "inventory_complete": true,
+            "source": "unknown",
+            "event": null,
+            "profile_revision": 1,
+            "backpack": {
+              "sulfur": 1000
+            },
+            "storage": {
+              "sulfur": 5000
+            },
+            "continues_task": false,
+            "working_task": true,
+            "calls": 0,
+            "error": null,
+            "result_kind": "calculation",
+            "temporary_fields": [],
+            "task_id": "478ababe-dc60-5294-ad8c-398dbdff8810",
+            "working_task_id": "478ababe-dc60-5294-ad8c-398dbdff8810"
+          }
+        },
+        {
+          "turn": 1,
+          "message": "取消计算",
+          "checks": [
+            {
+              "field": "route",
+              "expected": "chat",
+              "actual": "chat",
+              "passed": true
+            },
+            {
+              "field": "action",
+              "expected": "cancel",
+              "actual": "cancel",
+              "passed": true
+            },
+            {
+              "field": "working_task",
+              "expected": false,
+              "actual": false,
+              "passed": true
+            },
+            {
+              "field": "calls",
+              "expected": 0,
+              "actual": 0,
+              "passed": true
+            },
+            {
+              "field": "terminal_type",
+              "expected": "result",
+              "actual": "result",
+              "passed": true
+            }
+          ],
+          "elapsed_ms": 6,
+          "model_calls": 0,
+          "terminal_type": "result",
+          "actual": {
+            "route": "chat",
+            "node": "chat",
+            "action": "cancel",
+            "status": null,
+            "operation": null,
+            "hp": null,
+            "inventory": null,
+            "inventory_complete": null,
+            "source": null,
+            "event": null,
+            "profile_revision": 1,
+            "backpack": {
+              "sulfur": 1000
+            },
+            "storage": {
+              "sulfur": 5000
+            },
+            "continues_task": false,
+            "working_task": false,
+            "calls": 0,
+            "error": null,
+            "result_kind": "chat",
+            "temporary_fields": [],
+            "task_id": "526b6e1a-cb8e-52cd-aadd-f923577b17e2",
+            "working_task_id": null
+          }
+        }
+      ]
+    },
+    {
+      "case_id": "explicit_empty",
+      "category": "inventory",
+      "passed": true,
+      "first_failed_turn": null,
+      "turns": [
+        {
+          "turn": 0,
+          "message": "/calc {\"operation\":\"craft\",\"goals\":{\"explosive.timed\":1},\"inventory\":{}}",
+          "checks": [
+            {
+              "field": "status",
+              "expected": "calculated",
+              "actual": "calculated",
+              "passed": true
+            },
+            {
+              "field": "inventory",
+              "expected": {},
+              "actual": {},
+              "passed": true
+            },
+            {
+              "field": "source",
+              "expected": "text",
+              "actual": "text",
+              "passed": true
+            },
+            {
+              "field": "terminal_type",
+              "expected": "result",
+              "actual": "result",
+              "passed": true
+            }
+          ],
+          "elapsed_ms": 8,
+          "model_calls": 0,
+          "terminal_type": "result",
+          "actual": {
+            "route": "simple_call",
+            "node": "calculate",
+            "action": "new",
+            "status": "calculated",
+            "operation": "craft",
+            "hp": null,
+            "inventory": {},
+            "inventory_complete": true,
+            "source": "text",
+            "event": null,
+            "profile_revision": 1,
+            "backpack": {
+              "sulfur": 1000
+            },
+            "storage": {
+              "sulfur": 5000
+            },
+            "continues_task": false,
+            "working_task": true,
+            "calls": 0,
+            "error": null,
+            "result_kind": "calculation",
+            "temporary_fields": [],
+            "task_id": "ad15dcd3-1244-503c-be20-7316a73d4ab6",
+            "working_task_id": "ad15dcd3-1244-503c-be20-7316a73d4ab6"
+          }
+        }
+      ]
+    },
+    {
+      "case_id": "unknown_inventory",
+      "category": "inventory",
+      "passed": true,
+      "first_failed_turn": null,
+      "turns": [
+        {
+          "turn": 0,
+          "message": "/calc {\"operation\":\"craft\",\"goals\":{\"explosive.timed\":1}}",
+          "checks": [
+            {
+              "field": "status",
+              "expected": "calculated",
+              "actual": "calculated",
+              "passed": true
+            },
+            {
+              "field": "inventory",
+              "expected": null,
+              "actual": null,
+              "passed": true
+            },
+            {
+              "field": "source",
+              "expected": "unknown",
+              "actual": "unknown",
+              "passed": true
+            },
+            {
+              "field": "terminal_type",
+              "expected": "result",
+              "actual": "result",
+              "passed": true
+            }
+          ],
+          "elapsed_ms": 8,
+          "model_calls": 0,
+          "terminal_type": "result",
+          "actual": {
+            "route": "simple_call",
+            "node": "calculate",
+            "action": "new",
+            "status": "calculated",
+            "operation": "craft",
+            "hp": null,
+            "inventory": null,
+            "inventory_complete": true,
+            "source": "unknown",
+            "event": null,
+            "profile_revision": 1,
+            "backpack": {
+              "sulfur": 1000
+            },
+            "storage": {
+              "sulfur": 5000
+            },
+            "continues_task": false,
+            "working_task": true,
+            "calls": 0,
+            "error": null,
+            "result_kind": "calculation",
+            "temporary_fields": [],
+            "task_id": "6041d391-65c0-574b-82f3-03ce80140c42",
+            "working_task_id": "6041d391-65c0-574b-82f3-03ce80140c42"
+          }
+        }
+      ]
+    },
+    {
+      "case_id": "profile_inventory",
+      "category": "inventory",
+      "passed": true,
+      "first_failed_turn": null,
+      "turns": [
+        {
+          "turn": 0,
+          "message": "/calc {\"operation\":\"craft\",\"goals\":{\"explosive.timed\":1}}",
+          "checks": [
+            {
+              "field": "inventory",
+              "expected": {
+                "sulfur": 1000
+              },
+              "actual": {
+                "sulfur": 1000
+              },
+              "passed": true
+            },
+            {
+              "field": "source",
+              "expected": "profile",
+              "actual": "profile",
+              "passed": true
+            },
+            {
+              "field": "terminal_type",
+              "expected": "result",
+              "actual": "result",
+              "passed": true
+            }
+          ],
+          "elapsed_ms": 8,
+          "model_calls": 0,
+          "terminal_type": "result",
+          "actual": {
+            "route": "simple_call",
+            "node": "calculate",
+            "action": "new",
+            "status": "calculated",
+            "operation": "craft",
+            "hp": null,
+            "inventory": {
+              "sulfur": 1000
+            },
+            "inventory_complete": true,
+            "source": "profile",
+            "event": null,
+            "profile_revision": 1,
+            "backpack": {
+              "sulfur": 1000
+            },
+            "storage": {
+              "sulfur": 5000
+            },
+            "continues_task": false,
+            "working_task": true,
+            "calls": 0,
+            "error": null,
+            "result_kind": "calculation",
+            "temporary_fields": [],
+            "task_id": "705c786d-7c48-51a0-a57c-45aa3dabc2ff",
+            "working_task_id": "705c786d-7c48-51a0-a57c-45aa3dabc2ff"
+          }
+        }
+      ]
+    },
+    {
+      "case_id": "partial_profile",
+      "category": "inventory",
+      "passed": true,
+      "first_failed_turn": null,
+      "turns": [
+        {
+          "turn": 0,
+          "message": "/calc {\"operation\":\"craft\",\"goals\":{\"explosive.timed\":1}}",
+          "checks": [
+            {
+              "field": "status",
+              "expected": "needs_input",
+              "actual": "needs_input",
+              "passed": true
+            },
+            {
+              "field": "error",
+              "expected": "player_inventory_incomplete",
+              "actual": "player_inventory_incomplete",
+              "passed": true
+            },
+            {
+              "field": "terminal_type",
+              "expected": "result",
+              "actual": "result",
+              "passed": true
+            }
+          ],
+          "elapsed_ms": 7,
+          "model_calls": 0,
+          "terminal_type": "result",
+          "actual": {
+            "route": "simple_call",
+            "node": "calculate",
+            "action": "new",
+            "status": "needs_input",
+            "operation": "craft",
+            "hp": null,
+            "inventory": null,
+            "inventory_complete": true,
+            "source": null,
+            "event": null,
+            "profile_revision": 1,
+            "backpack": {
+              "sulfur": 1000
+            },
+            "storage": {
+              "sulfur": 5000
+            },
+            "continues_task": false,
+            "working_task": true,
+            "calls": 0,
+            "error": "player_inventory_incomplete",
+            "result_kind": "calculation",
+            "temporary_fields": [],
+            "task_id": "0f950f77-ac29-5530-98d5-4823d64a6fcb",
+            "working_task_id": "0f950f77-ac29-5530-98d5-4823d64a6fcb"
+          }
+        }
+      ]
+    },
+    {
+      "case_id": "stale_profile",
+      "category": "inventory",
+      "passed": true,
+      "first_failed_turn": null,
+      "turns": [
+        {
+          "turn": 0,
+          "message": "/calc {\"operation\":\"craft\",\"goals\":{\"explosive.timed\":1}}",
+          "checks": [
+            {
+              "field": "status",
+              "expected": "needs_input",
+              "actual": "needs_input",
+              "passed": true
+            },
+            {
+              "field": "error",
+              "expected": "player_inventory_incomplete",
+              "actual": "player_inventory_incomplete",
+              "passed": true
+            },
+            {
+              "field": "terminal_type",
+              "expected": "result",
+              "actual": "result",
+              "passed": true
+            }
+          ],
+          "elapsed_ms": 7,
+          "model_calls": 0,
+          "terminal_type": "result",
+          "actual": {
+            "route": "simple_call",
+            "node": "calculate",
+            "action": "new",
+            "status": "needs_input",
+            "operation": "craft",
+            "hp": null,
+            "inventory": null,
+            "inventory_complete": true,
+            "source": null,
+            "event": null,
+            "profile_revision": 1,
+            "backpack": {
+              "sulfur": 1000
+            },
+            "storage": {
+              "sulfur": 5000
+            },
+            "continues_task": false,
+            "working_task": true,
+            "calls": 0,
+            "error": "player_inventory_incomplete",
+            "result_kind": "calculation",
+            "temporary_fields": [],
+            "task_id": "5f520609-13cb-5f37-a4ef-b48a9c3ee69e",
+            "working_task_id": "5f520609-13cb-5f37-a4ef-b48a9c3ee69e"
+          }
+        }
+      ]
+    },
+    {
+      "case_id": "text_profile_conflict",
+      "category": "inventory",
+      "passed": true,
+      "first_failed_turn": null,
+      "turns": [
+        {
+          "turn": 0,
+          "message": "/calc {\"operation\":\"craft\",\"goals\":{\"explosive.timed\":1},\"inventory\":{\"sulfur\":20}}",
+          "checks": [
+            {
+              "field": "status",
+              "expected": "needs_input",
+              "actual": "needs_input",
+              "passed": true
+            },
+            {
+              "field": "error",
+              "expected": "ambiguous_inventory",
+              "actual": "ambiguous_inventory",
+              "passed": true
+            },
+            {
+              "field": "terminal_type",
+              "expected": "result",
+              "actual": "result",
+              "passed": true
+            }
+          ],
+          "elapsed_ms": 7,
+          "model_calls": 0,
+          "terminal_type": "result",
+          "actual": {
+            "route": "simple_call",
+            "node": "calculate",
+            "action": "new",
+            "status": "needs_input",
+            "operation": "craft",
+            "hp": null,
+            "inventory": {
+              "sulfur": 20
+            },
+            "inventory_complete": true,
+            "source": null,
+            "event": null,
+            "profile_revision": 1,
+            "backpack": {
+              "sulfur": 1000
+            },
+            "storage": {
+              "sulfur": 5000
+            },
+            "continues_task": false,
+            "working_task": true,
+            "calls": 0,
+            "error": "ambiguous_inventory",
+            "result_kind": "calculation",
+            "temporary_fields": [],
+            "task_id": "f6e42eff-9a07-5598-940d-0c01f8b7b83e",
+            "working_task_id": "f6e42eff-9a07-5598-940d-0c01f8b7b83e"
+          }
+        }
+      ]
+    },
+    {
+      "case_id": "standard_raid",
+      "category": "route",
+      "passed": true,
+      "first_failed_turn": null,
+      "turns": [
+        {
+          "turn": 0,
+          "message": "拆一面石墙最省资源",
+          "checks": [
+            {
+              "field": "status",
+              "expected": "calculated",
+              "actual": "calculated",
+              "passed": true
+            },
+            {
+              "field": "operation",
+              "expected": "raid",
+              "actual": "raid",
+              "passed": true
+            },
+            {
+              "field": "hp",
+              "expected": null,
+              "actual": null,
+              "passed": true
+            },
+            {
+              "field": "calls",
+              "expected": 0,
+              "actual": 0,
+              "passed": true
+            },
+            {
+              "field": "terminal_type",
+              "expected": "result",
+              "actual": "result",
+              "passed": true
+            }
+          ],
+          "elapsed_ms": 10,
+          "model_calls": 0,
+          "terminal_type": "result",
+          "actual": {
+            "route": "simple_call",
+            "node": "calculate",
+            "action": "new",
+            "status": "calculated",
+            "operation": "raid",
+            "hp": null,
+            "inventory": null,
+            "inventory_complete": true,
+            "source": "unknown",
+            "event": null,
+            "profile_revision": 1,
+            "backpack": {
+              "sulfur": 1000
+            },
+            "storage": {
+              "sulfur": 5000
+            },
+            "continues_task": false,
+            "working_task": true,
+            "calls": 0,
+            "error": null,
+            "result_kind": "calculation",
+            "temporary_fields": [],
+            "task_id": "a6476e3c-8b14-5f0d-a90d-639875f095bf",
+            "working_task_id": "a6476e3c-8b14-5f0d-a90d-639875f095bf"
+          }
+        }
+      ]
+    },
+    {
+      "case_id": "standard_wood",
+      "category": "route",
+      "passed": true,
+      "first_failed_turn": null,
+      "turns": [
+        {
+          "turn": 0,
+          "message": "拆两面木墙最省资源",
+          "checks": [
+            {
+              "field": "status",
+              "expected": "calculated",
+              "actual": "calculated",
+              "passed": true
+            },
+            {
+              "field": "operation",
+              "expected": "raid",
+              "actual": "raid",
+              "passed": true
+            },
+            {
+              "field": "calls",
+              "expected": 0,
+              "actual": 0,
+              "passed": true
+            },
+            {
+              "field": "terminal_type",
+              "expected": "result",
+              "actual": "result",
+              "passed": true
+            }
+          ],
+          "elapsed_ms": 9,
+          "model_calls": 0,
+          "terminal_type": "result",
+          "actual": {
+            "route": "simple_call",
+            "node": "calculate",
+            "action": "new",
+            "status": "calculated",
+            "operation": "raid",
+            "hp": null,
+            "inventory": null,
+            "inventory_complete": true,
+            "source": "unknown",
+            "event": null,
+            "profile_revision": 1,
+            "backpack": {
+              "sulfur": 1000
+            },
+            "storage": {
+              "sulfur": 5000
+            },
+            "continues_task": false,
+            "working_task": true,
+            "calls": 0,
+            "error": null,
+            "result_kind": "calculation",
+            "temporary_fields": [],
+            "task_id": "0e7a7ee5-e895-5bc4-ae7e-1d12295f2da3",
+            "working_task_id": "0e7a7ee5-e895-5bc4-ae7e-1d12295f2da3"
+          }
+        }
+      ]
+    },
+    {
+      "case_id": "health_followup",
+      "category": "task",
+      "passed": true,
+      "first_failed_turn": null,
+      "turns": [
+        {
+          "turn": 0,
+          "message": "拆一面石墙最省资源",
+          "checks": [
+            {
+              "field": "operation",
+              "expected": "raid",
+              "actual": "raid",
+              "passed": true
+            },
+            {
+              "field": "terminal_type",
+              "expected": "result",
+              "actual": "result",
+              "passed": true
+            }
+          ],
+          "elapsed_ms": 9,
+          "model_calls": 0,
+          "terminal_type": "result",
+          "actual": {
+            "route": "simple_call",
+            "node": "calculate",
+            "action": "new",
+            "status": "calculated",
+            "operation": "raid",
+            "hp": null,
+            "inventory": null,
+            "inventory_complete": true,
+            "source": "unknown",
+            "event": null,
+            "profile_revision": 1,
+            "backpack": {
+              "sulfur": 1000
+            },
+            "storage": {
+              "sulfur": 5000
+            },
+            "continues_task": false,
+            "working_task": true,
+            "calls": 0,
+            "error": null,
+            "result_kind": "calculation",
+            "temporary_fields": [],
+            "task_id": "58aa0380-9d37-5185-9b58-b83991dc96cb",
+            "working_task_id": "58aa0380-9d37-5185-9b58-b83991dc96cb"
+          }
+        },
+        {
+          "turn": 1,
+          "message": "它还剩250血",
+          "checks": [
+            {
+              "field": "hp",
+              "expected": 250,
+              "actual": 250,
+              "passed": true
+            },
+            {
+              "field": "continues_task",
+              "expected": true,
+              "actual": true,
+              "passed": true
+            },
+            {
+              "field": "calls",
+              "expected": 0,
+              "actual": 0,
+              "passed": true
+            },
+            {
+              "field": "terminal_type",
+              "expected": "result",
+              "actual": "result",
+              "passed": true
+            }
+          ],
+          "elapsed_ms": 9,
+          "model_calls": 0,
+          "terminal_type": "result",
+          "actual": {
+            "route": "simple_call",
+            "node": "calculate",
+            "action": "continue",
+            "status": "calculated",
+            "operation": "raid",
+            "hp": 250,
+            "inventory": null,
+            "inventory_complete": true,
+            "source": "unknown",
+            "event": null,
+            "profile_revision": 1,
+            "backpack": {
+              "sulfur": 1000
+            },
+            "storage": {
+              "sulfur": 5000
+            },
+            "continues_task": true,
+            "working_task": true,
+            "calls": 0,
+            "error": null,
+            "result_kind": "calculation",
+            "temporary_fields": [],
+            "task_id": "58aa0380-9d37-5185-9b58-b83991dc96cb",
+            "working_task_id": "58aa0380-9d37-5185-9b58-b83991dc96cb"
+          }
+        }
+      ]
+    },
+    {
+      "case_id": "orphan_health",
+      "category": "task",
+      "passed": true,
+      "first_failed_turn": null,
+      "turns": [
+        {
+          "turn": 0,
+          "message": "它还剩250血",
+          "checks": [
+            {
+              "field": "status",
+              "expected": "needs_input",
+              "actual": "needs_input",
+              "passed": true
+            },
+            {
+              "field": "calls",
+              "expected": 0,
+              "actual": 0,
+              "passed": true
+            },
+            {
+              "field": "terminal_type",
+              "expected": "result",
+              "actual": "result",
+              "passed": true
+            }
+          ],
+          "elapsed_ms": 7,
+          "model_calls": 0,
+          "terminal_type": "result",
+          "actual": {
+            "route": "simple_call",
+            "node": "calculate",
+            "action": "clarify",
+            "status": "needs_input",
+            "operation": null,
+            "hp": null,
+            "inventory": null,
+            "inventory_complete": null,
+            "source": null,
+            "event": null,
+            "profile_revision": 1,
+            "backpack": {
+              "sulfur": 1000
+            },
+            "storage": {
+              "sulfur": 5000
+            },
+            "continues_task": false,
+            "working_task": true,
+            "calls": 0,
+            "error": null,
+            "result_kind": "calculation",
+            "temporary_fields": [],
+            "task_id": "8d0ce9e0-b28e-5fe2-9f42-88c477b4966d",
+            "working_task_id": "8d0ce9e0-b28e-5fe2-9f42-88c477b4966d"
+          }
+        }
+      ]
+    },
+    {
+      "case_id": "unknown_damaged_health",
+      "category": "task",
+      "passed": true,
+      "first_failed_turn": null,
+      "turns": [
+        {
+          "turn": 0,
+          "message": "拆受损石墙但不知道血量",
+          "checks": [
+            {
+              "field": "status",
+              "expected": "needs_input",
+              "actual": "needs_input",
+              "passed": true
+            },
+            {
+              "field": "calls",
+              "expected": 0,
+              "actual": 0,
+              "passed": true
+            },
+            {
+              "field": "terminal_type",
+              "expected": "result",
+              "actual": "result",
+              "passed": true
+            }
+          ],
+          "elapsed_ms": 7,
+          "model_calls": 0,
+          "terminal_type": "result",
+          "actual": {
+            "route": "simple_call",
+            "node": "calculate",
+            "action": "clarify",
+            "status": "needs_input",
+            "operation": null,
+            "hp": null,
+            "inventory": null,
+            "inventory_complete": null,
+            "source": null,
+            "event": null,
+            "profile_revision": 1,
+            "backpack": {
+              "sulfur": 1000
+            },
+            "storage": {
+              "sulfur": 5000
+            },
+            "continues_task": false,
+            "working_task": true,
+            "calls": 0,
+            "error": null,
+            "result_kind": "calculation",
+            "temporary_fields": [],
+            "task_id": "115e5474-5367-5502-a1fe-aff6826fc0ba",
+            "working_task_id": "115e5474-5367-5502-a1fe-aff6826fc0ba"
+          }
+        }
+      ]
+    },
+    {
+      "case_id": "mixed_task",
+      "category": "task",
+      "passed": true,
+      "first_failed_turn": null,
+      "turns": [
+        {
+          "turn": 0,
+          "message": "制作一个C4然后拆一面石墙",
+          "checks": [
+            {
+              "field": "status",
+              "expected": "needs_input",
+              "actual": "needs_input",
+              "passed": true
+            },
+            {
+              "field": "calls",
+              "expected": 0,
+              "actual": 0,
+              "passed": true
+            },
+            {
+              "field": "terminal_type",
+              "expected": "result",
+              "actual": "result",
+              "passed": true
+            }
+          ],
+          "elapsed_ms": 7,
+          "model_calls": 0,
+          "terminal_type": "result",
+          "actual": {
+            "route": "simple_call",
+            "node": "calculate",
+            "action": "clarify",
+            "status": "needs_input",
+            "operation": null,
+            "hp": null,
+            "inventory": null,
+            "inventory_complete": null,
+            "source": null,
+            "event": null,
+            "profile_revision": 1,
+            "backpack": {
+              "sulfur": 1000
+            },
+            "storage": {
+              "sulfur": 5000
+            },
+            "continues_task": false,
+            "working_task": true,
+            "calls": 0,
+            "error": null,
+            "result_kind": "calculation",
+            "temporary_fields": [],
+            "task_id": "d7513229-f130-5622-b306-72db506b4f23",
+            "working_task_id": "d7513229-f130-5622-b306-72db506b4f23"
+          }
+        }
+      ]
+    },
+    {
+      "case_id": "invalid_schema",
+      "category": "failure",
+      "passed": true,
+      "first_failed_turn": null,
+      "turns": [
+        {
+          "turn": 0,
+          "message": "/calc {\"operation\":\"craft\",\"goals\":{\"explosive.timed\":-1}}",
+          "checks": [
+            {
+              "field": "status",
+              "expected": "needs_input",
+              "actual": "needs_input",
+              "passed": true
+            },
+            {
+              "field": "calls",
+              "expected": 0,
+              "actual": 0,
+              "passed": true
+            },
+            {
+              "field": "terminal_type",
+              "expected": "result",
+              "actual": "result",
+              "passed": true
+            }
+          ],
+          "elapsed_ms": 7,
+          "model_calls": 0,
+          "terminal_type": "result",
+          "actual": {
+            "route": "simple_call",
+            "node": "calculate",
+            "action": "clarify",
+            "status": "needs_input",
+            "operation": null,
+            "hp": null,
+            "inventory": null,
+            "inventory_complete": null,
+            "source": null,
+            "event": null,
+            "profile_revision": 1,
+            "backpack": {
+              "sulfur": 1000
+            },
+            "storage": {
+              "sulfur": 5000
+            },
+            "continues_task": false,
+            "working_task": true,
+            "calls": 0,
+            "error": null,
+            "result_kind": "calculation",
+            "temporary_fields": [],
+            "task_id": "854903bb-270a-537b-bf19-cd4d0451f63e",
+            "working_task_id": "854903bb-270a-537b-bf19-cd4d0451f63e"
+          }
+        }
+      ]
+    },
+    {
+      "case_id": "unsupported_rule",
+      "category": "failure",
+      "passed": true,
+      "first_failed_turn": null,
+      "turns": [
+        {
+          "turn": 0,
+          "message": "修改服的石墙怎么拆",
+          "checks": [
+            {
+              "field": "status",
+              "expected": "needs_input",
+              "actual": "needs_input",
+              "passed": true
+            },
+            {
+              "field": "terminal_type",
+              "expected": "result",
+              "actual": "result",
+              "passed": true
+            }
+          ],
+          "elapsed_ms": 7,
+          "model_calls": 1,
+          "terminal_type": "result",
+          "actual": {
+            "route": "simple_call",
+            "node": "calculate",
+            "action": "clarify",
+            "status": "needs_input",
+            "operation": null,
+            "hp": null,
+            "inventory": null,
+            "inventory_complete": null,
+            "source": null,
+            "event": null,
+            "profile_revision": 1,
+            "backpack": {
+              "sulfur": 1000
+            },
+            "storage": {
+              "sulfur": 5000
+            },
+            "continues_task": false,
+            "working_task": true,
+            "calls": 1,
+            "error": null,
+            "result_kind": "calculation",
+            "temporary_fields": [],
+            "task_id": "26ee8493-6b88-53ba-9c32-b93384bc4db0",
+            "working_task_id": "26ee8493-6b88-53ba-9c32-b93384bc4db0"
+          }
+        }
+      ]
+    },
+    {
+      "case_id": "craft_to_raid",
+      "category": "task",
+      "passed": true,
+      "first_failed_turn": null,
+      "turns": [
+        {
+          "turn": 0,
+          "message": "/calc {\"operation\":\"craft\",\"goals\":{\"explosive.timed\":1}}",
+          "checks": [
+            {
+              "field": "operation",
+              "expected": "craft",
+              "actual": "craft",
+              "passed": true
+            },
+            {
+              "field": "terminal_type",
+              "expected": "result",
+              "actual": "result",
+              "passed": true
+            }
+          ],
+          "elapsed_ms": 10,
+          "model_calls": 0,
+          "terminal_type": "result",
+          "actual": {
+            "route": "simple_call",
+            "node": "calculate",
+            "action": "new",
+            "status": "calculated",
+            "operation": "craft",
+            "hp": null,
+            "inventory": null,
+            "inventory_complete": true,
+            "source": "unknown",
+            "event": null,
+            "profile_revision": 1,
+            "backpack": {
+              "sulfur": 1000
+            },
+            "storage": {
+              "sulfur": 5000
+            },
+            "continues_task": false,
+            "working_task": true,
+            "calls": 0,
+            "error": null,
+            "result_kind": "calculation",
+            "temporary_fields": [],
+            "task_id": "73ce434b-d6f7-5625-9974-51e50aa4639b",
+            "working_task_id": "73ce434b-d6f7-5625-9974-51e50aa4639b"
+          }
+        },
+        {
+          "turn": 1,
+          "message": "改成拆一面石墙最省资源",
+          "checks": [
+            {
+              "field": "operation",
+              "expected": "raid",
+              "actual": "raid",
+              "passed": true
+            },
+            {
+              "field": "action",
+              "expected": "switch",
+              "actual": "switch",
+              "passed": true
+            },
+            {
+              "field": "continues_task",
+              "expected": false,
+              "actual": false,
+              "passed": true
+            },
+            {
+              "field": "terminal_type",
+              "expected": "result",
+              "actual": "result",
+              "passed": true
+            }
+          ],
+          "elapsed_ms": 10,
+          "model_calls": 0,
+          "terminal_type": "result",
+          "actual": {
+            "route": "simple_call",
+            "node": "calculate",
+            "action": "switch",
+            "status": "calculated",
+            "operation": "raid",
+            "hp": null,
+            "inventory": null,
+            "inventory_complete": true,
+            "source": "unknown",
+            "event": null,
+            "profile_revision": 1,
+            "backpack": {
+              "sulfur": 1000
+            },
+            "storage": {
+              "sulfur": 5000
+            },
+            "continues_task": false,
+            "working_task": true,
+            "calls": 0,
+            "error": null,
+            "result_kind": "calculation",
+            "temporary_fields": [],
+            "task_id": "e73e8dcc-84df-5851-9df3-b29f7945a19e",
+            "working_task_id": "e73e8dcc-84df-5851-9df3-b29f7945a19e"
+          }
+        }
+      ]
+    },
+    {
+      "case_id": "raid_to_craft",
+      "category": "task",
+      "passed": true,
+      "first_failed_turn": null,
+      "turns": [
+        {
+          "turn": 0,
+          "message": "拆一面石墙最省资源",
+          "checks": [
+            {
+              "field": "operation",
+              "expected": "raid",
+              "actual": "raid",
+              "passed": true
+            },
+            {
+              "field": "terminal_type",
+              "expected": "result",
+              "actual": "result",
+              "passed": true
+            }
+          ],
+          "elapsed_ms": 10,
+          "model_calls": 0,
+          "terminal_type": "result",
+          "actual": {
+            "route": "simple_call",
+            "node": "calculate",
+            "action": "new",
+            "status": "calculated",
+            "operation": "raid",
+            "hp": null,
+            "inventory": null,
+            "inventory_complete": true,
+            "source": "unknown",
+            "event": null,
+            "profile_revision": 1,
+            "backpack": {
+              "sulfur": 1000
+            },
+            "storage": {
+              "sulfur": 5000
+            },
+            "continues_task": false,
+            "working_task": true,
+            "calls": 0,
+            "error": null,
+            "result_kind": "calculation",
+            "temporary_fields": [],
+            "task_id": "1c8b3a09-1b42-59f8-9ca9-cd0a360fae5a",
+            "working_task_id": "1c8b3a09-1b42-59f8-9ca9-cd0a360fae5a"
+          }
+        },
+        {
+          "turn": 1,
+          "message": "改成制作两个C4",
+          "checks": [
+            {
+              "field": "operation",
+              "expected": "craft",
+              "actual": "craft",
+              "passed": true
+            },
+            {
+              "field": "action",
+              "expected": "switch",
+              "actual": "switch",
+              "passed": true
+            },
+            {
+              "field": "continues_task",
+              "expected": false,
+              "actual": false,
+              "passed": true
+            },
+            {
+              "field": "terminal_type",
+              "expected": "result",
+              "actual": "result",
+              "passed": true
+            }
+          ],
+          "elapsed_ms": 10,
+          "model_calls": 1,
+          "terminal_type": "result",
+          "actual": {
+            "route": "simple_call",
+            "node": "calculate",
+            "action": "switch",
+            "status": "calculated",
+            "operation": "craft",
+            "hp": null,
+            "inventory": null,
+            "inventory_complete": true,
+            "source": "unknown",
+            "event": null,
+            "profile_revision": 1,
+            "backpack": {
+              "sulfur": 1000
+            },
+            "storage": {
+              "sulfur": 5000
+            },
+            "continues_task": false,
+            "working_task": true,
+            "calls": 1,
+            "error": null,
+            "result_kind": "calculation",
+            "temporary_fields": [],
+            "task_id": "cf54e388-f991-5696-b892-2f3a9b7a5fb3",
+            "working_task_id": "cf54e388-f991-5696-b892-2f3a9b7a5fb3"
+          }
+        }
+      ]
+    },
+    {
+      "case_id": "interleaved_chat",
+      "category": "task",
+      "passed": true,
+      "first_failed_turn": null,
+      "turns": [
+        {
+          "turn": 0,
+          "message": "拆一面石墙最省资源",
+          "checks": [
+            {
+              "field": "operation",
+              "expected": "raid",
+              "actual": "raid",
+              "passed": true
+            },
+            {
+              "field": "terminal_type",
+              "expected": "result",
+              "actual": "result",
+              "passed": true
+            }
+          ],
+          "elapsed_ms": 9,
+          "model_calls": 0,
+          "terminal_type": "result",
+          "actual": {
+            "route": "simple_call",
+            "node": "calculate",
+            "action": "new",
+            "status": "calculated",
+            "operation": "raid",
+            "hp": null,
+            "inventory": null,
+            "inventory_complete": true,
+            "source": "unknown",
+            "event": null,
+            "profile_revision": 1,
+            "backpack": {
+              "sulfur": 1000
+            },
+            "storage": {
+              "sulfur": 5000
+            },
+            "continues_task": false,
+            "working_task": true,
+            "calls": 0,
+            "error": null,
+            "result_kind": "calculation",
+            "temporary_fields": [],
+            "task_id": "11a51c14-9349-5bb3-a36e-97257e4a1c3f",
+            "working_task_id": "11a51c14-9349-5bb3-a36e-97257e4a1c3f"
+          }
+        },
+        {
+          "turn": 1,
+          "message": "谢谢",
+          "checks": [
+            {
+              "field": "route",
+              "expected": "chat",
+              "actual": "chat",
+              "passed": true
+            },
+            {
+              "field": "calls",
+              "expected": 1,
+              "actual": 1,
+              "passed": true
+            },
+            {
+              "field": "terminal_type",
+              "expected": "result",
+              "actual": "result",
+              "passed": true
+            }
+          ],
+          "elapsed_ms": 8,
+          "model_calls": 1,
+          "terminal_type": "result",
+          "actual": {
+            "route": "chat",
+            "node": "chat",
+            "action": "continue",
+            "status": null,
+            "operation": null,
+            "hp": null,
+            "inventory": null,
+            "inventory_complete": null,
+            "source": null,
+            "event": null,
+            "profile_revision": 1,
+            "backpack": {
+              "sulfur": 1000
+            },
+            "storage": {
+              "sulfur": 5000
+            },
+            "continues_task": false,
+            "working_task": true,
+            "calls": 1,
+            "error": null,
+            "result_kind": "chat",
+            "temporary_fields": [],
+            "task_id": "c72a6033-3145-5f05-a0c1-bbe2a37e136d",
+            "working_task_id": "11a51c14-9349-5bb3-a36e-97257e4a1c3f"
+          }
+        },
+        {
+          "turn": 2,
+          "message": "它还剩250血",
+          "checks": [
+            {
+              "field": "hp",
+              "expected": 250,
+              "actual": 250,
+              "passed": true
+            },
+            {
+              "field": "continues_task",
+              "expected": true,
+              "actual": true,
+              "passed": true
+            },
+            {
+              "field": "calls",
+              "expected": 0,
+              "actual": 0,
+              "passed": true
+            },
+            {
+              "field": "terminal_type",
+              "expected": "result",
+              "actual": "result",
+              "passed": true
+            }
+          ],
+          "elapsed_ms": 11,
+          "model_calls": 0,
+          "terminal_type": "result",
+          "actual": {
+            "route": "simple_call",
+            "node": "calculate",
+            "action": "continue",
+            "status": "calculated",
+            "operation": "raid",
+            "hp": 250,
+            "inventory": null,
+            "inventory_complete": true,
+            "source": "unknown",
+            "event": null,
+            "profile_revision": 1,
+            "backpack": {
+              "sulfur": 1000
+            },
+            "storage": {
+              "sulfur": 5000
+            },
+            "continues_task": true,
+            "working_task": true,
+            "calls": 0,
+            "error": null,
+            "result_kind": "calculation",
+            "temporary_fields": [],
+            "task_id": "11a51c14-9349-5bb3-a36e-97257e4a1c3f",
+            "working_task_id": "11a51c14-9349-5bb3-a36e-97257e4a1c3f"
+          }
+        }
+      ]
+    },
+    {
+      "case_id": "death",
+      "category": "event",
+      "passed": true,
+      "first_failed_turn": null,
+      "turns": [
+        {
+          "turn": 0,
+          "message": "我刚死了，背包丢了",
+          "checks": [
+            {
+              "field": "event",
+              "expected": "death",
+              "actual": "death",
+              "passed": true
+            },
+            {
+              "field": "backpack",
+              "expected": {},
+              "actual": {},
+              "passed": true
+            },
+            {
+              "field": "storage",
+              "expected": {
+                "sulfur": 5000
+              },
+              "actual": {
+                "sulfur": 5000
+              },
+              "passed": true
+            },
+            {
+              "field": "profile_revision",
+              "expected": 2,
+              "actual": 2,
+              "passed": true
+            },
+            {
+              "field": "calls",
+              "expected": 0,
+              "actual": 0,
+              "passed": true
+            },
+            {
+              "field": "terminal_type",
+              "expected": "result",
+              "actual": "result",
+              "passed": true
+            }
+          ],
+          "elapsed_ms": 8,
+          "model_calls": 0,
+          "terminal_type": "result",
+          "actual": {
+            "route": "state",
+            "node": "player_state",
+            "action": "inspect",
+            "status": null,
+            "operation": null,
+            "hp": null,
+            "inventory": null,
+            "inventory_complete": null,
+            "source": null,
+            "event": "death",
+            "profile_revision": 2,
+            "backpack": {},
+            "storage": {
+              "sulfur": 5000
+            },
+            "continues_task": false,
+            "working_task": false,
+            "calls": 0,
+            "error": null,
+            "result_kind": "state",
+            "temporary_fields": [],
+            "task_id": "92314759-5db4-51d8-ac2b-dbeb981219e8",
+            "working_task_id": null
+          }
+        }
+      ]
+    },
+    {
+      "case_id": "death_cross_conversation",
+      "category": "event",
+      "passed": true,
+      "first_failed_turn": null,
+      "turns": [
+        {
+          "turn": 0,
+          "message": "我刚死了，背包丢了",
+          "checks": [
+            {
+              "field": "backpack",
+              "expected": {},
+              "actual": {},
+              "passed": true
+            },
+            {
+              "field": "terminal_type",
+              "expected": "result",
+              "actual": "result",
+              "passed": true
+            }
+          ],
+          "elapsed_ms": 7,
+          "model_calls": 0,
+          "terminal_type": "result",
+          "actual": {
+            "route": "state",
+            "node": "player_state",
+            "action": "inspect",
+            "status": null,
+            "operation": null,
+            "hp": null,
+            "inventory": null,
+            "inventory_complete": null,
+            "source": null,
+            "event": "death",
+            "profile_revision": 2,
+            "backpack": {},
+            "storage": {
+              "sulfur": 5000
+            },
+            "continues_task": false,
+            "working_task": false,
+            "calls": 0,
+            "error": null,
+            "result_kind": "state",
+            "temporary_fields": [],
+            "task_id": "2825696b-1df6-5def-bdc6-4504cfff56cd",
+            "working_task_id": null
+          }
+        },
+        {
+          "turn": 1,
+          "message": "/calc {\"operation\":\"craft\",\"goals\":{\"explosive.timed\":1}}",
+          "checks": [
+            {
+              "field": "inventory",
+              "expected": {},
+              "actual": {},
+              "passed": true
+            },
+            {
+              "field": "source",
+              "expected": "profile",
+              "actual": "profile",
+              "passed": true
+            },
+            {
+              "field": "profile_revision",
+              "expected": 2,
+              "actual": 2,
+              "passed": true
+            },
+            {
+              "field": "terminal_type",
+              "expected": "result",
+              "actual": "result",
+              "passed": true
+            }
+          ],
+          "elapsed_ms": 8,
+          "model_calls": 0,
+          "terminal_type": "result",
+          "actual": {
+            "route": "simple_call",
+            "node": "calculate",
+            "action": "new",
+            "status": "calculated",
+            "operation": "craft",
+            "hp": null,
+            "inventory": {},
+            "inventory_complete": true,
+            "source": "profile",
+            "event": null,
+            "profile_revision": 2,
+            "backpack": {},
+            "storage": {
+              "sulfur": 5000
+            },
+            "continues_task": false,
+            "working_task": true,
+            "calls": 0,
+            "error": null,
+            "result_kind": "calculation",
+            "temporary_fields": [],
+            "task_id": "91345959-cc5d-5878-afa2-a6e7b1f9aa77",
+            "working_task_id": "91345959-cc5d-5878-afa2-a6e7b1f9aa77"
+          }
+        }
+      ]
+    },
+    {
+      "case_id": "historical_death",
+      "category": "event",
+      "passed": true,
+      "first_failed_turn": null,
+      "turns": [
+        {
+          "turn": 0,
+          "message": "昨天我死了",
+          "checks": [
+            {
+              "field": "event",
+              "expected": null,
+              "actual": null,
+              "passed": true
+            },
+            {
+              "field": "backpack",
+              "expected": {
+                "sulfur": 1000
+              },
+              "actual": {
+                "sulfur": 1000
+              },
+              "passed": true
+            },
+            {
+              "field": "profile_revision",
+              "expected": 1,
+              "actual": 1,
+              "passed": true
+            },
+            {
+              "field": "terminal_type",
+              "expected": "result",
+              "actual": "result",
+              "passed": true
+            }
+          ],
+          "elapsed_ms": 7,
+          "model_calls": 1,
+          "terminal_type": "result",
+          "actual": {
+            "route": "chat",
+            "node": "chat",
+            "action": "new",
+            "status": null,
+            "operation": null,
+            "hp": null,
+            "inventory": null,
+            "inventory_complete": null,
+            "source": null,
+            "event": null,
+            "profile_revision": 1,
+            "backpack": {
+              "sulfur": 1000
+            },
+            "storage": {
+              "sulfur": 5000
+            },
+            "continues_task": false,
+            "working_task": false,
+            "calls": 1,
+            "error": null,
+            "result_kind": "chat",
+            "temporary_fields": [],
+            "task_id": "8836e816-d3f2-5f43-8dab-69bd273d7d5c",
+            "working_task_id": null
+          }
+        }
+      ]
+    },
+    {
+      "case_id": "hypothetical_death",
+      "category": "event",
+      "passed": true,
+      "first_failed_turn": null,
+      "turns": [
+        {
+          "turn": 0,
+          "message": "假如我死了",
+          "checks": [
+            {
+              "field": "event",
+              "expected": null,
+              "actual": null,
+              "passed": true
+            },
+            {
+              "field": "profile_revision",
+              "expected": 1,
+              "actual": 1,
+              "passed": true
+            },
+            {
+              "field": "terminal_type",
+              "expected": "result",
+              "actual": "result",
+              "passed": true
+            }
+          ],
+          "elapsed_ms": 7,
+          "model_calls": 1,
+          "terminal_type": "result",
+          "actual": {
+            "route": "chat",
+            "node": "chat",
+            "action": "new",
+            "status": null,
+            "operation": null,
+            "hp": null,
+            "inventory": null,
+            "inventory_complete": null,
+            "source": null,
+            "event": null,
+            "profile_revision": 1,
+            "backpack": {
+              "sulfur": 1000
+            },
+            "storage": {
+              "sulfur": 5000
+            },
+            "continues_task": false,
+            "working_task": false,
+            "calls": 1,
+            "error": null,
+            "result_kind": "chat",
+            "temporary_fields": [],
+            "task_id": "b645e614-0ea5-5823-9443-eb9e11f9ebdb",
+            "working_task_id": null
+          }
+        }
+      ]
+    },
+    {
+      "case_id": "negated_death",
+      "category": "event",
+      "passed": true,
+      "first_failed_turn": null,
+      "turns": [
+        {
+          "turn": 0,
+          "message": "我没死",
+          "checks": [
+            {
+              "field": "event",
+              "expected": null,
+              "actual": null,
+              "passed": true
+            },
+            {
+              "field": "profile_revision",
+              "expected": 1,
+              "actual": 1,
+              "passed": true
+            },
+            {
+              "field": "terminal_type",
+              "expected": "result",
+              "actual": "result",
+              "passed": true
+            }
+          ],
+          "elapsed_ms": 7,
+          "model_calls": 1,
+          "terminal_type": "result",
+          "actual": {
+            "route": "chat",
+            "node": "chat",
+            "action": "new",
+            "status": null,
+            "operation": null,
+            "hp": null,
+            "inventory": null,
+            "inventory_complete": null,
+            "source": null,
+            "event": null,
+            "profile_revision": 1,
+            "backpack": {
+              "sulfur": 1000
+            },
+            "storage": {
+              "sulfur": 5000
+            },
+            "continues_task": false,
+            "working_task": false,
+            "calls": 1,
+            "error": null,
+            "result_kind": "chat",
+            "temporary_fields": [],
+            "task_id": "b565b270-fae6-5ad7-817b-eaffca39a2ab",
+            "working_task_id": null
+          }
+        }
+      ]
+    },
+    {
+      "case_id": "server_change",
+      "category": "event",
+      "passed": true,
+      "first_failed_turn": null,
+      "turns": [
+        {
+          "turn": 0,
+          "message": "拆一面石墙最省资源",
+          "checks": [
+            {
+              "field": "operation",
+              "expected": "raid",
+              "actual": "raid",
+              "passed": true
+            },
+            {
+              "field": "terminal_type",
+              "expected": "result",
+              "actual": "result",
+              "passed": true
+            }
+          ],
+          "elapsed_ms": 10,
+          "model_calls": 0,
+          "terminal_type": "result",
+          "actual": {
+            "route": "simple_call",
+            "node": "calculate",
+            "action": "new",
+            "status": "calculated",
+            "operation": "raid",
+            "hp": null,
+            "inventory": null,
+            "inventory_complete": true,
+            "source": "unknown",
+            "event": null,
+            "profile_revision": 1,
+            "backpack": {
+              "sulfur": 1000
+            },
+            "storage": {
+              "sulfur": 5000
+            },
+            "continues_task": false,
+            "working_task": true,
+            "calls": 0,
+            "error": null,
+            "result_kind": "calculation",
+            "temporary_fields": [],
+            "task_id": "1ad316b7-e491-506b-82b0-8a87156ccfba",
+            "working_task_id": "1ad316b7-e491-506b-82b0-8a87156ccfba"
+          }
+        },
+        {
+          "turn": 1,
+          "message": "我换服了",
+          "checks": [
+            {
+              "field": "event",
+              "expected": "scope_changed",
+              "actual": "scope_changed",
+              "passed": true
+            },
+            {
+              "field": "profile_revision",
+              "expected": 1,
+              "actual": 1,
+              "passed": true
+            },
+            {
+              "field": "terminal_type",
+              "expected": "result",
+              "actual": "result",
+              "passed": true
+            }
+          ],
+          "elapsed_ms": 8,
+          "model_calls": 0,
+          "terminal_type": "result",
+          "actual": {
+            "route": "state",
+            "node": "player_state",
+            "action": "inspect",
+            "status": null,
+            "operation": null,
+            "hp": null,
+            "inventory": null,
+            "inventory_complete": null,
+            "source": null,
+            "event": "scope_changed",
+            "profile_revision": 1,
+            "backpack": {
+              "sulfur": 1000
+            },
+            "storage": {
+              "sulfur": 5000
+            },
+            "continues_task": false,
+            "working_task": false,
+            "calls": 0,
+            "error": null,
+            "result_kind": "state",
+            "temporary_fields": [],
+            "task_id": "3fd55caf-0807-56e5-8fcc-3fd9259ce62c",
+            "working_task_id": null
+          }
+        },
+        {
+          "turn": 2,
+          "message": "它还剩250血",
+          "checks": [
+            {
+              "field": "status",
+              "expected": "needs_input",
+              "actual": "needs_input",
+              "passed": true
+            },
+            {
+              "field": "continues_task",
+              "expected": false,
+              "actual": false,
+              "passed": true
+            },
+            {
+              "field": "terminal_type",
+              "expected": "result",
+              "actual": "result",
+              "passed": true
+            }
+          ],
+          "elapsed_ms": 7,
+          "model_calls": 0,
+          "terminal_type": "result",
+          "actual": {
+            "route": "simple_call",
+            "node": "calculate",
+            "action": "clarify",
+            "status": "needs_input",
+            "operation": null,
+            "hp": null,
+            "inventory": null,
+            "inventory_complete": null,
+            "source": null,
+            "event": null,
+            "profile_revision": 1,
+            "backpack": {
+              "sulfur": 1000
+            },
+            "storage": {
+              "sulfur": 5000
+            },
+            "continues_task": false,
+            "working_task": true,
+            "calls": 0,
+            "error": null,
+            "result_kind": "calculation",
+            "temporary_fields": [],
+            "task_id": "1dea687d-53a8-57b6-9093-41df8d6f39fb",
+            "working_task_id": "1dea687d-53a8-57b6-9093-41df8d6f39fb"
+          }
+        }
+      ]
+    },
+    {
+      "case_id": "image_inventory",
+      "category": "image",
+      "passed": true,
+      "first_failed_turn": null,
+      "turns": [
+        {
+          "turn": 0,
+          "message": "截图制作一个C4",
+          "checks": [
+            {
+              "field": "status",
+              "expected": "calculated",
+              "actual": "calculated",
+              "passed": true
+            },
+            {
+              "field": "inventory",
+              "expected": {
+                "sulfur": 100
+              },
+              "actual": {
+                "sulfur": 100
+              },
+              "passed": true
+            },
+            {
+              "field": "source",
+              "expected": "image_inferred",
+              "actual": "image_inferred",
+              "passed": true
+            },
+            {
+              "field": "calls",
+              "expected": 1,
+              "actual": 1,
+              "passed": true
+            },
+            {
+              "field": "terminal_type",
+              "expected": "result",
+              "actual": "result",
+              "passed": true
+            }
+          ],
+          "elapsed_ms": 12,
+          "model_calls": 1,
+          "terminal_type": "result",
+          "actual": {
+            "route": "simple_call",
+            "node": "calculate",
+            "action": "new",
+            "status": "calculated",
+            "operation": "craft",
+            "hp": null,
+            "inventory": {
+              "sulfur": 100
+            },
+            "inventory_complete": true,
+            "source": "image_inferred",
+            "event": null,
+            "profile_revision": 1,
+            "backpack": {
+              "sulfur": 1000
+            },
+            "storage": {
+              "sulfur": 5000
+            },
+            "continues_task": false,
+            "working_task": true,
+            "calls": 1,
+            "error": null,
+            "result_kind": "calculation",
+            "temporary_fields": [],
+            "task_id": "6acbfb0b-4e5f-5bc6-a4b3-1702949905e6",
+            "working_task_id": "6acbfb0b-4e5f-5bc6-a4b3-1702949905e6"
+          }
+        }
+      ]
+    },
+    {
+      "case_id": "image_unknown_identity",
+      "category": "image",
+      "passed": true,
+      "first_failed_turn": null,
+      "turns": [
+        {
+          "turn": 0,
+          "message": "截图制作一个C4",
+          "checks": [
+            {
+              "field": "inventory",
+              "expected": null,
+              "actual": null,
+              "passed": true
+            },
+            {
+              "field": "inventory_complete",
+              "expected": false,
+              "actual": false,
+              "passed": true
+            },
+            {
+              "field": "terminal_type",
+              "expected": "result",
+              "actual": "result",
+              "passed": true
+            }
+          ],
+          "elapsed_ms": 13,
+          "model_calls": 1,
+          "terminal_type": "result",
+          "actual": {
+            "route": "simple_call",
+            "node": "calculate",
+            "action": "new",
+            "status": "calculated",
+            "operation": "craft",
+            "hp": null,
+            "inventory": null,
+            "inventory_complete": false,
+            "source": "unknown",
+            "event": null,
+            "profile_revision": 1,
+            "backpack": {
+              "sulfur": 1000
+            },
+            "storage": {
+              "sulfur": 5000
+            },
+            "continues_task": false,
+            "working_task": true,
+            "calls": 1,
+            "error": null,
+            "result_kind": "calculation",
+            "temporary_fields": [],
+            "task_id": "1b094fc0-b024-547e-9784-6603fc259a0f",
+            "working_task_id": "1b094fc0-b024-547e-9784-6603fc259a0f"
+          }
+        }
+      ]
+    },
+    {
+      "case_id": "image_unknown_quantity",
+      "category": "image",
+      "passed": true,
+      "first_failed_turn": null,
+      "turns": [
+        {
+          "turn": 0,
+          "message": "截图制作一个C4",
+          "checks": [
+            {
+              "field": "inventory",
+              "expected": null,
+              "actual": null,
+              "passed": true
+            },
+            {
+              "field": "inventory_complete",
+              "expected": false,
+              "actual": false,
+              "passed": true
+            },
+            {
+              "field": "terminal_type",
+              "expected": "result",
+              "actual": "result",
+              "passed": true
+            }
+          ],
+          "elapsed_ms": 12,
+          "model_calls": 1,
+          "terminal_type": "result",
+          "actual": {
+            "route": "simple_call",
+            "node": "calculate",
+            "action": "new",
+            "status": "calculated",
+            "operation": "craft",
+            "hp": null,
+            "inventory": null,
+            "inventory_complete": false,
+            "source": "unknown",
+            "event": null,
+            "profile_revision": 1,
+            "backpack": {
+              "sulfur": 1000
+            },
+            "storage": {
+              "sulfur": 5000
+            },
+            "continues_task": false,
+            "working_task": true,
+            "calls": 1,
+            "error": null,
+            "result_kind": "calculation",
+            "temporary_fields": [],
+            "task_id": "7f13b650-6627-57cc-b316-1e188252cd8b",
+            "working_task_id": "7f13b650-6627-57cc-b316-1e188252cd8b"
+          }
+        }
+      ]
+    },
+    {
+      "case_id": "partial_image",
+      "category": "image",
+      "passed": true,
+      "first_failed_turn": null,
+      "turns": [
+        {
+          "turn": 0,
+          "message": "截图制作一个C4",
+          "checks": [
+            {
+              "field": "inventory",
+              "expected": {
+                "sulfur": 100
+              },
+              "actual": {
+                "sulfur": 100
+              },
+              "passed": true
+            },
+            {
+              "field": "inventory_complete",
+              "expected": false,
+              "actual": false,
+              "passed": true
+            },
+            {
+              "field": "terminal_type",
+              "expected": "result",
+              "actual": "result",
+              "passed": true
+            }
+          ],
+          "elapsed_ms": 13,
+          "model_calls": 1,
+          "terminal_type": "result",
+          "actual": {
+            "route": "simple_call",
+            "node": "calculate",
+            "action": "new",
+            "status": "calculated",
+            "operation": "craft",
+            "hp": null,
+            "inventory": {
+              "sulfur": 100
+            },
+            "inventory_complete": false,
+            "source": "image_inferred",
+            "event": null,
+            "profile_revision": 1,
+            "backpack": {
+              "sulfur": 1000
+            },
+            "storage": {
+              "sulfur": 5000
+            },
+            "continues_task": false,
+            "working_task": true,
+            "calls": 1,
+            "error": null,
+            "result_kind": "calculation",
+            "temporary_fields": [],
+            "task_id": "fc35cd3c-2ef6-5cea-92cb-07ca6c1cfa4a",
+            "working_task_id": "fc35cd3c-2ef6-5cea-92cb-07ca6c1cfa4a"
+          }
+        }
+      ]
+    },
+    {
+      "case_id": "opponent_image",
+      "category": "image",
+      "passed": true,
+      "first_failed_turn": null,
+      "turns": [
+        {
+          "turn": 0,
+          "message": "截图制作一个C4",
+          "checks": [
+            {
+              "field": "inventory",
+              "expected": null,
+              "actual": null,
+              "passed": true
+            },
+            {
+              "field": "source",
+              "expected": "unknown",
+              "actual": "unknown",
+              "passed": true
+            },
+            {
+              "field": "terminal_type",
+              "expected": "result",
+              "actual": "result",
+              "passed": true
+            }
+          ],
+          "elapsed_ms": 12,
+          "model_calls": 1,
+          "terminal_type": "result",
+          "actual": {
+            "route": "simple_call",
+            "node": "calculate",
+            "action": "new",
+            "status": "calculated",
+            "operation": "craft",
+            "hp": null,
+            "inventory": null,
+            "inventory_complete": false,
+            "source": "unknown",
+            "event": null,
+            "profile_revision": 1,
+            "backpack": {
+              "sulfur": 1000
+            },
+            "storage": {
+              "sulfur": 5000
+            },
+            "continues_task": false,
+            "working_task": true,
+            "calls": 1,
+            "error": null,
+            "result_kind": "calculation",
+            "temporary_fields": [],
+            "task_id": "f97c6d17-e2d7-5aa0-995e-fa103311cabb",
+            "working_task_id": "f97c6d17-e2d7-5aa0-995e-fa103311cabb"
+          }
+        }
+      ]
+    },
+    {
+      "case_id": "expired_image",
+      "category": "image",
+      "passed": true,
+      "first_failed_turn": null,
+      "turns": [
+        {
+          "turn": 0,
+          "message": "截图制作一个C4",
+          "checks": [
+            {
+              "field": "inventory",
+              "expected": null,
+              "actual": null,
+              "passed": true
+            },
+            {
+              "field": "source",
+              "expected": "unknown",
+              "actual": "unknown",
+              "passed": true
+            },
+            {
+              "field": "terminal_type",
+              "expected": "result",
+              "actual": "result",
+              "passed": true
+            }
+          ],
+          "elapsed_ms": 12,
+          "model_calls": 1,
+          "terminal_type": "result",
+          "actual": {
+            "route": "simple_call",
+            "node": "calculate",
+            "action": "new",
+            "status": "calculated",
+            "operation": "craft",
+            "hp": null,
+            "inventory": null,
+            "inventory_complete": false,
+            "source": "unknown",
+            "event": null,
+            "profile_revision": 1,
+            "backpack": {
+              "sulfur": 1000
+            },
+            "storage": {
+              "sulfur": 5000
+            },
+            "continues_task": false,
+            "working_task": true,
+            "calls": 1,
+            "error": null,
+            "result_kind": "calculation",
+            "temporary_fields": [],
+            "task_id": "a316b69c-7fd6-5220-847e-24c6774dd311",
+            "working_task_id": "a316b69c-7fd6-5220-847e-24c6774dd311"
+          }
+        }
+      ]
+    },
+    {
+      "case_id": "image_profile_conflict",
+      "category": "image",
+      "passed": true,
+      "first_failed_turn": null,
+      "turns": [
+        {
+          "turn": 0,
+          "message": "截图制作一个C4",
+          "checks": [
+            {
+              "field": "status",
+              "expected": "needs_input",
+              "actual": "needs_input",
+              "passed": true
+            },
+            {
+              "field": "error",
+              "expected": "ambiguous_inventory",
+              "actual": "ambiguous_inventory",
+              "passed": true
+            },
+            {
+              "field": "terminal_type",
+              "expected": "result",
+              "actual": "result",
+              "passed": true
+            }
+          ],
+          "elapsed_ms": 12,
+          "model_calls": 1,
+          "terminal_type": "result",
+          "actual": {
+            "route": "simple_call",
+            "node": "calculate",
+            "action": "new",
+            "status": "needs_input",
+            "operation": "craft",
+            "hp": null,
+            "inventory": null,
+            "inventory_complete": true,
+            "source": null,
+            "event": null,
+            "profile_revision": 1,
+            "backpack": {
+              "sulfur": 1000
+            },
+            "storage": {
+              "sulfur": 5000
+            },
+            "continues_task": false,
+            "working_task": true,
+            "calls": 1,
+            "error": "ambiguous_inventory",
+            "result_kind": "calculation",
+            "temporary_fields": [],
+            "task_id": "1fb3e259-850d-5b7d-9d22-efda861d6fda",
+            "working_task_id": "1fb3e259-850d-5b7d-9d22-efda861d6fda"
+          }
+        }
+      ]
+    },
+    {
+      "case_id": "image_correction",
+      "category": "image",
+      "passed": true,
+      "first_failed_turn": null,
+      "turns": [
+        {
+          "turn": 0,
+          "message": "截图制作一个C4",
+          "checks": [
+            {
+              "field": "inventory",
+              "expected": {
+                "sulfur": 100
+              },
+              "actual": {
+                "sulfur": 100
+              },
+              "passed": true
+            },
+            {
+              "field": "terminal_type",
+              "expected": "result",
+              "actual": "result",
+              "passed": true
+            }
+          ],
+          "elapsed_ms": 13,
+          "model_calls": 1,
+          "terminal_type": "result",
+          "actual": {
+            "route": "simple_call",
+            "node": "calculate",
+            "action": "new",
+            "status": "calculated",
+            "operation": "craft",
+            "hp": null,
+            "inventory": {
+              "sulfur": 100
+            },
+            "inventory_complete": true,
+            "source": "image_inferred",
+            "event": null,
+            "profile_revision": 1,
+            "backpack": {
+              "sulfur": 1000
+            },
+            "storage": {
+              "sulfur": 5000
+            },
+            "continues_task": false,
+            "working_task": true,
+            "calls": 1,
+            "error": null,
+            "result_kind": "calculation",
+            "temporary_fields": [],
+            "task_id": "89f457a9-eeb2-5037-941d-f173caea5d3f",
+            "working_task_id": "89f457a9-eeb2-5037-941d-f173caea5d3f"
+          }
+        },
+        {
+          "turn": 1,
+          "message": "硫磺数量改为150",
+          "checks": [
+            {
+              "field": "inventory",
+              "expected": {
+                "sulfur": 150
+              },
+              "actual": {
+                "sulfur": 150
+              },
+              "passed": true
+            },
+            {
+              "field": "calls",
+              "expected": 0,
+              "actual": 0,
+              "passed": true
+            },
+            {
+              "field": "terminal_type",
+              "expected": "result",
+              "actual": "result",
+              "passed": true
+            }
+          ],
+          "elapsed_ms": 13,
+          "model_calls": 0,
+          "terminal_type": "result",
+          "actual": {
+            "route": "simple_call",
+            "node": "calculate",
+            "action": "correct",
+            "status": "calculated",
+            "operation": "craft",
+            "hp": null,
+            "inventory": {
+              "sulfur": 150
+            },
+            "inventory_complete": true,
+            "source": "image_inferred",
+            "event": null,
+            "profile_revision": 1,
+            "backpack": {
+              "sulfur": 1000
+            },
+            "storage": {
+              "sulfur": 5000
+            },
+            "continues_task": true,
+            "working_task": true,
+            "calls": 0,
+            "error": null,
+            "result_kind": "calculation",
+            "temporary_fields": [],
+            "task_id": "89f457a9-eeb2-5037-941d-f173caea5d3f",
+            "working_task_id": "89f457a9-eeb2-5037-941d-f173caea5d3f"
+          }
+        }
+      ]
+    },
+    {
+      "case_id": "temporary_workbench",
+      "category": "state",
+      "passed": true,
+      "first_failed_turn": null,
+      "turns": [
+        {
+          "turn": 0,
+          "message": "我有1级工作台",
+          "checks": [
+            {
+              "field": "temporary_fields",
+              "expected": [
+                "technology.workbench"
+              ],
+              "actual": [
+                "technology.workbench"
+              ],
+              "passed": true
+            },
+            {
+              "field": "profile_revision",
+              "expected": 1,
+              "actual": 1,
+              "passed": true
+            },
+            {
+              "field": "terminal_type",
+              "expected": "result",
+              "actual": "result",
+              "passed": true
+            }
+          ],
+          "elapsed_ms": 6,
+          "model_calls": 1,
+          "terminal_type": "result",
+          "actual": {
+            "route": "chat",
+            "node": "chat",
+            "action": "new",
+            "status": null,
+            "operation": null,
+            "hp": null,
+            "inventory": null,
+            "inventory_complete": null,
+            "source": null,
+            "event": null,
+            "profile_revision": 1,
+            "backpack": {
+              "sulfur": 1000
+            },
+            "storage": {
+              "sulfur": 5000
+            },
+            "continues_task": false,
+            "working_task": false,
+            "calls": 1,
+            "error": null,
+            "result_kind": "chat",
+            "temporary_fields": [
+              "technology.workbench"
+            ],
+            "task_id": "e26472cb-8b43-5f34-bc55-478a3943dbc9",
+            "working_task_id": null
+          }
+        }
+      ]
+    },
+    {
+      "case_id": "inventory_delta",
+      "category": "state",
+      "passed": true,
+      "first_failed_turn": null,
+      "turns": [
+        {
+          "turn": 0,
+          "message": "我又捡了100硫磺",
+          "checks": [
+            {
+              "field": "status",
+              "expected": "needs_input",
+              "actual": "needs_input",
+              "passed": true
+            },
+            {
+              "field": "backpack",
+              "expected": {
+                "sulfur": 1000
+              },
+              "actual": {
+                "sulfur": 1000
+              },
+              "passed": true
+            },
+            {
+              "field": "profile_revision",
+              "expected": 1,
+              "actual": 1,
+              "passed": true
+            },
+            {
+              "field": "calls",
+              "expected": 0,
+              "actual": 0,
+              "passed": true
+            },
+            {
+              "field": "terminal_type",
+              "expected": "result",
+              "actual": "result",
+              "passed": true
+            }
+          ],
+          "elapsed_ms": 6,
+          "model_calls": 0,
+          "terminal_type": "result",
+          "actual": {
+            "route": "simple_call",
+            "node": "calculate",
+            "action": "clarify",
+            "status": "needs_input",
+            "operation": null,
+            "hp": null,
+            "inventory": null,
+            "inventory_complete": null,
+            "source": null,
+            "event": null,
+            "profile_revision": 1,
+            "backpack": {
+              "sulfur": 1000
+            },
+            "storage": {
+              "sulfur": 5000
+            },
+            "continues_task": false,
+            "working_task": true,
+            "calls": 0,
+            "error": null,
+            "result_kind": "calculation",
+            "temporary_fields": [],
+            "task_id": "9a3221a0-1fd7-52ae-b373-4ec19568c397",
+            "working_task_id": "9a3221a0-1fd7-52ae-b373-4ec19568c397"
+          }
+        }
+      ]
+    },
+    {
+      "case_id": "pending_followup",
+      "category": "task",
+      "passed": true,
+      "first_failed_turn": null,
+      "turns": [
+        {
+          "turn": 0,
+          "message": "拆石墙但不确定是什么服",
+          "checks": [
+            {
+              "field": "status",
+              "expected": "needs_input",
+              "actual": "needs_input",
+              "passed": true
+            },
+            {
+              "field": "terminal_type",
+              "expected": "result",
+              "actual": "result",
+              "passed": true
+            }
+          ],
+          "elapsed_ms": 6,
+          "model_calls": 1,
+          "terminal_type": "result",
+          "actual": {
+            "route": "simple_call",
+            "node": "calculate",
+            "action": "clarify",
+            "status": "needs_input",
+            "operation": null,
+            "hp": null,
+            "inventory": null,
+            "inventory_complete": null,
+            "source": null,
+            "event": null,
+            "profile_revision": 1,
+            "backpack": {
+              "sulfur": 1000
+            },
+            "storage": {
+              "sulfur": 5000
+            },
+            "continues_task": false,
+            "working_task": true,
+            "calls": 1,
+            "error": null,
+            "result_kind": "calculation",
+            "temporary_fields": [],
+            "task_id": "eb2bcd36-b257-59b3-989f-ef0198468ad8",
+            "working_task_id": "eb2bcd36-b257-59b3-989f-ef0198468ad8"
+          }
+        },
+        {
+          "turn": 1,
+          "message": "原版",
+          "checks": [
+            {
+              "field": "status",
+              "expected": "calculated",
+              "actual": "calculated",
+              "passed": true
+            },
+            {
+              "field": "operation",
+              "expected": "raid",
+              "actual": "raid",
+              "passed": true
+            },
+            {
+              "field": "continues_task",
+              "expected": true,
+              "actual": true,
+              "passed": true
+            },
+            {
+              "field": "terminal_type",
+              "expected": "result",
+              "actual": "result",
+              "passed": true
+            }
+          ],
+          "elapsed_ms": 8,
+          "model_calls": 1,
+          "terminal_type": "result",
+          "actual": {
+            "route": "simple_call",
+            "node": "calculate",
+            "action": "continue",
+            "status": "calculated",
+            "operation": "raid",
+            "hp": null,
+            "inventory": null,
+            "inventory_complete": true,
+            "source": "unknown",
+            "event": null,
+            "profile_revision": 1,
+            "backpack": {
+              "sulfur": 1000
+            },
+            "storage": {
+              "sulfur": 5000
+            },
+            "continues_task": true,
+            "working_task": true,
+            "calls": 1,
+            "error": null,
+            "result_kind": "calculation",
+            "temporary_fields": [],
+            "task_id": "eb2bcd36-b257-59b3-989f-ef0198468ad8",
+            "working_task_id": "eb2bcd36-b257-59b3-989f-ef0198468ad8"
+          }
+        }
+      ]
+    }
+  ],
+  "limitations": [
+    "模型抽取与视觉输出使用固定夹具；不衡量真实模型语言理解或识图准确率。",
+    "HTTP/SSE使用ASGI测试客户端，不等同浏览器交互验收。",
+    "样例用于工程回归，不能作为未见真实玩家分布的准确率。"
+  ]
+}

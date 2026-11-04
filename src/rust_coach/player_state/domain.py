@@ -62,7 +62,8 @@ def apply_update(snapshot, update: StateUpdate, now):
                 check_watermark(key)
                 watermarks[key] = update.observed_at.isoformat()
         affected_containers = ["inventory.*"] if changes.event in {"invalidate_all", "raided"} else (
-            ["inventory.backpack", "inventory.equipped", "visual.nonbase"] if changes.event == "death" else [])
+            ["inventory.backpack", "inventory.equipped", "visual.nonbase"] if changes.event == "death" else
+            ["inventory.backpack"] if changes.event == "backpack_lost" else [])
         for key in affected_containers:
             check_watermark(key)
             watermarks[key] = update.observed_at.isoformat()
@@ -75,13 +76,22 @@ def apply_update(snapshot, update: StateUpdate, now):
                 invalidate(record)
         for key, container in containers.items():
             if (changes.event in {"invalidate_all", "raided"} or
-                    changes.event == "death" and key in {"backpack", "equipped"}):
+                    changes.event == "death" and key in {"backpack", "equipped"} or
+                    changes.event == "backpack_lost" and key == "backpack"):
                 invalidate(container)
                 for record in container["items"].values():
                     invalidate(record)
         for record in result.get("visual_observations", {}).values():
-            if changes.event in {"invalidate_all", "raided"} or changes.event == "death" and record["value"]["kind"] != "base":
+            if (changes.event in {"invalidate_all", "raided"} or changes.event == "death" and record["value"]["kind"] != "base" or
+                    changes.event == "backpack_lost" and record["value"]["region_kind"] == "backpack"):
                 invalidate(record)
+        if changes.event in {"death", "backpack_lost"}:
+            previous = containers.get("backpack")
+            if previous:
+                result.setdefault("retired_containers", {})["backpack"] = copy.deepcopy(previous)
+            containers["backpack"] = {"items": {}, "coverage": "complete",
+                **metadata(update, INVENTORY_TTL_MINUTES), "last_changed_at": update.observed_at.isoformat(),
+                "cleared_by": changes.event}
         return result
     for key in changes.clear_fields:
         check_watermark(key)

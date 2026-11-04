@@ -159,6 +159,10 @@ function showSnapshot(snapshot) {
     summaryRow(stateCatalog.fields[key].label, value,
       `${stateStatus[record.status]}；观测 ${new Date(record.observed_at).toLocaleString()}；来源 ${record.source}`);
   }
+  for (const [container, data] of Object.entries(snapshot.retired_containers || {})) {
+    summaryRow(`已失效的旧容器 ${container}`, "仅供历史核对，不参与当前计算",
+      `失效原因 ${data.invalidated_by}；历史数量见完整状态或历史版本`);
+  }
   for (const [container, data] of Object.entries(snapshot.containers)) {
     const coverage = data.coverage === "complete" ? "完整盘点" : "局部记录，其他物品未知";
     summaryRow(`容器 ${container}`, coverage, `${stateStatus[data.status]}；${data.usable_for_exact_calculation ? "可供精确计算选用" : "不可直接用于精确缺口计算"}`);

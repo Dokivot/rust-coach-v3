@@ -85,8 +85,13 @@ class DecisionLayer:
 
     def from_calculation(self, request: DecisionRequest, output: dict) -> DecisionResult:
         status = "verified" if output.get("status") == "calculated" else "needs_input"
+        usage = output.get("input_usage") or {}
+        if status == "verified" and (usage.get("inventory_source") == "image_inferred" or
+                                     (output.get("input") or {}).get("inventory") is None or
+                                     not (output.get("input") or {}).get("inventory_complete", True)):
+            status = "conditional"
         tool = self._tool(request, "calculation", output.get("input") or output)
-        step = StepResult(step_id="calculation", status="ok" if status == "verified" else "blocked",
+        step = StepResult(step_id="calculation", status="ok" if status in {"verified", "conditional"} else "blocked",
                           input_hash=tool.input_hash, output_hash=_hash(output),
                           state_revision=request.state_ref.revision,
                           provenance=(Provenance(source_ref=output.get("calculation_id", "calculation"), source_type="tool"),))

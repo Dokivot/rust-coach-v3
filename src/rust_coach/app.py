@@ -151,7 +151,9 @@ def create_app(settings: Settings | None = None, model: ChatModel | None = None,
 
     @app.post("/api/conversations", response_model=Conversation, status_code=201)
     async def create_conversation(request: Request):
-        return request.app.state.runtime.store.create()
+        conversation = request.app.state.runtime.store.create()
+        request.app.state.runtime.player_states.inherit_binding(str(conversation.id))
+        return conversation
 
     @app.get("/api/conversations/{conversation_id}", response_model=Conversation)
     async def get_conversation(conversation_id: UUID, request: Request):

@@ -59,6 +59,8 @@ def render_snapshot(snapshot):
             lines.append("  仅展示前 30 种物品；完整记录请查看玩家状态页。")
         if not container["items"]:
             lines.append("  空清单。" if container["coverage"] == "complete" else "  尚无物品记录。")
+        if container.get("cleared_by"):
+            lines.append("  已按背包丢失事件清零；旧记录已失效，保留在历史版本中。")
     if not snapshot["facts"] and not snapshot["containers"] and not snapshot.get("visual_observations"):
         lines.append("当前档案尚未录入任何状态。")
     for record in list(snapshot.get("visual_observations",{}).values())[:20]:

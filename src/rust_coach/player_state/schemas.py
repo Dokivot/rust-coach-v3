@@ -74,7 +74,7 @@ class StateChanges(StrictModel):
     inventory: list[InventoryChange] = Field(default_factory=list, max_length=10)
     clear_fields: list[str] = Field(default_factory=list, max_length=30)
     invalidate_containers: list[Identifier] = Field(default_factory=list, max_length=20)
-    event: Literal["death", "raided", "blueprint_reset", "invalidate_all"] | None = None
+    event: Literal["death", "backpack_lost", "raided", "blueprint_reset", "invalidate_all"] | None = None
     visual_observations: list[VisualObservation] = Field(default_factory=list, max_length=120)
 
     @field_validator("facts")

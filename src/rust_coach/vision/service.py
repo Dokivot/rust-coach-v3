@@ -18,6 +18,7 @@ from rust_coach.vision.probe import image_part, parse_json, probe_model
 from rust_coach.vision.schemas import VisualExtraction
 from rust_coach.vision.context import automatic_input, item_identity_status, resolve_screenshots, visual_input
 from rust_coach.player_state.domain import model_context
+from rust_coach.vision.corrections import correct_observation
 
 
 logger = logging.getLogger("rust_coach")
@@ -274,7 +275,29 @@ unknowns 只记录影响当前问题的观测缺失，不重复用户目标，�
             "automatic":payload.get("automatic"),"resolved_context":payload.get("resolved_context",{}),"usable":bool(resolved),
             "inventory_coverage":payload["extraction"].get("inventory_coverage","unknown"),"unknowns":payload["extraction"]["unknowns"],
             "issues":payload["issues"],"scope_id":payload["scope_id"],"scope_revision":payload["scope_revision"],
-            "image_context":payload["image_context"],"version":payload["version"],"config_id":payload["config_id"],"cache_hit":payload["cache_hit"]}
+            "image_context":payload["image_context"],"version":payload["version"],"config_id":payload["config_id"],"cache_hit":payload["cache_hit"],
+            "correction": payload.get("correction")}
+
+    def correct(self, conversation_id, request, draft):
+        base = json.loads(json.dumps(draft["payload"]["extraction"]))
+        if draft["payload"].get("accepted"):
+            base["observations"] = draft["payload"]["accepted"]["observations"]
+        try:
+            correction = correct_observation(base, request.message, self.calculator.catalog.items)
+        except ValueError as error:
+            raise AppError("visual_correction_invalid", "纠正值不符合物品数量约束，没有修改原始识别；请核对后重试。", 422) from error
+        if correction is None:
+            return None
+        extraction, provenance = correction
+        payload = json.loads(json.dumps(draft["payload"]))
+        if payload.get("accepted", {}).get("state_revision") is not None:
+            payload["scope_revision"] = payload["accepted"]["state_revision"]
+        payload.pop("accepted", None)
+        payload.update(input_hash=signature(request.model_dump(mode="json")), question=request.message,
+                       extraction=extraction, cache_hit=False,
+                       correction={**provenance, "previous_draft_id": draft["id"], "saved_to_profile": False})
+        payload["automatic"] = automatic_input(extraction, payload["resolved_context"])
+        return self.drafts.create(conversation_id, str(request.request_id), payload)
 
     def calculate(self,visual):
         accepted = visual_input(visual)

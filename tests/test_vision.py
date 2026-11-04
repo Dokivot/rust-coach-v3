@@ -90,6 +90,93 @@ def confirmation(turn, **kwargs):
         "edits": [{"observation_id": item["id"], "accepted": True} for item in visual["observations"]], **kwargs}
 
 
+def test_image_craft_switch_raid_health_and_correction_share_valid_evidence(setup):
+    client, application, model, owner = setup
+    model.task = "craft"
+    first = analyze(client, owner, upload(client, owner), message="截图材料制作火药")
+    original_id = first["visual"]["draft_id"]
+    turns = []
+    for message in ["改成拆一面石墙最省资源", "它还剩250血", "硫磺数量改为150"]:
+        response = client.post(f"/api/conversations/{owner}/messages", json={"request_id": str(uuid4()), "message": message})
+        assert response.status_code == 200, response.text
+        turns.append(response.json())
+    raid, health, correction = turns
+    assert raid["calculation"]["input"]["operation"] == "raid"
+    assert raid["calculation"]["input"]["goals"] == {}
+    assert raid["calculation"]["input"]["inventory"] == {"sulfur": 100}
+    assert health["calculation"]["input"]["hp"] == 250
+    assert correction["calculation"]["input"]["hp"] == 250
+    assert correction["calculation"]["input"]["inventory"] == {"sulfur": 150}
+    assert correction["visual"]["correction"]["previous_draft_id"] == original_id
+    assert application.state.vision.drafts.get(owner, original_id)["payload"]["extraction"]["observations"][0]["quantity"] == 100
+    assert len(model.calls) == 1
+    assert "未写入玩家档案" in correction["assistant"]
+
+
+def test_automatic_image_does_not_override_explicit_profile_inventory(setup):
+    client, application, model, owner = setup
+    states, scope = bind(application, owner)
+    states.update(scope, StateUpdate(observation_id=uuid4(), expected_revision=0, observed_at=datetime.now(timezone.utc),
+        changes={"inventory": [{"container_id": "backpack", "mode": "replace", "complete": True, "items": {"sulfur": 999}}]}))
+    model.task = "craft"
+    turn = analyze(client, owner, upload(client, owner), player_inventory_container="backpack")
+    assert turn["calculation"]["status"] == "needs_input"
+    assert turn["calculation"]["error_code"] == "ambiguous_inventory"
+    assert turn["presentation"]["architecture"]["task"]["uncertainty"]["factual"] == "conflict"
+
+
+def test_text_task_wins_when_vision_only_reports_observations(setup, monkeypatch):
+    client, _, model, owner = setup
+    original = model.complete
+
+    async def with_extractor(messages):
+        if isinstance(messages[-1].content, list):
+            return await original(messages)
+        return ModelReply(content='{"operation":"craft","goals":{"explosive.timed":1}}')
+
+    monkeypatch.setattr(model, "complete", with_extractor)
+    turn = analyze(client, owner, upload(client, owner), message="用截图材料制作一个C4")
+    assert turn["visual"]["task"] == "observe"
+    assert turn["calculation"]["input"]["inventory"] == {"sulfur": 100}
+    assert turn["presentation"]["architecture"]["task"]["routing_reason"] == "text_task_with_visual_evidence"
+
+
+def test_temporary_technology_does_not_invalidate_unbound_image(setup, monkeypatch):
+    client, _, model, owner = setup
+    model.task = "craft"
+    first = analyze(client, owner, upload(client, owner))
+
+    async def text_extractor(messages):
+        payload = json.loads(messages[-1].content)
+        return ModelReply(content=json.dumps(payload["previous_request"]))
+
+    monkeypatch.setattr(model, "complete", text_extractor)
+    response = client.post(f"/api/conversations/{owner}/messages", json={"request_id": str(uuid4()),
+        "message": "我有3级工作台，继续计算"})
+    assert response.status_code == 200, response.text
+    result = response.json()
+    assert result["calculation"]["input"]["inventory"] == {"sulfur": 100}
+    assert result["calculation"]["input"]["workbench"] == 3
+    assert result["visual"]["draft_id"] == first["visual"]["draft_id"]
+    assert result["visual"]["fresh"] is True
+
+
+def test_predeath_image_cannot_be_revived_by_reanalysis(setup):
+    client, application, model, owner = setup
+    states, scope = bind(application, owner)
+    model.task = "craft"
+    attachment = upload(client, owner)
+    initial = analyze(client, owner, attachment)
+    event = client.post(f"/api/conversations/{owner}/messages", json={"request_id": str(uuid4()), "message": "我刚死了，背包丢了"})
+    assert event.status_code == 200, event.text
+    repeated = analyze(client, owner, attachment)
+    assert initial["calculation"]["input"]["inventory"] == {"sulfur": 100}
+    assert repeated["calculation"]["input"]["inventory"] == {}
+    assert repeated["calculation"]["input_usage"]["inventory_source"] == "profile"
+    assert repeated["calculation"]["visual_usage"]["inventory_used"] is False
+    assert states.get(scope)["containers"]["backpack"]["items"] == {}
+
+
 def confirm(client, owner, turn, payload):
     return client.post(f"/api/conversations/{owner}/visual-drafts/{turn['visual']['draft_id']}/confirm", json=payload)
 

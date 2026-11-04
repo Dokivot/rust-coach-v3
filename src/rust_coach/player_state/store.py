@@ -2,7 +2,7 @@ import hashlib
 import json
 import logging
 from datetime import datetime, timezone
-from uuid import uuid4
+from uuid import NAMESPACE_URL, uuid4, uuid5
 
 from rust_coach.contracts import AppError
 from rust_coach.player_state.domain import apply_update, project
@@ -26,6 +26,9 @@ class PlayerStateStore:
                 "UNIQUE(scope_id, revision));"
                 "CREATE TABLE IF NOT EXISTS conversation_player_scope (conversation_id TEXT PRIMARY KEY "
                 "REFERENCES conversations(id) ON DELETE CASCADE, scope_id TEXT NOT NULL REFERENCES player_scopes(id));"
+                "CREATE TABLE IF NOT EXISTS player_state_preferences (key TEXT PRIMARY KEY, value TEXT);"
+                "CREATE TABLE IF NOT EXISTS chat_state_events (conversation_id TEXT NOT NULL REFERENCES conversations(id) ON DELETE CASCADE,"
+                "request_id TEXT NOT NULL, payload TEXT NOT NULL, receipt TEXT NOT NULL, PRIMARY KEY(conversation_id, request_id));"
             )
 
     def list_scopes(self):
@@ -113,6 +116,57 @@ class PlayerStateStore:
                                    "DO UPDATE SET scope_id=excluded.scope_id", (conversation_id, scope_id))
             else:
                 connection.execute("DELETE FROM conversation_player_scope WHERE conversation_id=?", (conversation_id,))
+            connection.execute("INSERT INTO player_state_preferences VALUES ('active_scope', ?) "
+                               "ON CONFLICT(key) DO UPDATE SET value=excluded.value", (scope_id,))
+
+    def inherit_binding(self, conversation_id):
+        with self.store.connection() as connection:
+            row = connection.execute("SELECT value FROM player_state_preferences WHERE key='active_scope'").fetchone()
+        if row and row["value"]:
+            self.bind(conversation_id, row["value"])
+
+    def apply_chat_event(self, conversation_id, request, scope_id, event):
+        payload = json.dumps({"message": request.message, "scope_id": scope_id,
+                              "request": request.model_dump(mode="json")}, sort_keys=True, ensure_ascii=False)
+        with self.store.connection() as connection:
+            connection.execute("BEGIN IMMEDIATE")
+            replay = connection.execute("SELECT payload, receipt FROM chat_state_events WHERE conversation_id=? AND request_id=?",
+                                        (conversation_id, str(request.request_id))).fetchone()
+            if replay:
+                old = json.loads(replay["payload"])
+                saved_receipt = json.loads(replay["receipt"])
+                same_detached = saved_receipt["event"] == "scope_changed" and scope_id is None and old["request"] == request.model_dump(mode="json")
+                if replay["payload"] != payload and not same_detached:
+                    raise AppError("request_conflict", "此请求已写入状态事件，但内容或档案发生变化，请使用新请求标识。", 409)
+                return saved_receipt
+            if event is None:
+                return None
+            if event == "scope_changed":
+                connection.execute("DELETE FROM conversation_player_scope WHERE conversation_id=?", (conversation_id,))
+                connection.execute("INSERT INTO player_state_preferences VALUES ('active_scope', NULL) "
+                                   "ON CONFLICT(key) DO UPDATE SET value=NULL")
+                receipt = {"event": event, "scope_id": scope_id, "revision": None,
+                    "observation_id": str(request.request_id), "source": "explicit_user_report",
+                    "message": "已解除当前对话的旧服务器档案关联，旧档案和历史保留。请在玩家状态页选择新服务器与清档，再继续计算。"}
+                connection.execute("INSERT INTO chat_state_events VALUES (?, ?, ?, ?)",
+                    (conversation_id, str(request.request_id), payload, json.dumps(receipt, ensure_ascii=False)))
+                return receipt
+            if not scope_id:
+                raise AppError("player_scope_required", "请先在玩家状态页关联服务器和清档档案，才能持久记录背包丢失；本次尚未写入。", 422)
+            row = connection.execute("SELECT revision FROM player_scopes WHERE id=?", (scope_id,)).fetchone()
+            observed_at = datetime.now(timezone.utc)
+            update = StateUpdate(observation_id=uuid5(NAMESPACE_URL, "chat-state:" + conversation_id + ":" + str(request.request_id)),
+                                 expected_revision=row["revision"], observed_at=observed_at,
+                                 source="text_confirmed", changes={"event": event})
+            snapshot = self.update(scope_id, update, now=observed_at, connection=connection)
+            receipt = {"event": event, "scope_id": scope_id, "previous_revision": row["revision"],
+                       "revision": snapshot["revision"], "observation_id": str(update.observation_id),
+                       "observed_at": observed_at.isoformat(), "source": "explicit_user_report",
+                       "message": "已将旧背包标记为失效并保留历史，当前背包已清零。其他容器没有清零。"
+                       if event in {"death", "backpack_lost"} else "已保存当前状态事件，受影响记录已失效；历史记录保留。"}
+            connection.execute("INSERT INTO chat_state_events VALUES (?, ?, ?, ?)",
+                               (conversation_id, str(request.request_id), payload, json.dumps(receipt, ensure_ascii=False)))
+        return receipt
 
     @staticmethod
     def reference(snapshot):

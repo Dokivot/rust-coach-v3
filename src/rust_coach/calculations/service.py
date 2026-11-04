@@ -1,18 +1,19 @@
 import json
 import logging
 import re
-from datetime import datetime, timezone
 
 from pydantic import ValidationError
 
 from rust_coach.calculations.engine import Calculator
 from rust_coach.calculations.presentation import render_calculation
-from rust_coach.calculations.requests import standard_raid_request, switches_to_raid
+from rust_coach.calculations.requests import contextual_request, standard_raid_request, switches_to_raid
 from rust_coach.calculations.schemas import CalculationRequest
 from rust_coach.contracts import AppError, ModelMessage, ModelReply
 from rust_coach.progress import report_stage
 from rust_coach.vision.context import visual_input
-from rust_coach.player_state.domain import calculation_inventory, project
+from rust_coach.architecture.task_context import cancelled, continuation, conversational, inventory_selection
+from rust_coach.player_state.inputs import resolve_calculation_input
+from rust_coach.player_state.working import current_assertion, text_facts
 
 
 logger = logging.getLogger("rust_coach")
@@ -27,7 +28,11 @@ class CalculationService:
     def matches(self, message, previous, pending_message=None):
         if message.startswith("/calc"):
             return True
-        if (previous or pending_message) and not re.search(r"取消|换个话题|不算了|cancel", message, re.I):
+        if cancelled(message) or conversational(message):
+            return False
+        if contextual_request(message, previous, pending_message):
+            return True
+        if pending_message or previous and continuation(message):
             return True
         return bool(re.search(
             r"爆炸|炸药|炸墙|炸门|拆|石墙|铁墙|木墙|金属墙|装甲墙|车库门|铁门|金属门|装甲门|合成|制作|缺口|材料|配方|"
@@ -38,6 +43,9 @@ class CalculationService:
         text = messages[-1].content
         if text.startswith("/calc"):
             return json.loads(text[5:].strip())
+        contextual = contextual_request(text, previous, pending_message)
+        if contextual:
+            return contextual
         standard = standard_raid_request(text)
         if standard:
             return standard
@@ -88,6 +96,8 @@ blueprints 表示用户明确确认可制作的配方（包括默认配方）。
                 parsed = await self._extract_once(messages, previous, pending_message, inventory_container)
                 if not isinstance(parsed, dict) or not (set(parsed) == {"chat"} or set(parsed) == {"unsupported"}):
                     CalculationRequest.model_validate(parsed)
+                    self.validate_inventory_evidence(parsed, messages[-1].content, previous)
+                    self.validate_technology_evidence(parsed, messages[-1].content, previous)
                 return parsed
             except (ValueError, TypeError):
                 if attempt + 1 == attempts:
@@ -98,7 +108,60 @@ blueprints 表示用户明确确认可制作的配方（包括默认配方）。
                     raise
                 logger.info("calculation_parse_retry reason=invalid_response")
 
-    async def run(self, messages, previous=None, pending_message=None, player_snapshot=None, inventory_container=None, visual=None):
+    def validate_technology_evidence(self, parsed, message, previous):
+        if message.startswith("/calc"):
+            return
+        prior = previous or {}
+        workbench = parsed.get("workbench")
+        if workbench is not None and workbench != prior.get("workbench"):
+            if text_facts(message).get("technology.workbench") != workbench:
+                raise ValueError("workbench_without_text_evidence")
+        blueprints = parsed.get("blueprints")
+        if blueprints is not None and blueprints != prior.get("blueprints"):
+            clauses = [clause for clause in re.split(r"[，,。；;\n]", message) if current_assertion(clause)
+                       and re.search(r"解锁|能制作|可制作|已学会", clause)
+                       and not re.search(r"未|没|不能|对手|队友", clause)]
+            evidence = "，".join(clauses)
+            for identifier in blueprints:
+                item = self.calculator.catalog.items.get(identifier, {})
+                names = [identifier, item.get("name", identifier)] + (["C4"] if identifier == "explosive.timed" else [])
+                if not any(name.lower() in evidence.lower() for name in names):
+                    raise ValueError("blueprint_without_text_evidence")
+
+    def validate_inventory_evidence(self, parsed, message, previous):
+        if message.startswith("/calc") or parsed.get("inventory") is None:
+            return
+        inventory = parsed["inventory"]
+        prior_inventory = (previous or {}).get("inventory")
+        inventory_statement = re.search(r"已有|我有|库存|背包|现有|手上|手里|没有|have|inventory", message, re.I)
+        if inventory == prior_inventory and not inventory_statement:
+            parsed["inventory_complete"] = previous.get("inventory_complete", False)
+            return
+        clauses = [clause.strip() for clause in re.split(r"[，,。；;\n]", message)]
+        declarations = [clause for clause in clauses if current_assertion(clause) and
+                        not re.search(r"对手|敌人|队友|他有|她有|没有\s*\d|没\s*\d|不到|不足|不够|至少|大约|大概|(?:要|需要|缺|还差)\s*\d", clause)]
+        evidence_text = "，".join(declarations)
+        complete = bool(re.search(r"全部库存|完整(?:盘点|库存)|没有其他|只有|空(?:背包|库存)|背包(?:已)?空|库存为空|零库存|没有(?:任何)?材料|empty (?:inventory|backpack)|no materials|complete inventory", evidence_text, re.I))
+        if not inventory and not complete:
+            raise ValueError("empty_inventory_without_evidence")
+        for identifier, quantity in inventory.items():
+            item = self.calculator.catalog.items.get(identifier)
+            names = [identifier, item["name"]] if item else [identifier]
+            if identifier == "explosive.timed":
+                names.append("C4")
+            name_pattern = "(?:" + "|".join(re.escape(name) for name in names) + ")"
+            mentioned = re.search(name_pattern, message, re.I)
+            if prior_inventory is not None and prior_inventory.get(identifier) == quantity and not mentioned:
+                continue
+            amount = r"(?<!\d)" + str(quantity) + r"(?!\d)"
+            evidence = re.search(amount + r"\s*(?:个|份|块|颗)?\s*" + name_pattern + "|" +
+                                 name_pattern + r"\s*(?:[:：×x]|数量(?:是|为)?)?\s*" + amount, evidence_text, re.I)
+            goal_as_inventory = identifier in parsed.get("goals", {}) and not re.search(r"已有|我有|库存|背包|现有|手上|手里|have|inventory", evidence_text, re.I)
+            if not evidence or goal_as_inventory:
+                raise ValueError("inventory_without_text_evidence")
+        parsed["inventory_complete"] = complete
+
+    async def run(self, messages, previous=None, pending_message=None, player_snapshot=None, inventory_container=None, visual=None, extracted=None, selection=None):
         report_stage("understand")
         parsed = None
         request = None
@@ -107,62 +170,30 @@ blueprints 表示用户明确确认可制作的配方（包括默认配方）。
             previous, pending_message = None, None
         pending = "\n".join(part for part in [pending_message, messages[-1].content] if part)[-12000:]
         try:
-            parsed = await self.extract(messages, previous, pending_message, inventory_container)
+            parsed = extracted if extracted is not None else await self.extract(messages, previous, pending_message, inventory_container)
             if isinstance(parsed, dict) and set(parsed) == {"chat"} and parsed["chat"] is True:
                 return {"route": "chat", "calculation": None}
             if isinstance(parsed, dict) and set(parsed) == {"unsupported"} and isinstance(parsed["unsupported"], str):
                 return {"reply": ModelReply(content="暂不能给出可靠计算：" + parsed["unsupported"][:500]),
                         "calculation": {"status": "needs_input", "input": previous, "pending_message": pending}}
             request = CalculationRequest.model_validate(parsed)
+            self.validate_technology_evidence(parsed, messages[-1].content, previous)
             accepted = visual_input(visual)
-            automatic = bool(accepted and not visual.get("accepted"))
-            visual_inventory_used = False
-            if automatic and any(item["kind"] == "inventory" for item in accepted["observations"]):
-                inventory_container = None
-            if accepted and not automatic and inventory_container and any(item["kind"] == "inventory" for item in accepted["observations"]):
-                raise AppError("ambiguous_inventory","同时提供了截图观测与档案库存，请只选一个库存来源。",422)
-            if accepted and (accepted["inventory_complete"] or accepted["inventory"]):
-                if not automatic and (inventory_container or request.inventory is not None):
-                    raise AppError("ambiguous_inventory","同时提供了截图库存与其他库存来源，请只选一个来源。",422)
-                if not visual["fresh"] or accepted["subject"] != "self":
-                    if not automatic:
-                        raise AppError("visual_inventory_not_current","这份截图库存不是当前本人库存，请重新盘点。",422)
-                elif request.inventory is None:
-                    supported = self.calculator.catalog.items
-                    request = request.model_copy(update={"inventory":{key:value for key,value in accepted["inventory"].items() if key in supported},
-                        "inventory_complete":accepted["inventory_complete"]})
-                    visual_inventory_used = True
-            if inventory_container:
-                if player_snapshot is None:
-                    raise AppError("player_scope_required", "请先关联玩家状态档案。", 422)
-                player_snapshot = project(player_snapshot, datetime.now(timezone.utc))
-                if request.inventory is not None:
-                    raise AppError("ambiguous_inventory", "消息中已有库存，同时又选择了档案库存。请取消容器选择，或只使用档案库存，避免混合来源。", 422)
-                inventory = calculation_inventory(player_snapshot, inventory_container)
-                supported = self.calculator.catalog.items
-                updates = {"inventory": {key: amount for key, amount in inventory.items() if key in supported}}
-                for key, state_key in [("workbench", "technology.workbench"), ("blueprints", "technology.unlocked_blueprints")]:
-                    record = player_snapshot["facts"].get(state_key)
-                    if getattr(request, key) is None and record and record["status"] == "fresh":
-                        updates[key] = record["value"] if key == "workbench" else [item for item in record["value"] if item in supported]
-                player_usage = {"scope_id": player_snapshot["scope"]["id"], "revision": player_snapshot["revision"],
-                                "container_id": inventory_container, "fields": sorted(updates),
-                                "observed_at": player_snapshot["containers"][inventory_container]["observed_at"],
-                                "excluded_items": sorted(set(inventory) - supported.keys())}
-                request = CalculationRequest.model_validate(request.model_dump() | updates)
+            request, input_usage = resolve_calculation_input(request, player_snapshot, inventory_container, visual,
+                self.calculator.catalog.items, selection=selection or inventory_selection(messages[-1].content))
+            if input_usage["inventory_source"] == "text":
+                input_usage["verification"] = "structured_user_input" if messages[-1].content.startswith("/calc") else "model_extracted_from_text"
+            player_usage = input_usage.get("player_state_usage")
             result = self.calculator.calculate(request)
-            if accepted:
-                result["visual_usage"] = {"draft_id":visual["draft_id"],"confirmation_id":accepted["confirmation_id"],
-                    "observed_at":accepted["observed_at"],"complete":accepted["inventory_complete"],"subject":accepted["subject"],
-                    "fresh":visual["fresh"],
-                    "inventory_used":visual_inventory_used,"source":accepted.get("source","image_confirmed"),
-                    "excluded_items":sorted(set(accepted["inventory"]) - self.calculator.catalog.items.keys())}
+            result["input_usage"] = input_usage
+            if input_usage.get("visual_usage"):
+                result["visual_usage"] = input_usage["visual_usage"]
             if player_usage:
                 result["player_state_usage"] = player_usage
             logger.info("calculation id=%s operation=%s snapshot=%s", result["calculation_id"],
                         request.operation, result["provenance"]["snapshot_id"])
             rendered = render_calculation(result, self.calculator.catalog)
-            if accepted and result["visual_usage"]["excluded_items"]:
+            if accepted and result.get("visual_usage", {}).get("excluded_items"):
                 rendered += "\n计算目录未收录、未参与抵扣的图片物品：" + "、".join(result["visual_usage"]["excluded_items"])
             if player_usage:
                 rendered += (f"\n使用玩家档案版本 {player_usage['revision']} 的容器 {inventory_container} 完整盘点；"
@@ -181,4 +212,5 @@ blueprints 表示用户明确确认可制作的配方（包括默认配方）。
                 for field in player_usage["fields"]:
                     safe_input[field] = None
             return {"reply": ModelReply(content=error.message + " 可在本地计算器查看已收录项目。"),
-                    "calculation": {"status": "needs_input", "input": safe_input, "pending_message": pending}}
+                    "calculation": {"status": "needs_input", "input": safe_input, "pending_message": pending,
+                                    "error_code": error.code}}

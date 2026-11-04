@@ -104,6 +104,11 @@ def test_domain_events_only_invalidate_relevant_state(store, event):
     state = store.update(scope, observation(1, {"event": event}), now=NOW)
     assert state["facts"]["preferences.risk"]["status"] == ("invalidated" if event == "invalidate_all" else "fresh")
     for container in ["backpack", "equipped", "storage"]:
+        if event == "death" and container == "backpack":
+            assert calculation_inventory(state, container) == {}
+            assert state["retired_containers"][container]["invalidated_by"] == "death"
+            assert state["retired_containers"][container]["items"]["sulfur"]["value"] == 100
+            continue
         invalid = event in {"raided", "invalidate_all"} or event == "death" and container != "storage"
         assert state["containers"][container]["status"] == ("invalidated" if invalid else "fresh")
         assert state["containers"][container]["items"]["sulfur"]["value"] == 100
@@ -313,7 +318,7 @@ async def test_calculation_cannot_silently_use_unsafe_or_ambiguous_inventory(tmp
     runtime.player_states.update(scope, observation(0, inventory({"sulfur": 1000}, case != "partial"),
         at=now - timedelta(hours=1) if case == "stale" else now))
     if case == "invalidated":
-        runtime.player_states.update(scope, observation(1, {"event": "death"}, at=now))
+        runtime.player_states.update(scope, observation(1, {"event": "raided"}, at=now))
     identifier = store.create().id
     await runtime.bind_player_state(identifier, scope)
     payload = {"operation": "craft", "goals": {"explosive.timed": 2}}

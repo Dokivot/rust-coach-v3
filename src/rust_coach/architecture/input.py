@@ -71,7 +71,7 @@ class TextExtractor:
         )
 
     def request_kind(self, prompt: str) -> str:
-        if prompt.strip() == "/state":
+        if prompt.strip() in {"/state", "查看我的状态", "查看玩家状态"}:
             return "state.query"
         if is_onboarding(prompt):
             return "decision.recommendation"
@@ -83,6 +83,8 @@ class TextExtractor:
 
     @staticmethod
     def operation(prompt: str) -> str | None:
+        if re.search(r"拆|炸|摧毁", prompt) and re.search(r"墙|门", prompt):
+            return "raid"
         if re.search(r"合成|制作|配方|缺口|C4|火箭|gunpowder|craft", prompt, re.I):
             return "craft"
         if re.search(r"爆炸|炸|拆|raid|墙|门", prompt, re.I):

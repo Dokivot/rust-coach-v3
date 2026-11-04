@@ -348,8 +348,22 @@ def finalize_response(state):
     else:
         kind = "chat"
         add("chat", state["reply"].content, "narrative")
+    receipt = state.get("state_receipt")
+    if receipt:
+        add("state_event_receipt", receipt["message"], reference=receipt["observation_id"])
+        assertions.append(ProtectedAssertion(kind="observation", reference=receipt["observation_id"], value=receipt))
+    view = state.get("state_view") or {}
+    if view.get("temporary_facts"):
+        add("temporary_state", "本轮使用了你当前自报的状态，未写回玩家档案。", placement="detail")
+    if view.get("conflicts"):
+        add("state_conflict", "当前自报与档案有差异，本轮按当前自报条件计算或建议；档案未覆盖，请核对后保存。")
+    if view.get("excluded_sources"):
+        add("expired_text_inventory", "此前自报库存已过期，未继续抵扣；请重新确认当前数量。")
     visual = state.get("visual")
     if visual:
+        if visual.get("correction"):
+            add("visual_correction", "已按你明确纠正的字段更新本次截图分析并重新计算；原始识别保留，未写入玩家档案。",
+                reference=visual["draft_id"])
         if kind == "chat":
             kind = "visual"
         payload = {"business":payload,"visual":visual}
@@ -392,6 +406,9 @@ def finalize_response(state):
             architecture["trace"] = trace
         presentation["architecture"] = {
             "task": architecture.get("task"),
+            "working_state": architecture.get("working_state"),
+            "state_view": state.get("state_view"),
+            "state_receipt": state.get("state_receipt"),
             "decision_request": architecture.get("decision_request"),
             "decision_result": decision_result.model_dump(mode="json"),
             "answer_spec": answer_spec.model_dump(mode="json"),

@@ -1,0 +1,704 @@
+{
+  "version": "intent-state-v1",
+  "purpose": "固定模型输出下的主链路回归；不衡量模型理解或识图准确率",
+  "cases": [
+    {
+      "id": "state_query",
+      "category": "route",
+      "steps": [
+        {
+          "message": "查看我的状态",
+          "expected": {
+            "route": "state",
+            "result_kind": "state",
+            "calls": 0
+          }
+        }
+      ]
+    },
+    {
+      "id": "state_after_craft",
+      "category": "route",
+      "steps": [
+        {
+          "message": "/calc {\"operation\":\"craft\",\"goals\":{\"explosive.timed\":1}}",
+          "expected": {
+            "route": "simple_call"
+          }
+        },
+        {
+          "message": "查看玩家状态",
+          "expected": {
+            "route": "state",
+            "calls": 0
+          }
+        }
+      ]
+    },
+    {
+      "id": "greeting_after_craft",
+      "category": "route",
+      "steps": [
+        {
+          "message": "/calc {\"operation\":\"craft\",\"goals\":{\"explosive.timed\":1}}",
+          "expected": {
+            "operation": "craft"
+          }
+        },
+        {
+          "message": "你好",
+          "expected": {
+            "route": "chat",
+            "result_kind": "chat",
+            "calls": 1
+          }
+        }
+      ]
+    },
+    {
+      "id": "concept_after_craft",
+      "category": "route",
+      "steps": [
+        {
+          "message": "/calc {\"operation\":\"craft\",\"goals\":{\"explosive.timed\":1}}",
+          "expected": {
+            "operation": "craft"
+          }
+        },
+        {
+          "message": "解释一下合成批次",
+          "expected": {
+            "route": "chat",
+            "calls": 1
+          }
+        }
+      ]
+    },
+    {
+      "id": "parser_resolves_chat",
+      "category": "route",
+      "steps": [
+        {
+          "message": "C4这个词读起来有趣",
+          "model_response": {
+            "chat": true
+          },
+          "expected": {
+            "route": "chat",
+            "result_kind": "chat",
+            "calls": 2
+          }
+        }
+      ]
+    },
+    {
+      "id": "cancel_task",
+      "category": "task",
+      "steps": [
+        {
+          "message": "拆一面石墙最省资源",
+          "expected": {
+            "operation": "raid"
+          }
+        },
+        {
+          "message": "取消计算",
+          "expected": {
+            "route": "chat",
+            "action": "cancel",
+            "working_task": false,
+            "calls": 0
+          }
+        }
+      ]
+    },
+    {
+      "id": "explicit_empty",
+      "category": "inventory",
+      "steps": [
+        {
+          "message": "/calc {\"operation\":\"craft\",\"goals\":{\"explosive.timed\":1},\"inventory\":{}}",
+          "expected": {
+            "status": "calculated",
+            "inventory": {},
+            "source": "text"
+          }
+        }
+      ]
+    },
+    {
+      "id": "unknown_inventory",
+      "category": "inventory",
+      "steps": [
+        {
+          "message": "/calc {\"operation\":\"craft\",\"goals\":{\"explosive.timed\":1}}",
+          "expected": {
+            "status": "calculated",
+            "inventory": null,
+            "source": "unknown"
+          }
+        }
+      ]
+    },
+    {
+      "id": "profile_inventory",
+      "category": "inventory",
+      "steps": [
+        {
+          "message": "/calc {\"operation\":\"craft\",\"goals\":{\"explosive.timed\":1}}",
+          "container": "backpack",
+          "expected": {
+            "inventory": {
+              "sulfur": 1000
+            },
+            "source": "profile"
+          }
+        }
+      ]
+    },
+    {
+      "id": "partial_profile",
+      "category": "inventory",
+      "initial": {
+        "complete": false
+      },
+      "steps": [
+        {
+          "message": "/calc {\"operation\":\"craft\",\"goals\":{\"explosive.timed\":1}}",
+          "container": "backpack",
+          "expected": {
+            "status": "needs_input",
+            "error": "player_inventory_incomplete"
+          }
+        }
+      ]
+    },
+    {
+      "id": "stale_profile",
+      "category": "inventory",
+      "initial": {
+        "age_minutes": 31
+      },
+      "steps": [
+        {
+          "message": "/calc {\"operation\":\"craft\",\"goals\":{\"explosive.timed\":1}}",
+          "container": "backpack",
+          "expected": {
+            "status": "needs_input",
+            "error": "player_inventory_incomplete"
+          }
+        }
+      ]
+    },
+    {
+      "id": "text_profile_conflict",
+      "category": "inventory",
+      "steps": [
+        {
+          "message": "/calc {\"operation\":\"craft\",\"goals\":{\"explosive.timed\":1},\"inventory\":{\"sulfur\":20}}",
+          "container": "backpack",
+          "expected": {
+            "status": "needs_input",
+            "error": "ambiguous_inventory"
+          }
+        }
+      ]
+    },
+    {
+      "id": "standard_raid",
+      "category": "route",
+      "steps": [
+        {
+          "message": "拆一面石墙最省资源",
+          "expected": {
+            "status": "calculated",
+            "operation": "raid",
+            "hp": null,
+            "calls": 0
+          }
+        }
+      ]
+    },
+    {
+      "id": "standard_wood",
+      "category": "route",
+      "steps": [
+        {
+          "message": "拆两面木墙最省资源",
+          "expected": {
+            "status": "calculated",
+            "operation": "raid",
+            "calls": 0
+          }
+        }
+      ]
+    },
+    {
+      "id": "health_followup",
+      "category": "task",
+      "steps": [
+        {
+          "message": "拆一面石墙最省资源",
+          "expected": {
+            "operation": "raid"
+          }
+        },
+        {
+          "message": "它还剩250血",
+          "expected": {
+            "hp": 250,
+            "continues_task": true,
+            "calls": 0
+          }
+        }
+      ]
+    },
+    {
+      "id": "orphan_health",
+      "category": "task",
+      "steps": [
+        {
+          "message": "它还剩250血",
+          "expected": {
+            "status": "needs_input",
+            "calls": 0
+          }
+        }
+      ]
+    },
+    {
+      "id": "unknown_damaged_health",
+      "category": "task",
+      "steps": [
+        {
+          "message": "拆受损石墙但不知道血量",
+          "expected": {
+            "status": "needs_input",
+            "calls": 0
+          }
+        }
+      ]
+    },
+    {
+      "id": "mixed_task",
+      "category": "task",
+      "steps": [
+        {
+          "message": "制作一个C4然后拆一面石墙",
+          "expected": {
+            "status": "needs_input",
+            "calls": 0
+          }
+        }
+      ]
+    },
+    {
+      "id": "invalid_schema",
+      "category": "failure",
+      "steps": [
+        {
+          "message": "/calc {\"operation\":\"craft\",\"goals\":{\"explosive.timed\":-1}}",
+          "expected": {
+            "status": "needs_input",
+            "calls": 0
+          }
+        }
+      ]
+    },
+    {
+      "id": "unsupported_rule",
+      "category": "failure",
+      "steps": [
+        {
+          "message": "修改服的石墙怎么拆",
+          "model_response": {
+            "unsupported": "只支持既定PC原版规则"
+          },
+          "expected": {
+            "status": "needs_input"
+          }
+        }
+      ]
+    },
+    {
+      "id": "craft_to_raid",
+      "category": "task",
+      "steps": [
+        {
+          "message": "/calc {\"operation\":\"craft\",\"goals\":{\"explosive.timed\":1}}",
+          "expected": {
+            "operation": "craft"
+          }
+        },
+        {
+          "message": "改成拆一面石墙最省资源",
+          "expected": {
+            "operation": "raid",
+            "action": "switch",
+            "continues_task": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "raid_to_craft",
+      "category": "task",
+      "steps": [
+        {
+          "message": "拆一面石墙最省资源",
+          "expected": {
+            "operation": "raid"
+          }
+        },
+        {
+          "message": "改成制作两个C4",
+          "model_response": {
+            "operation": "craft",
+            "goals": {
+              "explosive.timed": 2
+            }
+          },
+          "expected": {
+            "operation": "craft",
+            "action": "switch",
+            "continues_task": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "interleaved_chat",
+      "category": "task",
+      "steps": [
+        {
+          "message": "拆一面石墙最省资源",
+          "expected": {
+            "operation": "raid"
+          }
+        },
+        {
+          "message": "谢谢",
+          "expected": {
+            "route": "chat",
+            "calls": 1
+          }
+        },
+        {
+          "message": "它还剩250血",
+          "expected": {
+            "hp": 250,
+            "continues_task": true,
+            "calls": 0
+          }
+        }
+      ]
+    },
+    {
+      "id": "death",
+      "category": "event",
+      "steps": [
+        {
+          "message": "我刚死了，背包丢了",
+          "expected": {
+            "event": "death",
+            "backpack": {},
+            "storage": {
+              "sulfur": 5000
+            },
+            "profile_revision": 2,
+            "calls": 0
+          }
+        }
+      ]
+    },
+    {
+      "id": "death_cross_conversation",
+      "category": "event",
+      "steps": [
+        {
+          "message": "我刚死了，背包丢了",
+          "expected": {
+            "backpack": {}
+          }
+        },
+        {
+          "message": "/calc {\"operation\":\"craft\",\"goals\":{\"explosive.timed\":1}}",
+          "new_conversation": true,
+          "container": "backpack",
+          "expected": {
+            "inventory": {},
+            "source": "profile",
+            "profile_revision": 2
+          }
+        }
+      ]
+    },
+    {
+      "id": "historical_death",
+      "category": "event",
+      "steps": [
+        {
+          "message": "昨天我死了",
+          "expected": {
+            "event": null,
+            "backpack": {
+              "sulfur": 1000
+            },
+            "profile_revision": 1
+          }
+        }
+      ]
+    },
+    {
+      "id": "hypothetical_death",
+      "category": "event",
+      "steps": [
+        {
+          "message": "假如我死了",
+          "expected": {
+            "event": null,
+            "profile_revision": 1
+          }
+        }
+      ]
+    },
+    {
+      "id": "negated_death",
+      "category": "event",
+      "steps": [
+        {
+          "message": "我没死",
+          "expected": {
+            "event": null,
+            "profile_revision": 1
+          }
+        }
+      ]
+    },
+    {
+      "id": "server_change",
+      "category": "event",
+      "steps": [
+        {
+          "message": "拆一面石墙最省资源",
+          "expected": {
+            "operation": "raid"
+          }
+        },
+        {
+          "message": "我换服了",
+          "expected": {
+            "event": "scope_changed",
+            "profile_revision": 1
+          }
+        },
+        {
+          "message": "它还剩250血",
+          "expected": {
+            "status": "needs_input",
+            "continues_task": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "image_inventory",
+      "category": "image",
+      "steps": [
+        {
+          "message": "截图制作一个C4",
+          "image": {},
+          "expected": {
+            "status": "calculated",
+            "inventory": {
+              "sulfur": 100
+            },
+            "source": "image_inferred",
+            "calls": 1
+          }
+        }
+      ]
+    },
+    {
+      "id": "image_unknown_identity",
+      "category": "image",
+      "steps": [
+        {
+          "message": "截图制作一个C4",
+          "image": {
+            "item_id": null,
+            "item_status": "unknown"
+          },
+          "expected": {
+            "inventory": null,
+            "inventory_complete": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "image_unknown_quantity",
+      "category": "image",
+      "steps": [
+        {
+          "message": "截图制作一个C4",
+          "image": {
+            "quantity": null
+          },
+          "expected": {
+            "inventory": null,
+            "inventory_complete": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "partial_image",
+      "category": "image",
+      "steps": [
+        {
+          "message": "截图制作一个C4",
+          "image": {
+            "coverage": "partial"
+          },
+          "expected": {
+            "inventory": {
+              "sulfur": 100
+            },
+            "inventory_complete": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "opponent_image",
+      "category": "image",
+      "steps": [
+        {
+          "message": "截图制作一个C4",
+          "image": {
+            "subject": "opponent"
+          },
+          "expected": {
+            "inventory": null,
+            "source": "unknown"
+          }
+        }
+      ]
+    },
+    {
+      "id": "expired_image",
+      "category": "image",
+      "steps": [
+        {
+          "message": "截图制作一个C4",
+          "image": {
+            "age_minutes": 31
+          },
+          "expected": {
+            "inventory": null,
+            "source": "unknown"
+          }
+        }
+      ]
+    },
+    {
+      "id": "image_profile_conflict",
+      "category": "image",
+      "steps": [
+        {
+          "message": "截图制作一个C4",
+          "image": {},
+          "container": "backpack",
+          "expected": {
+            "status": "needs_input",
+            "error": "ambiguous_inventory"
+          }
+        }
+      ]
+    },
+    {
+      "id": "image_correction",
+      "category": "image",
+      "steps": [
+        {
+          "message": "截图制作一个C4",
+          "image": {},
+          "expected": {
+            "inventory": {
+              "sulfur": 100
+            }
+          }
+        },
+        {
+          "message": "硫磺数量改为150",
+          "expected": {
+            "inventory": {
+              "sulfur": 150
+            },
+            "calls": 0
+          }
+        }
+      ]
+    },
+    {
+      "id": "temporary_workbench",
+      "category": "state",
+      "steps": [
+        {
+          "message": "我有1级工作台",
+          "expected": {
+            "temporary_fields": [
+              "technology.workbench"
+            ],
+            "profile_revision": 1
+          }
+        }
+      ]
+    },
+    {
+      "id": "inventory_delta",
+      "category": "state",
+      "steps": [
+        {
+          "message": "我又捡了100硫磺",
+          "expected": {
+            "status": "needs_input",
+            "backpack": {
+              "sulfur": 1000
+            },
+            "profile_revision": 1,
+            "calls": 0
+          }
+        }
+      ]
+    },
+    {
+      "id": "pending_followup",
+      "category": "task",
+      "steps": [
+        {
+          "message": "拆石墙但不确定是什么服",
+          "model_response": {
+            "unsupported": "请确认规则"
+          },
+          "expected": {
+            "status": "needs_input"
+          }
+        },
+        {
+          "message": "原版",
+          "model_response": {
+            "operation": "raid",
+            "target": "building:base-wall:stone"
+          },
+          "expected": {
+            "status": "calculated",
+            "operation": "raid",
+            "continues_task": true
+          }
+        }
+      ]
+    }
+  ]
+}
