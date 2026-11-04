@@ -1,0 +1,10 @@
+case_id,repeat,source_group,split_at_capture,execution_status,quality_status,evidence_status,coverage_status,first_error_id,turn_count,model_calls
+wide_craft,1,original-inventory-scene,diagnostic,completed,pending,incomplete,unverified,,1,2
+components_craft,1,new-components-scene,acceptance_first_run,completed,fail,incomplete,unverified,turn:0:identified_items_and_counts,1,2
+mixed_craft,1,new-mixed-scene,acceptance_first_run,completed,fail,incomplete,partial,turn:0:identified_items_and_counts,1,2
+components_historical,1,new-components-scene,acceptance_first_run,completed,fail,incomplete,unverified,turn:0:identified_items_and_counts,1,2
+mixed_opponent,1,new-mixed-scene,acceptance_first_run,completed,fail,incomplete,unverified,turn:0:identified_items_and_counts,1,3
+mixed_expired,1,new-mixed-scene,acceptance_first_run,completed,pending,incomplete,unverified,,2,3
+components_switch,1,new-components-scene,acceptance_first_run,completed,fail,incomplete,unverified,turn:0:identified_items_and_counts,3,3
+text_craft,1,baseline-text,diagnostic,completed,pending,incomplete,unverified,,1,1
+damaged_unknown_hp,1,baseline-text,diagnostic,completed,pass,sufficient_for_scoped_checks,complete,,1,1

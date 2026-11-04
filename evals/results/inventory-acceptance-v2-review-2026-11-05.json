@@ -1,0 +1,218 @@
+{
+  "version": "expression-review-v2",
+  "source_sha256": "27bd402741d079f206eb7d01f5dd7497ad446c8a745354613dcfe8ae9b63fc82",
+  "revision": 1,
+  "entries": [
+    {
+      "case_id": "wide_craft",
+      "repeat": 1,
+      "turn_index": 0,
+      "turn_sha256": "9f9dbf82284f5406ec605504abe03788fd17661a5d2bf201602f899c1c6cea10",
+      "status": "pass",
+      "reviewer": "coding_agent",
+      "reviewer_kind": "coding_agent",
+      "reason": "逐轮核对原始回答、人工确认标注及独立配方：材料数字符合本轮有效库存，工作台和局部库存条件保留；游戏build独立留待核验。",
+      "evidence_refs": [
+        "steps/0/turn/assistant"
+      ],
+      "findings": [
+        "facts_match"
+      ],
+      "clarification_appropriate": null
+    },
+    {
+      "case_id": "components_craft",
+      "repeat": 1,
+      "turn_index": 0,
+      "turn_sha256": "e75938ce30486c9c110a40f708c3da9ccbf35e036d79c52ce4d290e67aeef0a4",
+      "status": "fail",
+      "reviewer": "coding_agent",
+      "reviewer_kind": "coding_agent",
+      "reason": "齿轮20被误认成电子零件20，电子零件2被误认成炸药2；回答据此省略电子零件缺口并少算材料。独立手算与实际错误输入相符，首个分歧在视觉识别。",
+      "evidence_refs": [
+        "steps/0/turn/assistant",
+        "steps/0/turn/calculation"
+      ],
+      "findings": [
+        "incorrect_certainty"
+      ],
+      "clarification_appropriate": null
+    },
+    {
+      "case_id": "mixed_craft",
+      "repeat": 1,
+      "turn_index": 0,
+      "turn_sha256": "01afa9fb7ffe9d950484abbdcf52b818b3aa428b73f6ec18ad531981929b685d",
+      "status": "fail",
+      "reviewer": "coding_agent",
+      "reviewer_kind": "coding_agent",
+      "reason": "已确认的低品质燃油157被识别成动物脂肪，回答因此列出燃油缺口600而非443；电子零件2被保守排除是另一项覆盖损失。",
+      "evidence_refs": [
+        "steps/0/turn/assistant",
+        "steps/0/turn/visual/observations"
+      ],
+      "findings": [
+        "incorrect_certainty",
+        "coverage_loss"
+      ],
+      "clarification_appropriate": null
+    },
+    {
+      "case_id": "components_historical",
+      "repeat": 1,
+      "turn_index": 0,
+      "turn_sha256": "578069bdd864ea46affb8469bcc7da21a19228dff7d4c0cbbf5b21e00f2b8941",
+      "status": "pass",
+      "reviewer": "coding_agent",
+      "reviewer_kind": "coding_agent",
+      "reason": "回答明确当前库存未知，仅列十个C4总需求，旧图／对手图／过期图未用于抵扣；中间视觉错误单独保留，不算预算错误。",
+      "evidence_refs": [
+        "steps/0/turn/assistant"
+      ],
+      "findings": [
+        "scope_boundary"
+      ],
+      "clarification_appropriate": null
+    },
+    {
+      "case_id": "mixed_opponent",
+      "repeat": 1,
+      "turn_index": 0,
+      "turn_sha256": "1b8f51ce0a2af329416802f40e5b51632ef68e8111f1e5cc15a39dcfe7f6afea",
+      "status": "pass",
+      "reviewer": "coding_agent",
+      "reviewer_kind": "coding_agent",
+      "reason": "回答明确当前库存未知，仅列十个C4总需求，旧图／对手图／过期图未用于抵扣；中间视觉错误单独保留，不算预算错误。",
+      "evidence_refs": [
+        "steps/0/turn/assistant"
+      ],
+      "findings": [
+        "scope_boundary"
+      ],
+      "clarification_appropriate": null
+    },
+    {
+      "case_id": "mixed_expired",
+      "repeat": 1,
+      "turn_index": 0,
+      "turn_sha256": "6d93af53cbf907a2e91927b4e86b7251b7665ef13da4e220b6f912227c7cb51c",
+      "status": "pending",
+      "reviewer": "coding_agent",
+      "reviewer_kind": "coding_agent",
+      "reason": "已确认的八项材料识别正确。锤子被具体命名而人工身份仍未知，液体450ml显示为×450且省略单位，无法认证整轮表达；两项均未进入材料抵扣。",
+      "evidence_refs": [
+        "steps/0/turn/assistant"
+      ],
+      "findings": [
+        "unverified_claim"
+      ],
+      "clarification_appropriate": null
+    },
+    {
+      "case_id": "mixed_expired",
+      "repeat": 1,
+      "turn_index": 1,
+      "turn_sha256": "bc7de837ef2a32b587df8030aff05cd358fa2cdffad75894c858b59833383001",
+      "status": "pass",
+      "reviewer": "coding_agent",
+      "reviewer_kind": "coding_agent",
+      "reason": "回答明确当前库存未知，仅列十个C4总需求，旧图／对手图／过期图未用于抵扣；中间视觉错误单独保留，不算预算错误。",
+      "evidence_refs": [
+        "steps/1/turn/assistant"
+      ],
+      "findings": [
+        "scope_boundary"
+      ],
+      "clarification_appropriate": null
+    },
+    {
+      "case_id": "components_switch",
+      "repeat": 1,
+      "turn_index": 0,
+      "turn_sha256": "37a62b36e3c410900749713dffd01688d46e6237af5fec1afb40a20c32513627",
+      "status": "fail",
+      "reviewer": "coding_agent",
+      "reviewer_kind": "coding_agent",
+      "reason": "齿轮20被误认成电子零件20，电子零件2被误认成炸药2；回答据此省略电子零件缺口并少算材料。独立手算与实际错误输入相符，首个分歧在视觉识别。",
+      "evidence_refs": [
+        "steps/0/turn/assistant",
+        "steps/0/turn/calculation"
+      ],
+      "findings": [
+        "incorrect_certainty"
+      ],
+      "clarification_appropriate": null
+    },
+    {
+      "case_id": "components_switch",
+      "repeat": 1,
+      "turn_index": 1,
+      "turn_sha256": "b0fd825983611c21ca68d775caa178f7b48a4f207f38a03a3dc631f1afe51ac5",
+      "status": "fail",
+      "reviewer": "coding_agent",
+      "reviewer_kind": "coding_agent",
+      "reason": "本轮切换拆墙和HP输入正确，但继续使用前一轮误识别的炸药2抵扣硫磺。条件说明保留，仍无法消除从第一轮传播的错误库存。",
+      "evidence_refs": [
+        "steps/1/turn/assistant",
+        "steps/1/turn/calculation"
+      ],
+      "findings": [
+        "incorrect_certainty"
+      ],
+      "clarification_appropriate": null
+    },
+    {
+      "case_id": "components_switch",
+      "repeat": 1,
+      "turn_index": 2,
+      "turn_sha256": "2da220d9c0bc806702d53c3e81626e0af04467744067bc3d9005ee3d3b127853",
+      "status": "fail",
+      "reviewer": "coding_agent",
+      "reviewer_kind": "coding_agent",
+      "reason": "本轮切换拆墙和HP输入正确，但继续使用前一轮误识别的炸药2抵扣硫磺。条件说明保留，仍无法消除从第一轮传播的错误库存。",
+      "evidence_refs": [
+        "steps/2/turn/assistant",
+        "steps/2/turn/calculation"
+      ],
+      "findings": [
+        "incorrect_certainty"
+      ],
+      "clarification_appropriate": null
+    },
+    {
+      "case_id": "text_craft",
+      "repeat": 1,
+      "turn_index": 0,
+      "turn_sha256": "b964aa21681cfcbedf20209d177908ea90ec7138b2b26d40f3ce0fce5a6a8589",
+      "status": "pass",
+      "reviewer": "coding_agent",
+      "reviewer_kind": "coding_agent",
+      "reason": "逐轮核对原始回答、人工确认标注及独立配方：材料数字符合本轮有效库存，工作台和局部库存条件保留；游戏build独立留待核验。",
+      "evidence_refs": [
+        "steps/0/turn/assistant"
+      ],
+      "findings": [
+        "facts_match"
+      ],
+      "clarification_appropriate": null
+    },
+    {
+      "case_id": "damaged_unknown_hp",
+      "repeat": 1,
+      "turn_index": 0,
+      "turn_sha256": "b74b552237c8184bc32e238a11933cc4bc6cdf4db10cedbad80d3845586233a1",
+      "status": "pass",
+      "reviewer": "coding_agent",
+      "reviewer_kind": "coding_agent",
+      "reason": "受损但HP未知时要求提供当前血量，没有套用满血；正确澄清。",
+      "evidence_refs": [
+        "steps/0/turn/assistant"
+      ],
+      "findings": [
+        "necessary_clarification"
+      ],
+      "clarification_appropriate": null
+    }
+  ],
+  "method": "Coding-agent review of all 12 real-model answers and visual/calculation artifacts, using user-confirmed labels. Not independent human blind review."
+}

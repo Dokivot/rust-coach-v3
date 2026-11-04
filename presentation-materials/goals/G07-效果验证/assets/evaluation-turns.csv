@@ -1,0 +1,13 @@
+case_id,repeat,turn_index_zero_based,status,http_elapsed_seconds,source_pointer
+wide_craft,1,0,completed,41.838,/runs/0/steps/0/elapsed_seconds
+components_craft,1,0,completed,26.794,/runs/1/steps/0/elapsed_seconds
+mixed_craft,1,0,completed,48.408,/runs/2/steps/0/elapsed_seconds
+components_historical,1,0,completed,19.158,/runs/3/steps/0/elapsed_seconds
+mixed_opponent,1,0,completed,91.322,/runs/4/steps/0/elapsed_seconds
+mixed_expired,1,0,completed,42.357,/runs/5/steps/0/elapsed_seconds
+mixed_expired,1,1,completed,3.604,/runs/5/steps/1/elapsed_seconds
+components_switch,1,0,completed,20.848,/runs/6/steps/0/elapsed_seconds
+components_switch,1,1,completed,0.009,/runs/6/steps/1/elapsed_seconds
+components_switch,1,2,completed,3.605,/runs/6/steps/2/elapsed_seconds
+text_craft,1,0,completed,21.057,/runs/7/steps/0/elapsed_seconds
+damaged_unknown_hp,1,0,completed,2.875,/runs/8/steps/0/elapsed_seconds

@@ -1,0 +1,154 @@
+{
+  "mode": "version_comparison",
+  "comparable": false,
+  "reasons": [
+    "incompatible_or_missing:grader_version",
+    "incompatible_or_missing:grader_sha256",
+    "incompatible_or_missing:fixture_sha256",
+    "different_review_protocol:version",
+    "different_review_protocol:reviewer_kinds"
+  ],
+  "pairs": [
+    {
+      "case_id": "clear_inventory",
+      "repeat": 1,
+      "before": "fail",
+      "after": "fail",
+      "before_first_error": null,
+      "after_first_error": "turn:0:identified_items_and_counts"
+    },
+    {
+      "case_id": "clear_inventory",
+      "repeat": 2,
+      "before": "fail",
+      "after": "fail",
+      "before_first_error": null,
+      "after_first_error": "turn:0:identified_items_and_counts"
+    },
+    {
+      "case_id": "craft_to_raid",
+      "repeat": 1,
+      "before": "pending",
+      "after": "pending",
+      "before_first_error": null,
+      "after_first_error": null
+    },
+    {
+      "case_id": "craft_to_raid",
+      "repeat": 2,
+      "before": "fail",
+      "after": "pending",
+      "before_first_error": null,
+      "after_first_error": null
+    },
+    {
+      "case_id": "damaged_unknown_hp",
+      "repeat": 1,
+      "before": "pending",
+      "after": "pass",
+      "before_first_error": null,
+      "after_first_error": null
+    },
+    {
+      "case_id": "damaged_unknown_hp",
+      "repeat": 2,
+      "before": "pending",
+      "after": "pass",
+      "before_first_error": null,
+      "after_first_error": null
+    },
+    {
+      "case_id": "expired_inventory",
+      "repeat": 1,
+      "before": "pending",
+      "after": "pending",
+      "before_first_error": null,
+      "after_first_error": null
+    },
+    {
+      "case_id": "expired_inventory",
+      "repeat": 2,
+      "before": "pending",
+      "after": "fail",
+      "before_first_error": null,
+      "after_first_error": "turn:0:identified_items_and_counts"
+    },
+    {
+      "case_id": "historical_inventory",
+      "repeat": 1,
+      "before": "pending",
+      "after": "fail",
+      "before_first_error": null,
+      "after_first_error": "turn:0:identified_items_and_counts"
+    },
+    {
+      "case_id": "historical_inventory",
+      "repeat": 2,
+      "before": "pending",
+      "after": "fail",
+      "before_first_error": null,
+      "after_first_error": "turn:0:identified_items_and_counts"
+    },
+    {
+      "case_id": "occluded_inventory",
+      "repeat": 1,
+      "before": "fail",
+      "after": "fail",
+      "before_first_error": null,
+      "after_first_error": "turn:0:identified_items_and_counts"
+    },
+    {
+      "case_id": "occluded_inventory",
+      "repeat": 2,
+      "before": "fail",
+      "after": "fail",
+      "before_first_error": null,
+      "after_first_error": "turn:0:identified_items_and_counts"
+    },
+    {
+      "case_id": "opponent_inventory",
+      "repeat": 1,
+      "before": "pending",
+      "after": "fail",
+      "before_first_error": null,
+      "after_first_error": "turn:0:identified_items_and_counts"
+    },
+    {
+      "case_id": "opponent_inventory",
+      "repeat": 2,
+      "before": "pending",
+      "after": "pending",
+      "before_first_error": null,
+      "after_first_error": null
+    },
+    {
+      "case_id": "text_craft",
+      "repeat": 1,
+      "before": "pending",
+      "after": "pending",
+      "before_first_error": null,
+      "after_first_error": null
+    },
+    {
+      "case_id": "text_craft",
+      "repeat": 2,
+      "before": "pending",
+      "after": "pending",
+      "before_first_error": null,
+      "after_first_error": null
+    }
+  ],
+  "experiment": "mixed_or_saved_evidence",
+  "model_improvement_proven": false,
+  "limitation": "Paired statuses are descriptive. Grader/review changes are not business improvement; small samples do not establish generalization.",
+  "sources": [
+    {
+      "path": "evals/results/inventory-baseline-live-2026-11-05.json",
+      "sha256": "6f1a1707edcb7a7a1b1352afcee96bc0987313880f876e1f0775d6760d57b5bc"
+    },
+    {
+      "path": "evals/results/inventory-baseline-v2-reviewed-2026-11-05.json",
+      "sha256": "2efd9003affd7dc9190d3c1b923869d4c46d332546d8beae32170aa3ffd3090f"
+    }
+  ]
+}

@@ -1,0 +1,92 @@
+{
+  "material_date": "2026-11-05",
+  "evidence_kind": "existing_real_model_capture_with_saved_output_rescore",
+  "real_model_run_not_repeated_during_packaging": true,
+  "source": "../../../../evals/results/inventory-acceptance-v2-reviewed-2026-11-05.json",
+  "capture_started_at": "2026-11-04T20:33:42.516725+00:00",
+  "capture_completed_at": "2026-11-04T20:39:25.742125+00:00",
+  "dataset_version": "inventory-acceptance-v2",
+  "summary": {
+    "runs": 9,
+    "execution": {
+      "completed": 9
+    },
+    "quality": {
+      "pending": 3,
+      "fail": 5,
+      "pass": 1
+    },
+    "checks": {
+      "pass": 93,
+      "pending": 11,
+      "fail": 19,
+      "partial": 1
+    },
+    "review_findings": {
+      "facts_match": 2,
+      "incorrect_certainty": 5,
+      "coverage_loss": 1,
+      "scope_boundary": 3,
+      "unverified_claim": 1,
+      "necessary_clarification": 1
+    },
+    "model_calls": 19,
+    "failed_model_calls": 0,
+    "usage_reported_calls": 19,
+    "billed_cost": null,
+    "reported_token_totals": {
+      "input_tokens": 132267,
+      "output_tokens": 15245,
+      "total_tokens": 147512
+    },
+    "calls_by_role": {
+      "vision": 15,
+      "text": 4
+    },
+    "cost_status": "unknown; no provider billing receipt or pricing conversion",
+    "latency": {
+      "scope": "HTTP chat requests, includes errors when measured; excludes probe/setup",
+      "samples": 12,
+      "p50_seconds": 20.848,
+      "p95_seconds": 91.322
+    },
+    "interpretation": "diagnostic counts; not population accuracy or proof of model improvement",
+    "new_model_calls": 0
+  },
+  "counts": {
+    "runs": 9,
+    "turns": 12,
+    "model_calls": 19,
+    "images": 3,
+    "new_independent_image_groups": 2,
+    "vision_probe_calls": 7
+  },
+  "scoped_checks": {
+    "arithmetic_given_admitted_inventory": {
+      "matched": 8,
+      "examined": 8
+    },
+    "invalid_inventory_exclusion": {
+      "matched": 3,
+      "examined": 3
+    }
+  },
+  "units": {
+    "quality_counts": "案例运行数，非轮次数",
+    "latency": "秒",
+    "tokens": "供应商返回token计数",
+    "cost": "未知，不提供货币金额"
+  },
+  "statistical_scope": {
+    "repeat_per_case": 1,
+    "percentile_method": "按耗时升序，索引ceil(n*p)-1",
+    "latency_denominator": 12,
+    "latency_excludes": [
+      "视觉探测",
+      "会话初始化"
+    ],
+    "not_accuracy_rate": true,
+    "not_before_after_business_comparison": true
+  },
+  "plot_guidance": "用计数图分别展示执行完成9与质量失败5/待核验3/通过1；两者不能相加。8/8算术和3/3隔离使用各自分母，禁止标成整体准确率。"
+}

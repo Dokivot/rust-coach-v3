@@ -59,7 +59,8 @@ def test_unconfirmed_annotation_is_not_accepted_as_visual_ground_truth():
 
 def test_expired_stock_cannot_pass_with_deductions():
     record = craft_record({"sulfur": 140})
-    record["steps"].insert(0, {"turn": {"visual": {}, "assistant": "observation"}})
+    observations = DATASET["annotation"]["slots"]
+    record["steps"].insert(0, {"turn": {"visual": {"observations": observations}, "assistant": "observation"}})
     result = score_case(DATASET, case("expired_inventory"), record)
     assert result["status"] == "fail"
     assert result["first_error_stage"] == "state"

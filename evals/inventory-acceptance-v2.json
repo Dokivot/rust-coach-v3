@@ -1,0 +1,290 @@
+{
+  "version": "inventory-acceptance-v2",
+  "scope": "Nine diagnostic/first-exposure cases; two new independent image scenes, one wider crop of baseline scene. All images partial. No business model or prompt tuning in this evaluation change.",
+  "initial_state": "Each case uses a separate temporary database, empty memory, no player profile and no previous turns. Only turns within a case share context.",
+  "images": {
+    "wide": {
+      "path": "fixtures/inventory-wide.png",
+      "sha256": "9eb21855cca8a98699909f64cfaf53519b0d3e0fd5ca7c4da378810bf77d7c81",
+      "source_group": "original-inventory-scene",
+      "annotation": {
+        "status": "human_confirmed",
+        "confirmed_at": "2026-11-05",
+        "evidence": "User confirmed in this chat: 以上均确认，所列不确定项保持未知",
+        "inventory_complete": false,
+        "slots": [
+          {
+            "slot": "row_1_col_1",
+            "item_id": "wood",
+            "quantity": 8147
+          },
+          {
+            "slot": "row_1_col_2",
+            "item_id": "stones",
+            "quantity": 550
+          },
+          {
+            "slot": "row_1_col_3",
+            "item_id": "metal.fragments",
+            "quantity": 946
+          },
+          {
+            "slot": "row_1_col_4",
+            "item_id": "charcoal",
+            "quantity": 4
+          },
+          {
+            "slot": "row_1_col_5",
+            "item_id": "sulfur",
+            "quantity": 140
+          },
+          {
+            "slot": "row_1_col_6",
+            "item_id": "wood",
+            "quantity": 5869
+          }
+        ],
+        "unknown_slots": [
+          "row_2_col_1"
+        ]
+      }
+    },
+    "components": {
+      "path": "fixtures/inventory-components.png",
+      "sha256": "28000ea1f884ebaefc37ac5cd861cf5c62f792ad48384cf5f8c77b38a35e58cb",
+      "source_group": "new-components-scene",
+      "annotation": {
+        "status": "human_confirmed",
+        "confirmed_at": "2026-11-05",
+        "evidence": "User confirmed in this chat: 以上均确认，所列不确定项保持未知",
+        "inventory_complete": false,
+        "slots": [
+          {
+            "slot": "row_1_col_1",
+            "item_id": "cloth",
+            "quantity": 40
+          },
+          {
+            "slot": "row_1_col_3",
+            "item_id": "gears",
+            "quantity": 20
+          },
+          {
+            "slot": "row_1_col_4",
+            "item_id": "techparts",
+            "quantity": 2
+          }
+        ],
+        "unknown_slots": []
+      }
+    },
+    "mixed": {
+      "path": "fixtures/inventory-mixed.png",
+      "sha256": "416d9a849df893ed67e12ce8de48dad68a1e407cee4f2a91c7df8b25893ed513",
+      "source_group": "new-mixed-scene",
+      "annotation": {
+        "status": "human_confirmed",
+        "confirmed_at": "2026-11-05",
+        "evidence": "User confirmed in this chat: 以上均确认，所列不确定项保持未知",
+        "inventory_complete": false,
+        "slots": [
+          {
+            "slot": "row_1_col_1",
+            "item_id": "cloth",
+            "quantity": 140
+          },
+          {
+            "slot": "row_1_col_2",
+            "item_id": "tarp",
+            "quantity": 2
+          },
+          {
+            "slot": "row_1_col_3",
+            "item_id": "gears",
+            "quantity": 49
+          },
+          {
+            "slot": "row_1_col_4",
+            "item_id": "techparts",
+            "quantity": 2
+          },
+          {
+            "slot": "row_2_col_1",
+            "item_id": "lowgradefuel",
+            "quantity": 157
+          },
+          {
+            "slot": "row_2_col_3",
+            "item_id": "wood",
+            "quantity": 1900
+          },
+          {
+            "slot": "row_2_col_4",
+            "item_id": "stones",
+            "quantity": 1900
+          },
+          {
+            "slot": "row_2_col_5",
+            "item_id": "metal.fragments",
+            "quantity": 1500
+          }
+        ],
+        "unknown_slots": [
+          "row_1_col_5",
+          "row_2_col_2"
+        ]
+      }
+    }
+  },
+  "oracle": {
+    "game_build": null,
+    "version_status": "pending_game_build_verification",
+    "craft_sources": [
+      "https://wiki.facepunch.com/rust/item/explosive.timed",
+      "https://wiki.facepunch.com/rust/item/explosives",
+      "https://wiki.facepunch.com/rust/item/gunpowder"
+    ],
+    "craft_basis": "Separately read Wiki Craft tables: one C4 uses 20 explosives, 5 cloth and 2 tech trash; one explosive uses 50 gunpowder, 10 metal fragments, 10 sulfur and 3 low grade fuel; workbench yields 10 gunpowder per 20 sulfur and 30 charcoal. Do not expand fuel. This oracle never imports the production catalog or Calculator.",
+    "per_c4": {
+      "techparts": 2,
+      "cloth": 5,
+      "metal.fragments": 200,
+      "lowgradefuel": 60,
+      "sulfur": 2200,
+      "charcoal": 3000
+    },
+    "raid": {
+      "full_hp": 500,
+      "c4_damage": 275,
+      "status": "provisional_snapshot_values_not_independently_verified",
+      "expected_counts": {
+        "250": 1,
+        "500": 2
+      }
+    }
+  },
+  "cases": [
+    {
+      "id": "wide_craft",
+      "expected": "craft_image",
+      "source_group": "original-inventory-scene",
+      "split": "diagnostic",
+      "turns": [
+        {
+          "image": "wide",
+          "message": "我还差多少资源才能造10个C4？使用普通工作台配方，不展开低品质燃油。"
+        }
+      ]
+    },
+    {
+      "id": "components_craft",
+      "expected": "craft_image",
+      "source_group": "new-components-scene",
+      "split": "acceptance_first_run",
+      "turns": [
+        {
+          "image": "components",
+          "message": "我还差多少资源才能造10个C4？使用普通工作台配方，不展开低品质燃油。"
+        }
+      ]
+    },
+    {
+      "id": "mixed_craft",
+      "expected": "craft_image",
+      "source_group": "new-mixed-scene",
+      "split": "acceptance_first_run",
+      "turns": [
+        {
+          "image": "mixed",
+          "message": "我还差多少资源才能造10个C4？使用普通工作台配方，不展开低品质燃油。"
+        }
+      ]
+    },
+    {
+      "id": "components_historical",
+      "expected": "no_image_stock",
+      "basis": "Explicit historical declaration; unknown current inventory is not zero",
+      "turns": [
+        {
+          "image": "components",
+          "message": "这是昨天的截图，我现在造10个C4还差多少资源？"
+        }
+      ],
+      "source_group": "new-components-scene",
+      "split": "acceptance_first_run"
+    },
+    {
+      "id": "mixed_opponent",
+      "expected": "no_image_stock",
+      "basis": "Explicit opponent declaration; opponent stock cannot be used as self inventory",
+      "turns": [
+        {
+          "image": "mixed",
+          "message": "这是对手的背包，我造10个C4还差多少资源？"
+        }
+      ],
+      "source_group": "new-mixed-scene",
+      "split": "acceptance_first_run"
+    },
+    {
+      "id": "mixed_expired",
+      "expected": "expired",
+      "basis": "Observation aged 31 minutes in this case's temporary database, beyond the existing 30-minute TTL",
+      "turns": [
+        {
+          "image": "mixed",
+          "message": "识别这张背包截图。"
+        },
+        {
+          "age_observation_minutes": 31,
+          "message": "造10个C4还差多少资源？"
+        }
+      ],
+      "source_group": "new-mixed-scene",
+      "split": "acceptance_first_run"
+    },
+    {
+      "id": "components_switch",
+      "expected": "switch",
+      "basis": "Craft must switch to one stone wall; omitted HP allows explicit full-health assumption; follow-up replaces HP only; no actual inventory mutation",
+      "turns": [
+        {
+          "image": "components",
+          "message": "我还差多少资源才能造10个C4？"
+        },
+        {
+          "message": "拆一面石墙最省资源的方案是什么？"
+        },
+        {
+          "message": "它还剩250血"
+        }
+      ],
+      "source_group": "new-components-scene",
+      "split": "acceptance_first_run"
+    },
+    {
+      "id": "text_craft",
+      "expected": "craft_zero",
+      "basis": "Independent Wiki recipe worksheet; game build pending",
+      "turns": [
+        {
+          "message": "库存为空，只算造10个C4的材料，使用普通工作台配方，不展开低品质燃油。"
+        }
+      ],
+      "source_group": "baseline-text",
+      "split": "diagnostic"
+    },
+    {
+      "id": "damaged_unknown_hp",
+      "expected": "needs_hp",
+      "basis": "Explicit damage with unknown HP cannot silently default to full health",
+      "turns": [
+        {
+          "message": "石墙受损了，不知道剩多少血，需要几颗C4？"
+        }
+      ],
+      "source_group": "baseline-text",
+      "split": "diagnostic"
+    }
+  ]
+}

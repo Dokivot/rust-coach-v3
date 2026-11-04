@@ -1,0 +1,382 @@
+{
+  "version": "expression-review-v2",
+  "source_sha256": "6f1a1707edcb7a7a1b1352afcee96bc0987313880f876e1f0775d6760d57b5bc",
+  "revision": 1,
+  "entries": [
+    {
+      "case_id": "text_craft",
+      "repeat": 1,
+      "turn_index": 0,
+      "turn_sha256": "6b937f6e25a85071dde0a81558a63940db825cd66ea1dd08673fbfafe778cc55",
+      "status": "pass",
+      "reviewer": "coding_agent",
+      "reviewer_kind": "coding_agent",
+      "reason": "已逐轮阅读原始回答；材料数字与独立配方及本轮有效库存一致，工作台和库存范围条件保留。仅评表达，游戏版本另列待核验。",
+      "evidence_refs": [
+        "steps/0/turn/assistant"
+      ],
+      "findings": [
+        "facts_match"
+      ],
+      "clarification_appropriate": null
+    },
+    {
+      "case_id": "clear_inventory",
+      "repeat": 1,
+      "turn_index": 0,
+      "turn_sha256": "22f4bf5d048f23d74ad46dff00cde832a40494bffda83b28c2117eb417d95a8e",
+      "status": "fail",
+      "reviewer": "coding_agent",
+      "reviewer_kind": "coding_agent",
+      "reason": "回答把错误的截图识别结果称为可确认库存并据此抵扣；已确认金属碎片被当成布，材料缺口因此错误。遮挡与局部库存说明不能消除这项事实错误。",
+      "evidence_refs": [
+        "steps/0/turn/assistant"
+      ],
+      "findings": [
+        "incorrect_certainty"
+      ],
+      "clarification_appropriate": null
+    },
+    {
+      "case_id": "occluded_inventory",
+      "repeat": 1,
+      "turn_index": 0,
+      "turn_sha256": "194f75a9f909929d1d2acf7295f8232d33a01299ebd67c837e870b5aec0fe312",
+      "status": "fail",
+      "reviewer": "coding_agent",
+      "reviewer_kind": "coding_agent",
+      "reason": "回答把错误的截图识别结果称为可确认库存并据此抵扣；已确认金属碎片被当成布，材料缺口因此错误。遮挡与局部库存说明不能消除这项事实错误。",
+      "evidence_refs": [
+        "steps/0/turn/assistant"
+      ],
+      "findings": [
+        "incorrect_certainty"
+      ],
+      "clarification_appropriate": null
+    },
+    {
+      "case_id": "historical_inventory",
+      "repeat": 1,
+      "turn_index": 0,
+      "turn_sha256": "3011328ece719916b50c71b260c0cccd9b512472cc702b530aa49775992606d7",
+      "status": "pass",
+      "reviewer": "coding_agent",
+      "reviewer_kind": "coding_agent",
+      "reason": "回答明确当前库存未知，只给十个C4总需求，说明旧图／非本人图未用于抵扣；总需求与独立配方一致。中间视觉错误另由视觉检查保留。",
+      "evidence_refs": [
+        "steps/0/turn/assistant"
+      ],
+      "findings": [
+        "scope_boundary"
+      ],
+      "clarification_appropriate": null
+    },
+    {
+      "case_id": "opponent_inventory",
+      "repeat": 1,
+      "turn_index": 0,
+      "turn_sha256": "335dc8c499f1b40c0cdf91dbb92ca9f1b09cd688a99fe234b5c13110b22c5911",
+      "status": "pass",
+      "reviewer": "coding_agent",
+      "reviewer_kind": "coding_agent",
+      "reason": "回答明确当前库存未知，只给十个C4总需求，说明旧图／非本人图未用于抵扣；总需求与独立配方一致。中间视觉错误另由视觉检查保留。",
+      "evidence_refs": [
+        "steps/0/turn/assistant"
+      ],
+      "findings": [
+        "scope_boundary"
+      ],
+      "clarification_appropriate": null
+    },
+    {
+      "case_id": "expired_inventory",
+      "repeat": 1,
+      "turn_index": 0,
+      "turn_sha256": "0671fac096ceec595063ea1d26ca6e370df2ab1fdc7843ee0290a77a2f5fa4bc",
+      "status": "pending",
+      "reviewer": "coding_agent",
+      "reviewer_kind": "coding_agent",
+      "reason": "前五项识别正确；第二行被命名为绳子，但人工标注仍未知，无法验证该名称。数量未用于抵扣。",
+      "evidence_refs": [
+        "steps/0/turn/assistant"
+      ],
+      "findings": [
+        "unverified_claim"
+      ],
+      "clarification_appropriate": null
+    },
+    {
+      "case_id": "expired_inventory",
+      "repeat": 1,
+      "turn_index": 1,
+      "turn_sha256": "d7e03ee3bc5fd8ad601ffc397ef23ebfdcb009e7220866b6a4bc0ee2e6178fa1",
+      "status": "pass",
+      "reviewer": "coding_agent",
+      "reviewer_kind": "coding_agent",
+      "reason": "回答明确当前库存未知，只给十个C4总需求，说明旧图／非本人图未用于抵扣；总需求与独立配方一致。中间视觉错误另由视觉检查保留。",
+      "evidence_refs": [
+        "steps/1/turn/assistant"
+      ],
+      "findings": [
+        "scope_boundary"
+      ],
+      "clarification_appropriate": null
+    },
+    {
+      "case_id": "damaged_unknown_hp",
+      "repeat": 1,
+      "turn_index": 0,
+      "turn_sha256": "af4f2e043abf35295080c9faff99c3b0a538cbbe311cdc42184ef5b8f8c6dcd9",
+      "status": "pass",
+      "reviewer": "coding_agent",
+      "reviewer_kind": "coding_agent",
+      "reason": "受损石墙剩余HP未知，回答要求当前血量，未套用满血；属于必要澄清。",
+      "evidence_refs": [
+        "steps/0/turn/assistant"
+      ],
+      "findings": [
+        "necessary_clarification"
+      ],
+      "clarification_appropriate": null
+    },
+    {
+      "case_id": "craft_to_raid",
+      "repeat": 1,
+      "turn_index": 0,
+      "turn_sha256": "f5e192d6253519d533f2e00f2285de36aa4360d0ce6f35cd0e97705aebe4b3a6",
+      "status": "pass",
+      "reviewer": "coding_agent",
+      "reviewer_kind": "coding_agent",
+      "reason": "已逐轮阅读原始回答；材料数字与独立配方及本轮有效库存一致，工作台和库存范围条件保留。仅评表达，游戏版本另列待核验。",
+      "evidence_refs": [
+        "steps/0/turn/assistant"
+      ],
+      "findings": [
+        "facts_match"
+      ],
+      "clarification_appropriate": null
+    },
+    {
+      "case_id": "craft_to_raid",
+      "repeat": 1,
+      "turn_index": 1,
+      "turn_sha256": "d60d2b57640ad9e043f3076a85707a247b4a464bb4eecf322109e014bf1f3023",
+      "status": "pending",
+      "reviewer": "coding_agent",
+      "reviewer_kind": "coding_agent",
+      "reason": "任务切换、500/250HP、硬面、局部库存与仅比较单一方案的限制均保留；所有候选方法的独立规则尚未核验，不能认证最优结论。",
+      "evidence_refs": [
+        "steps/1/turn/assistant"
+      ],
+      "findings": [
+        "unverified_claim"
+      ],
+      "clarification_appropriate": null
+    },
+    {
+      "case_id": "craft_to_raid",
+      "repeat": 1,
+      "turn_index": 2,
+      "turn_sha256": "9da638b0658a7e5dbb998eca0728b28b50ccd12abb772a7e7df1f75cd4380d98",
+      "status": "pending",
+      "reviewer": "coding_agent",
+      "reviewer_kind": "coding_agent",
+      "reason": "任务切换、500/250HP、硬面、局部库存与仅比较单一方案的限制均保留；所有候选方法的独立规则尚未核验，不能认证最优结论。",
+      "evidence_refs": [
+        "steps/2/turn/assistant"
+      ],
+      "findings": [
+        "unverified_claim"
+      ],
+      "clarification_appropriate": null
+    },
+    {
+      "case_id": "text_craft",
+      "repeat": 2,
+      "turn_index": 0,
+      "turn_sha256": "daa4397d7e2280816af6cec982708a2ba531add961e113f88e345eeb9d6486f0",
+      "status": "pass",
+      "reviewer": "coding_agent",
+      "reviewer_kind": "coding_agent",
+      "reason": "已逐轮阅读原始回答；材料数字与独立配方及本轮有效库存一致，工作台和库存范围条件保留。仅评表达，游戏版本另列待核验。",
+      "evidence_refs": [
+        "steps/0/turn/assistant"
+      ],
+      "findings": [
+        "facts_match"
+      ],
+      "clarification_appropriate": null
+    },
+    {
+      "case_id": "clear_inventory",
+      "repeat": 2,
+      "turn_index": 0,
+      "turn_sha256": "65deb7151e2e6d65213300703967f244a3796e0abd3e6ef1d0d809a256887d0d",
+      "status": "fail",
+      "reviewer": "coding_agent",
+      "reviewer_kind": "coding_agent",
+      "reason": "回答把错误的截图识别结果称为可确认库存并据此抵扣；已确认金属碎片被当成布，材料缺口因此错误。遮挡与局部库存说明不能消除这项事实错误。",
+      "evidence_refs": [
+        "steps/0/turn/assistant"
+      ],
+      "findings": [
+        "incorrect_certainty"
+      ],
+      "clarification_appropriate": null
+    },
+    {
+      "case_id": "occluded_inventory",
+      "repeat": 2,
+      "turn_index": 0,
+      "turn_sha256": "4de11aea066552e021a21c893420f1f667284c747de81e9cc5a20468ca3ac2e4",
+      "status": "fail",
+      "reviewer": "coding_agent",
+      "reviewer_kind": "coding_agent",
+      "reason": "回答把错误的截图识别结果称为可确认库存并据此抵扣；已确认金属碎片被当成布，材料缺口因此错误。遮挡与局部库存说明不能消除这项事实错误。",
+      "evidence_refs": [
+        "steps/0/turn/assistant"
+      ],
+      "findings": [
+        "incorrect_certainty"
+      ],
+      "clarification_appropriate": null
+    },
+    {
+      "case_id": "historical_inventory",
+      "repeat": 2,
+      "turn_index": 0,
+      "turn_sha256": "e24c2c04bc981d61fc78beaa40587579e2ec1306b1b5aa0b9fbde61996fc4b7d",
+      "status": "pass",
+      "reviewer": "coding_agent",
+      "reviewer_kind": "coding_agent",
+      "reason": "回答明确当前库存未知，只给十个C4总需求，说明旧图／非本人图未用于抵扣；总需求与独立配方一致。中间视觉错误另由视觉检查保留。",
+      "evidence_refs": [
+        "steps/0/turn/assistant"
+      ],
+      "findings": [
+        "scope_boundary"
+      ],
+      "clarification_appropriate": null
+    },
+    {
+      "case_id": "opponent_inventory",
+      "repeat": 2,
+      "turn_index": 0,
+      "turn_sha256": "4109a45f493d88e9bb19101d0276dd40153c2da2a2e8ba095f0473725175326e",
+      "status": "pass",
+      "reviewer": "coding_agent",
+      "reviewer_kind": "coding_agent",
+      "reason": "回答明确当前库存未知，只给十个C4总需求，说明旧图／非本人图未用于抵扣；总需求与独立配方一致。中间视觉错误另由视觉检查保留。",
+      "evidence_refs": [
+        "steps/0/turn/assistant"
+      ],
+      "findings": [
+        "scope_boundary"
+      ],
+      "clarification_appropriate": null
+    },
+    {
+      "case_id": "expired_inventory",
+      "repeat": 2,
+      "turn_index": 0,
+      "turn_sha256": "f2cdcc4b34191c440e57fa872271d8e4223134177db727a4d502b27e2d5360bf",
+      "status": "fail",
+      "reviewer": "coding_agent",
+      "reviewer_kind": "coding_agent",
+      "reason": "第一轮直接把已确认的金属碎片946表述成布946；后续过期隔离成功不消除这轮错误。",
+      "evidence_refs": [
+        "steps/0/turn/assistant"
+      ],
+      "findings": [
+        "incorrect_certainty"
+      ],
+      "clarification_appropriate": null
+    },
+    {
+      "case_id": "expired_inventory",
+      "repeat": 2,
+      "turn_index": 1,
+      "turn_sha256": "7c3d12ed008536544109361c6924a9873a35e36c692ffe9821ecfe2eb59381eb",
+      "status": "pass",
+      "reviewer": "coding_agent",
+      "reviewer_kind": "coding_agent",
+      "reason": "回答明确当前库存未知，只给十个C4总需求，说明旧图／非本人图未用于抵扣；总需求与独立配方一致。中间视觉错误另由视觉检查保留。",
+      "evidence_refs": [
+        "steps/1/turn/assistant"
+      ],
+      "findings": [
+        "scope_boundary"
+      ],
+      "clarification_appropriate": null
+    },
+    {
+      "case_id": "damaged_unknown_hp",
+      "repeat": 2,
+      "turn_index": 0,
+      "turn_sha256": "6a6f3aa0d1725a3b9b6f9c0d17a6db795ad05e1d9e2a779fe8197bcf2152b9bb",
+      "status": "pass",
+      "reviewer": "coding_agent",
+      "reviewer_kind": "coding_agent",
+      "reason": "受损石墙剩余HP未知，回答要求当前血量，未套用满血；属于必要澄清。",
+      "evidence_refs": [
+        "steps/0/turn/assistant"
+      ],
+      "findings": [
+        "necessary_clarification"
+      ],
+      "clarification_appropriate": null
+    },
+    {
+      "case_id": "craft_to_raid",
+      "repeat": 2,
+      "turn_index": 0,
+      "turn_sha256": "b12a8a2190ede07d2c5f7c4d435114da9bbf9b0cb0196f24ef8b93155c8f0670",
+      "status": "pass",
+      "reviewer": "coding_agent",
+      "reviewer_kind": "coding_agent",
+      "reason": "未识别的已知材料未抵扣，回答保留局部库存及实际缺口可能更少的限制；属于覆盖不足，未断言这些资源持有量为零。",
+      "evidence_refs": [
+        "steps/0/turn/assistant"
+      ],
+      "findings": [
+        "qualified_partial"
+      ],
+      "clarification_appropriate": null
+    },
+    {
+      "case_id": "craft_to_raid",
+      "repeat": 2,
+      "turn_index": 1,
+      "turn_sha256": "d63129dd155321872fa35eff790acdc958527ce39f47f736600c6ad70a02b030",
+      "status": "pending",
+      "reviewer": "coding_agent",
+      "reviewer_kind": "coding_agent",
+      "reason": "任务切换、500/250HP、硬面、局部库存与仅比较单一方案的限制均保留；所有候选方法的独立规则尚未核验，不能认证最优结论。",
+      "evidence_refs": [
+        "steps/1/turn/assistant"
+      ],
+      "findings": [
+        "unverified_claim"
+      ],
+      "clarification_appropriate": null
+    },
+    {
+      "case_id": "craft_to_raid",
+      "repeat": 2,
+      "turn_index": 2,
+      "turn_sha256": "db66f9301f05030657a86ab86a36e366ebb003380b32a95caabee490065b4789",
+      "status": "pending",
+      "reviewer": "coding_agent",
+      "reviewer_kind": "coding_agent",
+      "reason": "任务切换、500/250HP、硬面、局部库存与仅比较单一方案的限制均保留；所有候选方法的独立规则尚未核验，不能认证最优结论。",
+      "evidence_refs": [
+        "steps/2/turn/assistant"
+      ],
+      "findings": [
+        "unverified_claim"
+      ],
+      "clarification_appropriate": null
+    }
+  ],
+  "method": "Coding-agent review of all 22 captured answers and their visual/calculation evidence; not independent human blind review."
+}

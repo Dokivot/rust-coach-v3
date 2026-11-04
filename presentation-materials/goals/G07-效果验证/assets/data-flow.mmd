@@ -1,0 +1,32 @@
+flowchart TB
+    operator[评测人员] -. 启动批次 .-> gate{版本和图片校验}
+    cases[固定问题与图片] -->|版本、图像哈希与图源分组| gate
+    cases -->|本轮问题与图片附件| accept[接收文字和截图]
+    operator -->|调用次数与时间上限| budget{调用次数与时间预算}
+    facts[人工标注与独立配方] -->|已知物品、数量及未知边界| grade[逐轮核对前提与结果]
+    gate -. 校验通过，建立隔离会话 .-> accept
+    gate -. 校验失败 .-> stop[明确停止并保存状态]
+    budget -. 每次模型调用前允许继续 .-> infer[理解任务并提取图像观测]
+    budget -. 耗尽或超时 .-> stop
+    accept -->|问题、图片与会话上下文| infer
+    infer -->|物品候选、数量、归属与时效| scope{库存能否用于本次计算}
+    scope -->|当前本人，保留已知部分| calc[按规则计算材料缺口]
+    scope -->|旧图或他人图，当前库存未知| calc
+    infer -->|受损目标缺少血量| clarify[说明条件不足并澄清]
+    rules[固定配方与伤害规则] -->|工具可用规则及适用条件| calc
+    calc -->|总需求或局部抵扣结果、限制条件| answer[返回有条件的回答]
+    clarify -->|需要补充的条件| answer
+    answer -->|正文与阶段进度| player[玩家]
+    answer -->|成功轮次和观测状态| state[(案例内临时会话状态)]
+    state -->|后续问题所需历史| infer
+    infer -->|模型观测| capture[留存逐轮证据]
+    calc -->|采用的库存与工具结果| capture
+    answer -->|最终正文| capture
+    stop -->|失败或未执行原因| capture
+    capture -->|不可覆盖的捕获报告| grade
+    capture -->|回答哈希与原始证据| review[显式逐轮表达复核]
+    grade -->|检查结果、依赖与证据引用| report[合并评测结论]
+    review -->|评审身份、意见与待核验项| report
+    report -->|兼容版本的成对结果| compare[版本对照]
+    report -->|人工选择的问题线索| candidate[待审核反馈]
+    candidate -. 人工核实后才允许晋升 .-> revision[生成新版案例]

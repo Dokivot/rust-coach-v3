@@ -1,0 +1,92 @@
+{
+  "mode": "version_comparison",
+  "comparable": true,
+  "reasons": [],
+  "pairs": [
+    {
+      "case_id": "components_craft",
+      "repeat": 1,
+      "before": "fail",
+      "after": "fail",
+      "before_first_error": "turn:0:identified_items_and_counts",
+      "after_first_error": "turn:0:identified_items_and_counts"
+    },
+    {
+      "case_id": "components_historical",
+      "repeat": 1,
+      "before": "fail",
+      "after": "fail",
+      "before_first_error": "turn:0:identified_items_and_counts",
+      "after_first_error": "turn:0:identified_items_and_counts"
+    },
+    {
+      "case_id": "components_switch",
+      "repeat": 1,
+      "before": "fail",
+      "after": "fail",
+      "before_first_error": "turn:0:identified_items_and_counts",
+      "after_first_error": "turn:0:identified_items_and_counts"
+    },
+    {
+      "case_id": "damaged_unknown_hp",
+      "repeat": 1,
+      "before": "pass",
+      "after": "pass",
+      "before_first_error": null,
+      "after_first_error": null
+    },
+    {
+      "case_id": "mixed_craft",
+      "repeat": 1,
+      "before": "fail",
+      "after": "fail",
+      "before_first_error": "turn:0:identified_items_and_counts",
+      "after_first_error": "turn:0:identified_items_and_counts"
+    },
+    {
+      "case_id": "mixed_expired",
+      "repeat": 1,
+      "before": "pending",
+      "after": "pending",
+      "before_first_error": null,
+      "after_first_error": null
+    },
+    {
+      "case_id": "mixed_opponent",
+      "repeat": 1,
+      "before": "fail",
+      "after": "fail",
+      "before_first_error": "turn:0:identified_items_and_counts",
+      "after_first_error": "turn:0:identified_items_and_counts"
+    },
+    {
+      "case_id": "text_craft",
+      "repeat": 1,
+      "before": "pending",
+      "after": "pending",
+      "before_first_error": null,
+      "after_first_error": null
+    },
+    {
+      "case_id": "wide_craft",
+      "repeat": 1,
+      "before": "pending",
+      "after": "pending",
+      "before_first_error": null,
+      "after_first_error": null
+    }
+  ],
+  "experiment": "saved_output_regrading",
+  "model_improvement_proven": false,
+  "limitation": "Paired statuses are descriptive. Grader/review changes are not business improvement; small samples do not establish generalization.",
+  "sources": [
+    {
+      "path": "evals/results/inventory-acceptance-v2-reviewed-2026-11-05.json",
+      "sha256": "027e4b062bbd9c9cf81885742c76faf246f5c7639db8573c83b5ae78fb2d6f6e"
+    },
+    {
+      "path": "data/inventory-evaluation-v2/reproducibility.json",
+      "sha256": "027e4b062bbd9c9cf81885742c76faf246f5c7639db8573c83b5ae78fb2d6f6e"
+    }
+  ]
+}

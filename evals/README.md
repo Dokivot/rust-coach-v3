@@ -1,5 +1,77 @@
 # 库存与拆墙诊断基线
 
+## V2：可追溯的评测闭环
+
+当前入口继续复用原应用的上传、视觉探测、SSE 和隔离数据库。V2 增加证据前提、逐轮检查、复核合并、版本对照和预算停止；没有修改 Coach 的业务模型、提示词或计算器。实施结果与演示步骤见 [V2 实施报告](../docs/inventory-evaluation-v2.md)。下文旧基线说明保留历史背景，V2 的状态与归因规则以本节为准。
+
+### 运行、重判和复核
+
+```sh
+uv run python evals/inventory_baseline.py --live \
+  --cases evals/inventory-acceptance-v2.json --repeat 1 \
+  --max-model-calls 40 --max-seconds 900 \
+  --output data/inventory-evaluation-v2/demo-live.json \
+  --portable-output evals/results/demo-live.json
+
+uv run python evals/inventory_review.py \
+  --review-template evals/results/demo-live.json \
+  --output data/inventory-evaluation-v2/demo-review.json
+
+uv run python evals/inventory_baseline.py \
+  --cases evals/inventory-acceptance-v2.json \
+  --replay evals/results/demo-live.json \
+  --review data/inventory-evaluation-v2/demo-review.json \
+  --output evals/results/demo-reviewed.json
+```
+
+复核模板默认 `pending`。阅读每一轮原始回答及相关证据后填写 `status`、`reviewer`、`reviewer_kind`、`reason`、`findings`；`human` 与 `coding_agent` 必须如实区分。合理澄清可填写 `clarification_appropriate: true`，不必要追问填 `false`。引用必须落在该轮真实存在的字段内。文件哈希、轮次哈希、重复冲突或证据缺失会拒绝合并。复核只能补充表达和澄清判断，不能抹除自动检查已确认的上游错误；修订复核请写新文件并递增 `revision`。
+
+`--replay` 只重判保存的输出，新模型调用为零；原报告的 `model_calls` 数组是历史捕获证据。报告保留旧判定及新判定，不改原始文件。所有命令拒绝覆盖已有输出。
+
+### 状态与归因
+
+- 执行状态：`completed`、`failed`、`incomplete`、`stopped_budget`、`not_run`；质量状态单独记录 `pass`、`fail`、`pending`、`partial`、`not_run`。
+- 检查状态 `blocked` 表示缺少计算或观测前提；缺输出不能通过“未使用无效库存”。缺标注、缺版本证据会让相关检查保持 `pending`。
+- 已知格子的确定性错认是 `fail`；保守省略已知物品是 `partial`，另报覆盖损失。未知格子不编造金标；额外数值观测无法核验时，其下游抵扣仍待核实。
+- 每轮均检查回答与图像证据。旧图、他人图、过期图的库存隔离与视觉正确性分别判断，潜在错误被库存门禁拦住时记录 `blocked_by_scope_gate`。
+- 首错按轮次及工作流依赖寻找最早有证据的分歧，保留具体字段和阶段事件引用。依赖失败列入 `upstream_failures`，不把后续缺口错误重复宣称为独立根因；这不是经干预实验证明的因果根因。
+- 独立手算表仅覆盖十个 C4、普通工作台火药、不展开燃油，支持库存中的 C4／炸药／火药抵扣。它不调用生产计算器。当前游戏 build 与拆墙规则未独立验证，数值匹配仍不能宣称当前版本正确。
+
+### 版本、分组与对照
+
+```sh
+uv run python evals/inventory_review.py \
+  --compare evals/results/demo-reviewed.json evals/results/another-reviewed.json \
+  --output evals/results/demo-comparison.json
+```
+
+对照要求相同数据集、判定器版本及源码哈希、模型配置、规则、图片、案例与重复次数，以及一致的复核协议。不同业务源码允许对照，并由原报告保留源码清单。条件不兼容时给出原因，仍可查看描述性差异，但不宣称改进。相同保存输出的重判标记为 `saved_output_regrading`，真实执行标记为 `live_repeated_execution`；模型进步不会由一次状态变化自动认证。
+
+三张新图及其标注已获本会话用户确认。宽图与旧截图同源，属于诊断组；另两张图按独立场景分组，所有历史／对手／多轮变体跟随原图，不能跨调试集与验收集。`acceptance_first_run` 表示本轮首次真实测试，测试后已成为已见样本，未来修改还需要新的保留样本。
+
+### 反馈进入候选集
+
+```sh
+uv run python evals/inventory_review.py \
+  --feedback-template evals/inventory-acceptance-v2.json --image mixed \
+  --output data/inventory-evaluation-v2/feedback.json
+
+uv run python evals/inventory_review.py \
+  --promote-feedback data/inventory-evaluation-v2/feedback.json \
+  --cases evals/inventory-acceptance-v2.json \
+  --output evals/inventory-reviewed-next.json
+```
+
+第二条命令会拒绝未经审核的候选。只有人工核实后，填写 `status: approved`、`reviewer_kind: human`、审核人、来源证据和新的数据集版本，才可生成新版案例。输出放在 `evals/` 以保持图片相对路径有效。原数据集、运行结果和玩家状态均不会被更新。
+
+预算在每次模型调用前检查，包含视觉探测与工作流内部调用；时间预算取消在途案例。预先建立完整运行清单，剩余案例明确为 `not_run`，不算正确拒答。调用量、可获得的 token、聊天 HTTP 延迟分位数有真实记录；没有供应商账单时费用为 `null`，不填零。硬预算覆盖调用次数与墙钟时间，不承诺美元费用上限。
+
+```sh
+uv run pytest -q tests/test_inventory_baseline.py tests/test_inventory_evaluation.py
+```
+
+测试覆盖判定前提、跨层不确定性、逐轮首错、保守覆盖、复核冲突、版本不兼容、反馈审核、图片哈希、真实 HTTP/SSE 驱动及两类预算中止。测试模型与真实模型评测分别报告。
+
 本轮只增加评测材料和执行工具，保留当前业务行为。八个案例用于定位典型流程中的错误，不代表整体准确率，也不是修复后的保留验收集。
 
 首批两轮真实结果及建议见[评测报告](../docs/inventory-baseline-results.md)，其中区分了错误确定性回答、保守识别造成的覆盖不足和仍待核验的规则。脚本正常退出只表示批次执行结束，不表示案例通过；请阅读自动检查和逐案例复核记录。

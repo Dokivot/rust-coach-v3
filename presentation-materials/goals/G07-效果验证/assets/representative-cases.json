@@ -1,0 +1,1078 @@
+{
+  "source": "../../../../evals/results/inventory-acceptance-v2-reviewed-2026-11-05.json",
+  "source_sha256": "027e4b062bbd9c9cf81885742c76faf246f5c7639db8573c83b5ae78fb2d6f6e",
+  "note": "字段摘录；回答逐字保留；已去除会话ID、附件ID、提示正文和服务端点。输入截图均为游戏库存区域。",
+  "examples": [
+    {
+      "case_id": "wide_craft",
+      "repeat": 1,
+      "image_asset": "inventory-wide.png",
+      "annotation": {
+        "status": "human_confirmed",
+        "confirmed_at": "2026-11-05",
+        "evidence": "User confirmed in this chat: 以上均确认，所列不确定项保持未知",
+        "inventory_complete": false,
+        "slots": [
+          {
+            "slot": "row_1_col_1",
+            "item_id": "wood",
+            "quantity": 8147
+          },
+          {
+            "slot": "row_1_col_2",
+            "item_id": "stones",
+            "quantity": 550
+          },
+          {
+            "slot": "row_1_col_3",
+            "item_id": "metal.fragments",
+            "quantity": 946
+          },
+          {
+            "slot": "row_1_col_4",
+            "item_id": "charcoal",
+            "quantity": 4
+          },
+          {
+            "slot": "row_1_col_5",
+            "item_id": "sulfur",
+            "quantity": 140
+          },
+          {
+            "slot": "row_1_col_6",
+            "item_id": "wood",
+            "quantity": 5869
+          }
+        ],
+        "unknown_slots": [
+          "row_2_col_1"
+        ]
+      },
+      "quality_status": "pending",
+      "first_error_id": null,
+      "turns": [
+        {
+          "source_pointer": "/runs/0/steps/0",
+          "input": {
+            "image": "wide",
+            "message": "我还差多少资源才能造10个C4？使用普通工作台配方，不展开低品质燃油。"
+          },
+          "observations": [
+            {
+              "slot": "row_1_col_1",
+              "item_id": "wood",
+              "quantity": 8147,
+              "item_status": "identified",
+              "quantity_status": "readable"
+            },
+            {
+              "slot": "row_1_col_2",
+              "item_id": "stones",
+              "quantity": 550,
+              "item_status": "identified",
+              "quantity_status": "readable"
+            },
+            {
+              "slot": "row_1_col_3",
+              "item_id": "metal.fragments",
+              "quantity": 946,
+              "item_status": "identified",
+              "quantity_status": "readable"
+            },
+            {
+              "slot": "row_1_col_4",
+              "item_id": "charcoal",
+              "quantity": 4,
+              "item_status": "identified",
+              "quantity_status": "readable"
+            },
+            {
+              "slot": "row_1_col_5",
+              "item_id": "sulfur",
+              "quantity": 140,
+              "item_status": "identified",
+              "quantity_status": "readable"
+            },
+            {
+              "slot": "row_1_col_6",
+              "item_id": "wood",
+              "quantity": 5869,
+              "item_status": "identified",
+              "quantity_status": "readable"
+            },
+            {
+              "slot": "row_2_col_1",
+              "item_id": null,
+              "quantity": null,
+              "item_status": "unknown",
+              "quantity_status": "absent"
+            }
+          ],
+          "calculation": {
+            "status": "calculated",
+            "input": {
+              "operation": "craft",
+              "ruleset": "pc_vanilla",
+              "goals": {
+                "explosive.timed": 10
+              },
+              "inventory": {
+                "wood": 14016,
+                "stones": 550,
+                "metal.fragments": 946,
+                "charcoal": 4,
+                "sulfur": 140
+              },
+              "inventory_complete": false,
+              "reserve": {},
+              "target": null,
+              "hp": null,
+              "count": 1,
+              "side": "hard",
+              "methods": [],
+              "workbench": null,
+              "blueprints": null,
+              "gunpowder_recipe": "workbench",
+              "expand_fuel": false
+            },
+            "acquisition": {
+              "techparts": 20,
+              "metal.fragments": 1054,
+              "lowgradefuel": 600,
+              "sulfur": 21860,
+              "charcoal": 29996,
+              "cloth": 50
+            },
+            "inventory_used": {
+              "metal.fragments": 946,
+              "sulfur": 140,
+              "charcoal": 4
+            }
+          },
+          "independent_expected_acquisition": {
+            "techparts": 20,
+            "cloth": 50,
+            "metal.fragments": 1054,
+            "lowgradefuel": 600,
+            "sulfur": 21860,
+            "charcoal": 29996
+          },
+          "assistant_verbatim": "按截图里能确认的库存，制作 10 个 C4 还差：\n• 20 电子零件\n• 1054 金属碎片\n• 600 低品质燃油\n• 21860 硫磺\n• 29996 木炭\n• 50 布\n\n制作还需要 3 级工作台，并确保相关配方能制作。\n\n如果还有未计入的材料，实际缺口可能更少。",
+          "checks": [
+            {
+              "id": "turn:0:identified_items_and_counts",
+              "name": "identified_items_and_counts",
+              "status": "pass",
+              "artifact_ref": "steps/0/turn/visual/observations",
+              "upstream_failures": [],
+              "budget_effect": null
+            },
+            {
+              "id": "turn:0:visible_inventory_coverage",
+              "name": "visible_inventory_coverage",
+              "status": "pass",
+              "artifact_ref": "steps/0/turn",
+              "upstream_failures": [],
+              "budget_effect": null
+            },
+            {
+              "id": "turn:0:visual_evidence_present",
+              "name": "visual_evidence_present",
+              "status": "pass",
+              "artifact_ref": "steps/0/turn",
+              "upstream_failures": [],
+              "budget_effect": null
+            },
+            {
+              "id": "turn:0:craft_route",
+              "name": "craft_route",
+              "status": "pass",
+              "artifact_ref": "steps/0/turn",
+              "upstream_failures": [],
+              "budget_effect": null
+            },
+            {
+              "id": "turn:0:calculation_evidence_complete",
+              "name": "calculation_evidence_complete",
+              "status": "pass",
+              "artifact_ref": "steps/0/turn",
+              "upstream_failures": [],
+              "budget_effect": null
+            },
+            {
+              "id": "turn:0:craft_goal",
+              "name": "craft_goal",
+              "status": "pass",
+              "artifact_ref": "steps/0/turn",
+              "upstream_failures": [],
+              "budget_effect": null
+            },
+            {
+              "id": "turn:0:inventory_admitted",
+              "name": "inventory_admitted",
+              "status": "pass",
+              "artifact_ref": "steps/0/turn",
+              "upstream_failures": [],
+              "budget_effect": null
+            },
+            {
+              "id": "turn:0:partial_inventory",
+              "name": "partial_inventory",
+              "status": "pass",
+              "artifact_ref": "steps/0/turn",
+              "upstream_failures": [],
+              "budget_effect": null
+            },
+            {
+              "id": "turn:0:recipe_arithmetic",
+              "name": "recipe_arithmetic",
+              "status": "pass",
+              "artifact_ref": "steps/0/turn",
+              "upstream_failures": [],
+              "budget_effect": null
+            },
+            {
+              "id": "turn:0:inventory_deduction",
+              "name": "inventory_deduction",
+              "status": "pass",
+              "artifact_ref": "steps/0/turn",
+              "upstream_failures": [],
+              "budget_effect": null
+            },
+            {
+              "id": "turn:0:arithmetic_given_admitted_inventory",
+              "name": "arithmetic_given_admitted_inventory",
+              "status": "pass",
+              "artifact_ref": "steps/0/turn",
+              "upstream_failures": [],
+              "budget_effect": null
+            },
+            {
+              "id": "turn:0:game_version",
+              "name": "game_version",
+              "status": "pending",
+              "artifact_ref": "steps/0/turn",
+              "upstream_failures": [],
+              "budget_effect": null
+            },
+            {
+              "id": "turn:0:answer_present",
+              "name": "answer_present",
+              "status": "pass",
+              "artifact_ref": "steps/0/turn",
+              "upstream_failures": [],
+              "budget_effect": null
+            },
+            {
+              "id": "turn:0:final_expression_review",
+              "name": "final_expression_review",
+              "status": "pass",
+              "artifact_ref": "steps/0/turn/assistant",
+              "upstream_failures": [],
+              "budget_effect": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "case_id": "components_craft",
+      "repeat": 1,
+      "image_asset": "inventory-components.png",
+      "annotation": {
+        "status": "human_confirmed",
+        "confirmed_at": "2026-11-05",
+        "evidence": "User confirmed in this chat: 以上均确认，所列不确定项保持未知",
+        "inventory_complete": false,
+        "slots": [
+          {
+            "slot": "row_1_col_1",
+            "item_id": "cloth",
+            "quantity": 40
+          },
+          {
+            "slot": "row_1_col_3",
+            "item_id": "gears",
+            "quantity": 20
+          },
+          {
+            "slot": "row_1_col_4",
+            "item_id": "techparts",
+            "quantity": 2
+          }
+        ],
+        "unknown_slots": []
+      },
+      "quality_status": "fail",
+      "first_error_id": "turn:0:identified_items_and_counts",
+      "turns": [
+        {
+          "source_pointer": "/runs/1/steps/0",
+          "input": {
+            "image": "components",
+            "message": "我还差多少资源才能造10个C4？使用普通工作台配方，不展开低品质燃油。"
+          },
+          "observations": [
+            {
+              "slot": "row_1_col_1",
+              "item_id": "cloth",
+              "quantity": 40,
+              "item_status": "identified",
+              "quantity_status": "readable"
+            },
+            {
+              "slot": "row_1_col_3",
+              "item_id": "techparts",
+              "quantity": 20,
+              "item_status": "identified",
+              "quantity_status": "readable"
+            },
+            {
+              "slot": "row_1_col_4",
+              "item_id": "explosives",
+              "quantity": 2,
+              "item_status": "identified",
+              "quantity_status": "readable"
+            }
+          ],
+          "calculation": {
+            "status": "calculated",
+            "input": {
+              "operation": "craft",
+              "ruleset": "pc_vanilla",
+              "goals": {
+                "explosive.timed": 10
+              },
+              "inventory": {
+                "cloth": 40,
+                "techparts": 20,
+                "explosives": 2
+              },
+              "inventory_complete": false,
+              "reserve": {},
+              "target": null,
+              "hp": null,
+              "count": 1,
+              "side": "hard",
+              "methods": [],
+              "workbench": null,
+              "blueprints": null,
+              "gunpowder_recipe": "workbench",
+              "expand_fuel": false
+            },
+            "acquisition": {
+              "metal.fragments": 1980,
+              "lowgradefuel": 594,
+              "sulfur": 21780,
+              "charcoal": 29700,
+              "cloth": 10
+            },
+            "inventory_used": {
+              "techparts": 20,
+              "explosives": 2,
+              "cloth": 40
+            }
+          },
+          "independent_expected_acquisition": {
+            "techparts": 18,
+            "cloth": 10,
+            "metal.fragments": 2000,
+            "lowgradefuel": 600,
+            "sulfur": 22000,
+            "charcoal": 30000
+          },
+          "assistant_verbatim": "按截图里能确认的库存，制作 10 个 C4 还差：\n• 1980 金属碎片\n• 594 低品质燃油\n• 21780 硫磺\n• 29700 木炭\n• 10 布\n\n制作还需要 3 级工作台，并确保相关配方能制作。\n\n如果还有未计入的材料，实际缺口可能更少。",
+          "checks": [
+            {
+              "id": "turn:0:identified_items_and_counts",
+              "name": "identified_items_and_counts",
+              "status": "fail",
+              "artifact_ref": "steps/0/turn/visual/observations",
+              "upstream_failures": [],
+              "budget_effect": "inspect_downstream_evidence"
+            },
+            {
+              "id": "turn:0:visible_inventory_coverage",
+              "name": "visible_inventory_coverage",
+              "status": "pass",
+              "artifact_ref": "steps/0/turn",
+              "upstream_failures": [],
+              "budget_effect": null
+            },
+            {
+              "id": "turn:0:visual_evidence_present",
+              "name": "visual_evidence_present",
+              "status": "pass",
+              "artifact_ref": "steps/0/turn",
+              "upstream_failures": [],
+              "budget_effect": null
+            },
+            {
+              "id": "turn:0:craft_route",
+              "name": "craft_route",
+              "status": "pass",
+              "artifact_ref": "steps/0/turn",
+              "upstream_failures": [],
+              "budget_effect": null
+            },
+            {
+              "id": "turn:0:calculation_evidence_complete",
+              "name": "calculation_evidence_complete",
+              "status": "pass",
+              "artifact_ref": "steps/0/turn",
+              "upstream_failures": [],
+              "budget_effect": null
+            },
+            {
+              "id": "turn:0:craft_goal",
+              "name": "craft_goal",
+              "status": "pass",
+              "artifact_ref": "steps/0/turn",
+              "upstream_failures": [],
+              "budget_effect": null
+            },
+            {
+              "id": "turn:0:inventory_admitted",
+              "name": "inventory_admitted",
+              "status": "fail",
+              "artifact_ref": "steps/0/turn",
+              "upstream_failures": [
+                "turn:0:identified_items_and_counts"
+              ],
+              "budget_effect": null
+            },
+            {
+              "id": "turn:0:partial_inventory",
+              "name": "partial_inventory",
+              "status": "pass",
+              "artifact_ref": "steps/0/turn",
+              "upstream_failures": [],
+              "budget_effect": null
+            },
+            {
+              "id": "turn:0:recipe_arithmetic",
+              "name": "recipe_arithmetic",
+              "status": "fail",
+              "artifact_ref": "steps/0/turn",
+              "upstream_failures": [
+                "turn:0:inventory_admitted"
+              ],
+              "budget_effect": null
+            },
+            {
+              "id": "turn:0:inventory_deduction",
+              "name": "inventory_deduction",
+              "status": "fail",
+              "artifact_ref": "steps/0/turn",
+              "upstream_failures": [
+                "turn:0:inventory_admitted"
+              ],
+              "budget_effect": null
+            },
+            {
+              "id": "turn:0:arithmetic_given_admitted_inventory",
+              "name": "arithmetic_given_admitted_inventory",
+              "status": "pass",
+              "artifact_ref": "steps/0/turn",
+              "upstream_failures": [],
+              "budget_effect": null
+            },
+            {
+              "id": "turn:0:game_version",
+              "name": "game_version",
+              "status": "pending",
+              "artifact_ref": "steps/0/turn",
+              "upstream_failures": [],
+              "budget_effect": null
+            },
+            {
+              "id": "turn:0:answer_present",
+              "name": "answer_present",
+              "status": "pass",
+              "artifact_ref": "steps/0/turn",
+              "upstream_failures": [],
+              "budget_effect": null
+            },
+            {
+              "id": "turn:0:final_expression_review",
+              "name": "final_expression_review",
+              "status": "fail",
+              "artifact_ref": "steps/0/turn/assistant",
+              "upstream_failures": [],
+              "budget_effect": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "case_id": "mixed_craft",
+      "repeat": 1,
+      "image_asset": "inventory-mixed.png",
+      "annotation": {
+        "status": "human_confirmed",
+        "confirmed_at": "2026-11-05",
+        "evidence": "User confirmed in this chat: 以上均确认，所列不确定项保持未知",
+        "inventory_complete": false,
+        "slots": [
+          {
+            "slot": "row_1_col_1",
+            "item_id": "cloth",
+            "quantity": 140
+          },
+          {
+            "slot": "row_1_col_2",
+            "item_id": "tarp",
+            "quantity": 2
+          },
+          {
+            "slot": "row_1_col_3",
+            "item_id": "gears",
+            "quantity": 49
+          },
+          {
+            "slot": "row_1_col_4",
+            "item_id": "techparts",
+            "quantity": 2
+          },
+          {
+            "slot": "row_2_col_1",
+            "item_id": "lowgradefuel",
+            "quantity": 157
+          },
+          {
+            "slot": "row_2_col_3",
+            "item_id": "wood",
+            "quantity": 1900
+          },
+          {
+            "slot": "row_2_col_4",
+            "item_id": "stones",
+            "quantity": 1900
+          },
+          {
+            "slot": "row_2_col_5",
+            "item_id": "metal.fragments",
+            "quantity": 1500
+          }
+        ],
+        "unknown_slots": [
+          "row_1_col_5",
+          "row_2_col_2"
+        ]
+      },
+      "quality_status": "fail",
+      "first_error_id": "turn:0:identified_items_and_counts",
+      "turns": [
+        {
+          "source_pointer": "/runs/2/steps/0",
+          "input": {
+            "image": "mixed",
+            "message": "我还差多少资源才能造10个C4？使用普通工作台配方，不展开低品质燃油。"
+          },
+          "observations": [
+            {
+              "slot": "row_1_col_1",
+              "item_id": "cloth",
+              "quantity": 140,
+              "item_status": "identified",
+              "quantity_status": "readable"
+            },
+            {
+              "slot": "row_1_col_2",
+              "item_id": "tarp",
+              "quantity": 2,
+              "item_status": "identified",
+              "quantity_status": "readable"
+            },
+            {
+              "slot": "row_1_col_3",
+              "item_id": "gears",
+              "quantity": 49,
+              "item_status": "identified",
+              "quantity_status": "readable"
+            },
+            {
+              "slot": "row_1_col_4",
+              "item_id": null,
+              "quantity": 2,
+              "item_status": "unknown",
+              "quantity_status": "readable"
+            },
+            {
+              "slot": "row_1_col_5",
+              "item_id": null,
+              "quantity": 450,
+              "item_status": "unknown",
+              "quantity_status": "readable"
+            },
+            {
+              "slot": "row_2_col_1",
+              "item_id": "fat.animal",
+              "quantity": 157,
+              "item_status": "identified",
+              "quantity_status": "readable"
+            },
+            {
+              "slot": "row_2_col_2",
+              "item_id": "hammer.salvaged",
+              "quantity": null,
+              "item_status": "identified",
+              "quantity_status": "absent"
+            },
+            {
+              "slot": "row_2_col_3",
+              "item_id": "wood",
+              "quantity": 1900,
+              "item_status": "identified",
+              "quantity_status": "readable"
+            },
+            {
+              "slot": "row_2_col_4",
+              "item_id": "stones",
+              "quantity": 1900,
+              "item_status": "identified",
+              "quantity_status": "readable"
+            },
+            {
+              "slot": "row_2_col_5",
+              "item_id": "metal.fragments",
+              "quantity": 1500,
+              "item_status": "identified",
+              "quantity_status": "readable"
+            }
+          ],
+          "calculation": {
+            "status": "calculated",
+            "input": {
+              "operation": "craft",
+              "ruleset": "pc_vanilla",
+              "goals": {
+                "explosive.timed": 10
+              },
+              "inventory": {
+                "cloth": 140,
+                "tarp": 2,
+                "gears": 49,
+                "fat.animal": 157,
+                "wood": 1900,
+                "stones": 1900,
+                "metal.fragments": 1500
+              },
+              "inventory_complete": false,
+              "reserve": {},
+              "target": null,
+              "hp": null,
+              "count": 1,
+              "side": "hard",
+              "methods": [],
+              "workbench": null,
+              "blueprints": null,
+              "gunpowder_recipe": "workbench",
+              "expand_fuel": false
+            },
+            "acquisition": {
+              "techparts": 20,
+              "metal.fragments": 500,
+              "lowgradefuel": 600,
+              "sulfur": 22000,
+              "charcoal": 30000
+            },
+            "inventory_used": {
+              "metal.fragments": 1500,
+              "cloth": 50
+            }
+          },
+          "independent_expected_acquisition": {
+            "techparts": 18,
+            "metal.fragments": 500,
+            "lowgradefuel": 443,
+            "sulfur": 22000,
+            "charcoal": 30000
+          },
+          "assistant_verbatim": "按截图里能确认的库存，制作 10 个 C4 还差：\n• 20 电子零件\n• 500 金属碎片\n• 600 低品质燃油\n• 22000 硫磺\n• 30000 木炭\n\n制作还需要 3 级工作台，并确保相关配方能制作。\n\n如果还有未计入的材料，实际缺口可能更少。",
+          "checks": [
+            {
+              "id": "turn:0:identified_items_and_counts",
+              "name": "identified_items_and_counts",
+              "status": "fail",
+              "artifact_ref": "steps/0/turn/visual/observations",
+              "upstream_failures": [],
+              "budget_effect": "inspect_downstream_evidence"
+            },
+            {
+              "id": "turn:0:visible_inventory_coverage",
+              "name": "visible_inventory_coverage",
+              "status": "partial",
+              "artifact_ref": "steps/0/turn",
+              "upstream_failures": [],
+              "budget_effect": null
+            },
+            {
+              "id": "turn:0:visual_evidence_present",
+              "name": "visual_evidence_present",
+              "status": "pass",
+              "artifact_ref": "steps/0/turn",
+              "upstream_failures": [],
+              "budget_effect": null
+            },
+            {
+              "id": "turn:0:craft_route",
+              "name": "craft_route",
+              "status": "pass",
+              "artifact_ref": "steps/0/turn",
+              "upstream_failures": [],
+              "budget_effect": null
+            },
+            {
+              "id": "turn:0:calculation_evidence_complete",
+              "name": "calculation_evidence_complete",
+              "status": "pass",
+              "artifact_ref": "steps/0/turn",
+              "upstream_failures": [],
+              "budget_effect": null
+            },
+            {
+              "id": "turn:0:craft_goal",
+              "name": "craft_goal",
+              "status": "pass",
+              "artifact_ref": "steps/0/turn",
+              "upstream_failures": [],
+              "budget_effect": null
+            },
+            {
+              "id": "turn:0:inventory_admitted",
+              "name": "inventory_admitted",
+              "status": "fail",
+              "artifact_ref": "steps/0/turn",
+              "upstream_failures": [
+                "turn:0:identified_items_and_counts"
+              ],
+              "budget_effect": null
+            },
+            {
+              "id": "turn:0:partial_inventory",
+              "name": "partial_inventory",
+              "status": "pass",
+              "artifact_ref": "steps/0/turn",
+              "upstream_failures": [],
+              "budget_effect": null
+            },
+            {
+              "id": "turn:0:recipe_arithmetic",
+              "name": "recipe_arithmetic",
+              "status": "fail",
+              "artifact_ref": "steps/0/turn",
+              "upstream_failures": [
+                "turn:0:inventory_admitted"
+              ],
+              "budget_effect": null
+            },
+            {
+              "id": "turn:0:inventory_deduction",
+              "name": "inventory_deduction",
+              "status": "fail",
+              "artifact_ref": "steps/0/turn",
+              "upstream_failures": [
+                "turn:0:inventory_admitted"
+              ],
+              "budget_effect": null
+            },
+            {
+              "id": "turn:0:arithmetic_given_admitted_inventory",
+              "name": "arithmetic_given_admitted_inventory",
+              "status": "pass",
+              "artifact_ref": "steps/0/turn",
+              "upstream_failures": [],
+              "budget_effect": null
+            },
+            {
+              "id": "turn:0:game_version",
+              "name": "game_version",
+              "status": "pending",
+              "artifact_ref": "steps/0/turn",
+              "upstream_failures": [],
+              "budget_effect": null
+            },
+            {
+              "id": "turn:0:answer_present",
+              "name": "answer_present",
+              "status": "pass",
+              "artifact_ref": "steps/0/turn",
+              "upstream_failures": [],
+              "budget_effect": null
+            },
+            {
+              "id": "turn:0:final_expression_review",
+              "name": "final_expression_review",
+              "status": "fail",
+              "artifact_ref": "steps/0/turn/assistant",
+              "upstream_failures": [],
+              "budget_effect": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "case_id": "components_historical",
+      "repeat": 1,
+      "image_asset": "inventory-components.png",
+      "annotation": {
+        "status": "human_confirmed",
+        "confirmed_at": "2026-11-05",
+        "evidence": "User confirmed in this chat: 以上均确认，所列不确定项保持未知",
+        "inventory_complete": false,
+        "slots": [
+          {
+            "slot": "row_1_col_1",
+            "item_id": "cloth",
+            "quantity": 40
+          },
+          {
+            "slot": "row_1_col_3",
+            "item_id": "gears",
+            "quantity": 20
+          },
+          {
+            "slot": "row_1_col_4",
+            "item_id": "techparts",
+            "quantity": 2
+          }
+        ],
+        "unknown_slots": []
+      },
+      "quality_status": "fail",
+      "first_error_id": "turn:0:identified_items_and_counts",
+      "turns": [
+        {
+          "source_pointer": "/runs/3/steps/0",
+          "input": {
+            "image": "components",
+            "message": "这是昨天的截图，我现在造10个C4还差多少资源？"
+          },
+          "observations": [
+            {
+              "slot": "row_1_col_1",
+              "item_id": "cloth",
+              "quantity": 40,
+              "item_status": "identified",
+              "quantity_status": "readable"
+            },
+            {
+              "slot": "row_1_col_3",
+              "item_id": "techparts",
+              "quantity": 20,
+              "item_status": "identified",
+              "quantity_status": "readable"
+            },
+            {
+              "slot": "row_1_col_4",
+              "item_id": "explosives",
+              "quantity": 2,
+              "item_status": "identified",
+              "quantity_status": "readable"
+            }
+          ],
+          "calculation": {
+            "status": "calculated",
+            "input": {
+              "operation": "craft",
+              "ruleset": "pc_vanilla",
+              "goals": {
+                "explosive.timed": 10
+              },
+              "inventory": null,
+              "inventory_complete": false,
+              "reserve": {},
+              "target": null,
+              "hp": null,
+              "count": 1,
+              "side": "hard",
+              "methods": [],
+              "workbench": null,
+              "blueprints": null,
+              "gunpowder_recipe": "workbench",
+              "expand_fuel": false
+            },
+            "acquisition": {
+              "techparts": 20,
+              "metal.fragments": 2000,
+              "lowgradefuel": 600,
+              "sulfur": 22000,
+              "charcoal": 30000,
+              "cloth": 50
+            },
+            "inventory_used": {}
+          },
+          "independent_expected_acquisition": {
+            "techparts": 20,
+            "cloth": 50,
+            "metal.fragments": 2000,
+            "lowgradefuel": 600,
+            "sulfur": 22000,
+            "charcoal": 30000
+          },
+          "assistant_verbatim": "库存未知，不能判断实际缺口。制作 10 个 C4 的总需求是：\n• 20 电子零件\n• 2000 金属碎片\n• 600 低品质燃油\n• 22000 硫磺\n• 30000 木炭\n• 50 布\n\n制作还需要 3 级工作台，并确保相关配方能制作。\n\n截图已过期或不是当前本人库存，未用于抵扣。",
+          "checks": [
+            {
+              "id": "turn:0:identified_items_and_counts",
+              "name": "identified_items_and_counts",
+              "status": "fail",
+              "artifact_ref": "steps/0/turn/visual/observations",
+              "upstream_failures": [],
+              "budget_effect": "blocked_by_scope_gate"
+            },
+            {
+              "id": "turn:0:visible_inventory_coverage",
+              "name": "visible_inventory_coverage",
+              "status": "pass",
+              "artifact_ref": "steps/0/turn",
+              "upstream_failures": [],
+              "budget_effect": null
+            },
+            {
+              "id": "turn:0:visual_evidence_present",
+              "name": "visual_evidence_present",
+              "status": "pass",
+              "artifact_ref": "steps/0/turn",
+              "upstream_failures": [],
+              "budget_effect": null
+            },
+            {
+              "id": "turn:0:craft_route",
+              "name": "craft_route",
+              "status": "pass",
+              "artifact_ref": "steps/0/turn",
+              "upstream_failures": [],
+              "budget_effect": null
+            },
+            {
+              "id": "turn:0:calculation_evidence_complete",
+              "name": "calculation_evidence_complete",
+              "status": "pass",
+              "artifact_ref": "steps/0/turn",
+              "upstream_failures": [],
+              "budget_effect": null
+            },
+            {
+              "id": "turn:0:craft_goal",
+              "name": "craft_goal",
+              "status": "pass",
+              "artifact_ref": "steps/0/turn",
+              "upstream_failures": [],
+              "budget_effect": null
+            },
+            {
+              "id": "turn:0:no_invalid_inventory",
+              "name": "no_invalid_inventory",
+              "status": "pass",
+              "artifact_ref": "steps/0/turn",
+              "upstream_failures": [],
+              "budget_effect": null
+            },
+            {
+              "id": "turn:0:recipe_arithmetic",
+              "name": "recipe_arithmetic",
+              "status": "pass",
+              "artifact_ref": "steps/0/turn",
+              "upstream_failures": [],
+              "budget_effect": null
+            },
+            {
+              "id": "turn:0:inventory_deduction",
+              "name": "inventory_deduction",
+              "status": "pass",
+              "artifact_ref": "steps/0/turn",
+              "upstream_failures": [],
+              "budget_effect": null
+            },
+            {
+              "id": "turn:0:arithmetic_given_admitted_inventory",
+              "name": "arithmetic_given_admitted_inventory",
+              "status": "pass",
+              "artifact_ref": "steps/0/turn",
+              "upstream_failures": [],
+              "budget_effect": null
+            },
+            {
+              "id": "turn:0:game_version",
+              "name": "game_version",
+              "status": "pending",
+              "artifact_ref": "steps/0/turn",
+              "upstream_failures": [],
+              "budget_effect": null
+            },
+            {
+              "id": "turn:0:answer_present",
+              "name": "answer_present",
+              "status": "pass",
+              "artifact_ref": "steps/0/turn",
+              "upstream_failures": [],
+              "budget_effect": null
+            },
+            {
+              "id": "turn:0:final_expression_review",
+              "name": "final_expression_review",
+              "status": "pass",
+              "artifact_ref": "steps/0/turn/assistant",
+              "upstream_failures": [],
+              "budget_effect": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "case_id": "damaged_unknown_hp",
+      "repeat": 1,
+      "image_asset": null,
+      "annotation": null,
+      "quality_status": "pass",
+      "first_error_id": null,
+      "turns": [
+        {
+          "source_pointer": "/runs/8/steps/0",
+          "input": {
+            "message": "石墙受损了，不知道剩多少血，需要几颗C4？"
+          },
+          "observations": [],
+          "calculation": {
+            "status": "needs_input",
+            "input": null,
+            "acquisition": null,
+            "inventory_used": null
+          },
+          "independent_expected_acquisition": null,
+          "assistant_verbatim": "暂不能给出可靠计算：受损石墙需要提供当前生命值；不知道剩余血量时无法计算。",
+          "checks": [
+            {
+              "id": "turn:0:damaged_target_not_defaulted",
+              "name": "damaged_target_not_defaulted",
+              "status": "pass",
+              "artifact_ref": "steps/0/turn",
+              "upstream_failures": [],
+              "budget_effect": null
+            },
+            {
+              "id": "turn:0:answer_present",
+              "name": "answer_present",
+              "status": "pass",
+              "artifact_ref": "steps/0/turn",
+              "upstream_failures": [],
+              "budget_effect": null
+            },
+            {
+              "id": "turn:0:final_expression_review",
+              "name": "final_expression_review",
+              "status": "pass",
+              "artifact_ref": "steps/0/turn/assistant",
+              "upstream_failures": [],
+              "budget_effect": null
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
