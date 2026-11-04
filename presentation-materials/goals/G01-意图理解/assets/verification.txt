@@ -1,25 +1,39 @@
 核验日期：2026-11-05（Asia/Shanghai）
-Git HEAD：9f6ab3f8017feab1ec3999c384ae7b44d7c65a87
-状态：存在未提交业务修改及未跟踪文件；提交号不能单独代表本次版本。
-当前 Python 业务源码 SHA256：d5a48211fafd71245eb1b828ecb5ccc03336541b3bd277b2d493e139d5e8e807
-哈希算法及测试/报告文件哈希：source-manifest.json。
+HEAD：9f6ab3f8017feab1ec3999c384ae7b44d7c65a87
+状态：有未提交业务实现及未跟踪测试/报告。
+最终材料对应Python源码：c7fbac24685bb6478d81a820288628937978d209251d418c1301c9444f30f264
+各文件、报告、判定器与规则哈希见 source-manifest.json。
 
-执行：
+最终执行：
 .venv/bin/python -m pytest -q tests/test_intent_state_audit.py tests/test_intent_state.py tests/test_intent_state_evaluation.py tests/test_player_state.py tests/test_vision.py
-终端最终输出：186 passed in 8.25s
+终端输出：193 passed in 8.36s
 退出码：0
+其中 test_frozen_intent_state_cases_through_http_and_sse 重新执行40案例、54轮，断言failed=0。
+这是定向测试，不是全量测试。40案例已包含在测试中，不与193相加。
 
-为保存可核验的逐项判定，另执行一次同一固定集：
-.venv/bin/python -m evals.intent_state --output <独立本地输出文件>
-终端输出：{"mode": "scripted_http_sse", "case_count": 40, "turn_count": 54, "passed": 40, "failed": 0}
-退出码：0
-结果选择性导出为 fixed-evaluation.json；省略随机ID及耗时字段，不更改判定。
-这是第二次执行同一40例，不是新增独立样本；186个测试中的评测测试也包含同一固定集。
+版本变化说明：
+初次核验源码d5a48211fafd71245eb1b828ecb5ccc03336541b3bd277b2d493e139d5e8e807时，
+所选测试186通过，另执行同一固定集40/40并保存本地结果。
+整理期间工作树新增审查更新，故再次执行相关测试，最终以193通过为准。
+不把两个运行相加成独立样本；早期固定结果不再作为最终版本证据。
+当前 fixed-evaluation.json 改为从已有audited报告导出全部判定和业务字段，省略随机ID及耗时。
 
-已有报告核验：
-baseline/current 数据集哈希、判定器哈希、规则快照一致，且均匹配当前文件。
-历史实施版 current 与 live 的源码哈希均为 5fe25661a030628a3128091f749873bbee09f08a6f8e83ffce019b956b113176，与当前源码不同。
-本次重新执行固定夹具评测，与当前源码哈希匹配；本次未重新执行真实模型实验。
-历史 live：6/6轮，3次文本模型调用，没有视觉模型调用。
-历史文档记载的559项全量Python和16项DOM并非本次重新验证的结果，不用于当前通过数。
-未运行昂贵实验，未写入用户业务数据库。
+报告核验：
+历史baseline/current在同一旧判定器下10/40→40/40；
+当前audited使用新判定器，40/40，不与旧baseline直接作严格同条件对比。
+audited与live-audited的源码及各自判定器、规则均匹配当前。
+live-audited为已保存六轮、3次真实文本模型调用，源报告记录于2026-11-05 06:28北京时间。
+材料整理没有新发付费请求，未调用视觉模型，未使用用户业务数据库。
+旧live六轮与审查版为同一组场景，不能相加为12个独立样本。
+
+没有重新运行全量Python、DOM或浏览器验收。
+实施记录记载的历史全量结果不作为本次验证数字。
+
+最终材料交付检查：
+G01/G05新增19个文件；两个brief均包含8节，图与各自mmd源文件一致。
+检查展示目录249个本地Markdown链接：无缺失文件或越界源码行。
+全部JSON可解析；固定结果40案例54轮，全部断言与audited原报告一致。
+CSV三批分母分别为40案例54轮；旧判定器与新判定器分开记录。
+当前源码及版本清单内文件哈希全部匹配。
+材料内未发现本机绝对路径或临时目录引用；补丁空白检查通过。
+本材料任务仅编辑presentation-materials；整理期间其他业务更新已纳入最终核验。

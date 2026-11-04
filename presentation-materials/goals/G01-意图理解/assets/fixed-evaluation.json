@@ -1,9 +1,9 @@
 {
   "dataset": "intent-state-v1",
   "dataset_sha256": "df072b97c94d9a50b2ef2b90bb78a82ab926a3b7b7c75db146a738ecc2f934c9",
-  "source_sha256": "d5a48211fafd71245eb1b828ecb5ccc03336541b3bd277b2d493e139d5e8e807",
+  "source_sha256": "c7fbac24685bb6478d81a820288628937978d209251d418c1301c9444f30f264",
   "mode": "scripted_http_sse",
-  "grader_sha256": "5892342ca3e93888d277dfe0fecb508f0d170678d886f2f38476f05fc4544db0",
+  "grader_sha256": "7959528536b4eacae96caa2471c20210fa7a50aca236f70dd5b152e12e7a9b94",
   "rule_provenance": {
     "snapshot_id": "rustdata-pc-vanilla-2026-11-01",
     "retrieved_at": "2026-11-01",
@@ -22,6 +22,11 @@
   "passed": 40,
   "failed": 0,
   "turn_count": 54,
+  "limitations": [
+    "模型抽取与视觉输出使用固定夹具；不衡量真实模型语言理解或识图准确率。",
+    "HTTP/SSE使用ASGI测试客户端，不等同浏览器交互验收。",
+    "样例用于工程回归，不能作为未见真实玩家分布的准确率。"
+  ],
   "results": [
     {
       "case_id": "state_query",
@@ -77,11 +82,12 @@
               "sulfur": 5000
             },
             "continues_task": false,
+            "working_task": false,
             "calls": 0,
             "error": null,
+            "result_kind": "state",
             "temporary_fields": []
-          },
-          "terminal_type": "result"
+          }
         }
       ]
     },
@@ -127,11 +133,12 @@
               "sulfur": 5000
             },
             "continues_task": false,
+            "working_task": true,
             "calls": 0,
             "error": null,
+            "result_kind": "calculation",
             "temporary_fields": []
-          },
-          "terminal_type": "result"
+          }
         },
         {
           "turn": 1,
@@ -175,11 +182,12 @@
               "sulfur": 5000
             },
             "continues_task": false,
+            "working_task": true,
             "calls": 0,
             "error": null,
+            "result_kind": "state",
             "temporary_fields": []
-          },
-          "terminal_type": "result"
+          }
         }
       ]
     },
@@ -225,11 +233,12 @@
               "sulfur": 5000
             },
             "continues_task": false,
+            "working_task": true,
             "calls": 0,
             "error": null,
+            "result_kind": "calculation",
             "temporary_fields": []
-          },
-          "terminal_type": "result"
+          }
         },
         {
           "turn": 1,
@@ -279,11 +288,12 @@
               "sulfur": 5000
             },
             "continues_task": false,
+            "working_task": true,
             "calls": 1,
             "error": null,
+            "result_kind": "chat",
             "temporary_fields": []
-          },
-          "terminal_type": "result"
+          }
         }
       ]
     },
@@ -329,11 +339,12 @@
               "sulfur": 5000
             },
             "continues_task": false,
+            "working_task": true,
             "calls": 0,
             "error": null,
+            "result_kind": "calculation",
             "temporary_fields": []
-          },
-          "terminal_type": "result"
+          }
         },
         {
           "turn": 1,
@@ -377,11 +388,12 @@
               "sulfur": 5000
             },
             "continues_task": false,
+            "working_task": true,
             "calls": 1,
             "error": null,
+            "result_kind": "chat",
             "temporary_fields": []
-          },
-          "terminal_type": "result"
+          }
         }
       ]
     },
@@ -439,11 +451,12 @@
               "sulfur": 5000
             },
             "continues_task": false,
+            "working_task": false,
             "calls": 2,
             "error": null,
+            "result_kind": "chat",
             "temporary_fields": []
-          },
-          "terminal_type": "result"
+          }
         }
       ]
     },
@@ -489,11 +502,12 @@
               "sulfur": 5000
             },
             "continues_task": false,
+            "working_task": true,
             "calls": 0,
             "error": null,
+            "result_kind": "calculation",
             "temporary_fields": []
-          },
-          "terminal_type": "result"
+          }
         },
         {
           "turn": 1,
@@ -549,11 +563,12 @@
               "sulfur": 5000
             },
             "continues_task": false,
+            "working_task": false,
             "calls": 0,
             "error": null,
+            "result_kind": "chat",
             "temporary_fields": []
-          },
-          "terminal_type": "result"
+          }
         }
       ]
     },
@@ -611,11 +626,12 @@
               "sulfur": 5000
             },
             "continues_task": false,
+            "working_task": true,
             "calls": 0,
             "error": null,
+            "result_kind": "calculation",
             "temporary_fields": []
-          },
-          "terminal_type": "result"
+          }
         }
       ]
     },
@@ -673,11 +689,12 @@
               "sulfur": 5000
             },
             "continues_task": false,
+            "working_task": true,
             "calls": 0,
             "error": null,
+            "result_kind": "calculation",
             "temporary_fields": []
-          },
-          "terminal_type": "result"
+          }
         }
       ]
     },
@@ -735,11 +752,12 @@
               "sulfur": 5000
             },
             "continues_task": false,
+            "working_task": true,
             "calls": 0,
             "error": null,
+            "result_kind": "calculation",
             "temporary_fields": []
-          },
-          "terminal_type": "result"
+          }
         }
       ]
     },
@@ -791,11 +809,12 @@
               "sulfur": 5000
             },
             "continues_task": false,
+            "working_task": true,
             "calls": 0,
             "error": "player_inventory_incomplete",
+            "result_kind": "calculation",
             "temporary_fields": []
-          },
-          "terminal_type": "result"
+          }
         }
       ]
     },
@@ -847,11 +866,12 @@
               "sulfur": 5000
             },
             "continues_task": false,
+            "working_task": true,
             "calls": 0,
             "error": "player_inventory_incomplete",
+            "result_kind": "calculation",
             "temporary_fields": []
-          },
-          "terminal_type": "result"
+          }
         }
       ]
     },
@@ -905,11 +925,12 @@
               "sulfur": 5000
             },
             "continues_task": false,
+            "working_task": true,
             "calls": 0,
             "error": "ambiguous_inventory",
+            "result_kind": "calculation",
             "temporary_fields": []
-          },
-          "terminal_type": "result"
+          }
         }
       ]
     },
@@ -973,11 +994,12 @@
               "sulfur": 5000
             },
             "continues_task": false,
+            "working_task": true,
             "calls": 0,
             "error": null,
+            "result_kind": "calculation",
             "temporary_fields": []
-          },
-          "terminal_type": "result"
+          }
         }
       ]
     },
@@ -1035,11 +1057,12 @@
               "sulfur": 5000
             },
             "continues_task": false,
+            "working_task": true,
             "calls": 0,
             "error": null,
+            "result_kind": "calculation",
             "temporary_fields": []
-          },
-          "terminal_type": "result"
+          }
         }
       ]
     },
@@ -1085,11 +1108,12 @@
               "sulfur": 5000
             },
             "continues_task": false,
+            "working_task": true,
             "calls": 0,
             "error": null,
+            "result_kind": "calculation",
             "temporary_fields": []
-          },
-          "terminal_type": "result"
+          }
         },
         {
           "turn": 1,
@@ -1139,11 +1163,12 @@
               "sulfur": 5000
             },
             "continues_task": true,
+            "working_task": true,
             "calls": 0,
             "error": null,
+            "result_kind": "calculation",
             "temporary_fields": []
-          },
-          "terminal_type": "result"
+          }
         }
       ]
     },
@@ -1195,11 +1220,12 @@
               "sulfur": 5000
             },
             "continues_task": false,
+            "working_task": true,
             "calls": 0,
             "error": null,
+            "result_kind": "calculation",
             "temporary_fields": []
-          },
-          "terminal_type": "result"
+          }
         }
       ]
     },
@@ -1251,11 +1277,12 @@
               "sulfur": 5000
             },
             "continues_task": false,
+            "working_task": true,
             "calls": 0,
             "error": null,
+            "result_kind": "calculation",
             "temporary_fields": []
-          },
-          "terminal_type": "result"
+          }
         }
       ]
     },
@@ -1307,11 +1334,12 @@
               "sulfur": 5000
             },
             "continues_task": false,
+            "working_task": true,
             "calls": 0,
             "error": null,
+            "result_kind": "calculation",
             "temporary_fields": []
-          },
-          "terminal_type": "result"
+          }
         }
       ]
     },
@@ -1363,11 +1391,12 @@
               "sulfur": 5000
             },
             "continues_task": false,
+            "working_task": true,
             "calls": 0,
             "error": null,
+            "result_kind": "calculation",
             "temporary_fields": []
-          },
-          "terminal_type": "result"
+          }
         }
       ]
     },
@@ -1413,11 +1442,12 @@
               "sulfur": 5000
             },
             "continues_task": false,
+            "working_task": true,
             "calls": 1,
             "error": null,
+            "result_kind": "calculation",
             "temporary_fields": []
-          },
-          "terminal_type": "result"
+          }
         }
       ]
     },
@@ -1463,11 +1493,12 @@
               "sulfur": 5000
             },
             "continues_task": false,
+            "working_task": true,
             "calls": 0,
             "error": null,
+            "result_kind": "calculation",
             "temporary_fields": []
-          },
-          "terminal_type": "result"
+          }
         },
         {
           "turn": 1,
@@ -1517,11 +1548,12 @@
               "sulfur": 5000
             },
             "continues_task": false,
+            "working_task": true,
             "calls": 0,
             "error": null,
+            "result_kind": "calculation",
             "temporary_fields": []
-          },
-          "terminal_type": "result"
+          }
         }
       ]
     },
@@ -1567,11 +1599,12 @@
               "sulfur": 5000
             },
             "continues_task": false,
+            "working_task": true,
             "calls": 0,
             "error": null,
+            "result_kind": "calculation",
             "temporary_fields": []
-          },
-          "terminal_type": "result"
+          }
         },
         {
           "turn": 1,
@@ -1621,11 +1654,12 @@
               "sulfur": 5000
             },
             "continues_task": false,
+            "working_task": true,
             "calls": 1,
             "error": null,
+            "result_kind": "calculation",
             "temporary_fields": []
-          },
-          "terminal_type": "result"
+          }
         }
       ]
     },
@@ -1671,11 +1705,12 @@
               "sulfur": 5000
             },
             "continues_task": false,
+            "working_task": true,
             "calls": 0,
             "error": null,
+            "result_kind": "calculation",
             "temporary_fields": []
-          },
-          "terminal_type": "result"
+          }
         },
         {
           "turn": 1,
@@ -1719,11 +1754,12 @@
               "sulfur": 5000
             },
             "continues_task": false,
+            "working_task": true,
             "calls": 1,
             "error": null,
+            "result_kind": "chat",
             "temporary_fields": []
-          },
-          "terminal_type": "result"
+          }
         },
         {
           "turn": 2,
@@ -1773,11 +1809,12 @@
               "sulfur": 5000
             },
             "continues_task": true,
+            "working_task": true,
             "calls": 0,
             "error": null,
+            "result_kind": "calculation",
             "temporary_fields": []
-          },
-          "terminal_type": "result"
+          }
         }
       ]
     },
@@ -1849,11 +1886,12 @@
               "sulfur": 5000
             },
             "continues_task": false,
+            "working_task": false,
             "calls": 0,
             "error": null,
+            "result_kind": "state",
             "temporary_fields": []
-          },
-          "terminal_type": "result"
+          }
         }
       ]
     },
@@ -1897,11 +1935,12 @@
               "sulfur": 5000
             },
             "continues_task": false,
+            "working_task": false,
             "calls": 0,
             "error": null,
+            "result_kind": "state",
             "temporary_fields": []
-          },
-          "terminal_type": "result"
+          }
         },
         {
           "turn": 1,
@@ -1949,11 +1988,12 @@
               "sulfur": 5000
             },
             "continues_task": false,
+            "working_task": true,
             "calls": 0,
             "error": null,
+            "result_kind": "calculation",
             "temporary_fields": []
-          },
-          "terminal_type": "result"
+          }
         }
       ]
     },
@@ -2015,11 +2055,12 @@
               "sulfur": 5000
             },
             "continues_task": false,
+            "working_task": false,
             "calls": 1,
             "error": null,
+            "result_kind": "chat",
             "temporary_fields": []
-          },
-          "terminal_type": "result"
+          }
         }
       ]
     },
@@ -2071,11 +2112,12 @@
               "sulfur": 5000
             },
             "continues_task": false,
+            "working_task": false,
             "calls": 1,
             "error": null,
+            "result_kind": "chat",
             "temporary_fields": []
-          },
-          "terminal_type": "result"
+          }
         }
       ]
     },
@@ -2127,11 +2169,12 @@
               "sulfur": 5000
             },
             "continues_task": false,
+            "working_task": false,
             "calls": 1,
             "error": null,
+            "result_kind": "chat",
             "temporary_fields": []
-          },
-          "terminal_type": "result"
+          }
         }
       ]
     },
@@ -2177,11 +2220,12 @@
               "sulfur": 5000
             },
             "continues_task": false,
+            "working_task": true,
             "calls": 0,
             "error": null,
+            "result_kind": "calculation",
             "temporary_fields": []
-          },
-          "terminal_type": "result"
+          }
         },
         {
           "turn": 1,
@@ -2225,11 +2269,12 @@
               "sulfur": 5000
             },
             "continues_task": false,
+            "working_task": false,
             "calls": 0,
             "error": null,
+            "result_kind": "state",
             "temporary_fields": []
-          },
-          "terminal_type": "result"
+          }
         },
         {
           "turn": 2,
@@ -2273,11 +2318,12 @@
               "sulfur": 5000
             },
             "continues_task": false,
+            "working_task": true,
             "calls": 0,
             "error": null,
+            "result_kind": "calculation",
             "temporary_fields": []
-          },
-          "terminal_type": "result"
+          }
         }
       ]
     },
@@ -2347,11 +2393,12 @@
               "sulfur": 5000
             },
             "continues_task": false,
+            "working_task": true,
             "calls": 1,
             "error": null,
+            "result_kind": "calculation",
             "temporary_fields": []
-          },
-          "terminal_type": "result"
+          }
         }
       ]
     },
@@ -2403,11 +2450,12 @@
               "sulfur": 5000
             },
             "continues_task": false,
+            "working_task": true,
             "calls": 1,
             "error": null,
+            "result_kind": "calculation",
             "temporary_fields": []
-          },
-          "terminal_type": "result"
+          }
         }
       ]
     },
@@ -2459,11 +2507,12 @@
               "sulfur": 5000
             },
             "continues_task": false,
+            "working_task": true,
             "calls": 1,
             "error": null,
+            "result_kind": "calculation",
             "temporary_fields": []
-          },
-          "terminal_type": "result"
+          }
         }
       ]
     },
@@ -2521,11 +2570,12 @@
               "sulfur": 5000
             },
             "continues_task": false,
+            "working_task": true,
             "calls": 1,
             "error": null,
+            "result_kind": "calculation",
             "temporary_fields": []
-          },
-          "terminal_type": "result"
+          }
         }
       ]
     },
@@ -2577,11 +2627,12 @@
               "sulfur": 5000
             },
             "continues_task": false,
+            "working_task": true,
             "calls": 1,
             "error": null,
+            "result_kind": "calculation",
             "temporary_fields": []
-          },
-          "terminal_type": "result"
+          }
         }
       ]
     },
@@ -2633,11 +2684,12 @@
               "sulfur": 5000
             },
             "continues_task": false,
+            "working_task": true,
             "calls": 1,
             "error": null,
+            "result_kind": "calculation",
             "temporary_fields": []
-          },
-          "terminal_type": "result"
+          }
         }
       ]
     },
@@ -2689,11 +2741,12 @@
               "sulfur": 5000
             },
             "continues_task": false,
+            "working_task": true,
             "calls": 1,
             "error": "ambiguous_inventory",
+            "result_kind": "calculation",
             "temporary_fields": []
-          },
-          "terminal_type": "result"
+          }
         }
       ]
     },
@@ -2745,11 +2798,12 @@
               "sulfur": 5000
             },
             "continues_task": false,
+            "working_task": true,
             "calls": 1,
             "error": null,
+            "result_kind": "calculation",
             "temporary_fields": []
-          },
-          "terminal_type": "result"
+          }
         },
         {
           "turn": 1,
@@ -2799,11 +2853,12 @@
               "sulfur": 5000
             },
             "continues_task": true,
+            "working_task": true,
             "calls": 0,
             "error": null,
+            "result_kind": "calculation",
             "temporary_fields": []
-          },
-          "terminal_type": "result"
+          }
         }
       ]
     },
@@ -2859,13 +2914,14 @@
               "sulfur": 5000
             },
             "continues_task": false,
+            "working_task": false,
             "calls": 1,
             "error": null,
+            "result_kind": "chat",
             "temporary_fields": [
               "technology.workbench"
             ]
-          },
-          "terminal_type": "result"
+          }
         }
       ]
     },
@@ -2933,11 +2989,12 @@
               "sulfur": 5000
             },
             "continues_task": false,
+            "working_task": true,
             "calls": 0,
             "error": null,
+            "result_kind": "calculation",
             "temporary_fields": []
-          },
-          "terminal_type": "result"
+          }
         }
       ]
     },
@@ -2983,11 +3040,12 @@
               "sulfur": 5000
             },
             "continues_task": false,
+            "working_task": true,
             "calls": 1,
             "error": null,
+            "result_kind": "calculation",
             "temporary_fields": []
-          },
-          "terminal_type": "result"
+          }
         },
         {
           "turn": 1,
@@ -3037,19 +3095,15 @@
               "sulfur": 5000
             },
             "continues_task": true,
+            "working_task": true,
             "calls": 1,
             "error": null,
+            "result_kind": "calculation",
             "temporary_fields": []
-          },
-          "terminal_type": "result"
+          }
         }
       ]
     }
   ],
-  "limitations": [
-    "模型抽取与视觉输出使用固定夹具；不衡量真实模型语言理解或识图准确率。",
-    "HTTP/SSE使用ASGI测试客户端，不等同浏览器交互验收。",
-    "样例用于工程回归，不能作为未见真实玩家分布的准确率。"
-  ],
-  "export_note": "本次离线运行的选择性导出：保留全部判定与业务字段，省略随机ID、耗时和模型调用计时；不是保存结果重判。"
+  "export_note": "从当前已保存audited报告选择性导出，保留全部判定与业务字段，省略随机ID和耗时；本次193项定向测试另执行同一固定集通过。"
 }

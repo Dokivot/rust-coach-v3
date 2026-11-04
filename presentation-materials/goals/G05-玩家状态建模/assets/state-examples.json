@@ -1,0 +1,98 @@
+{
+  "source": "../../../../evals/results/intent-state-v1-live-audited-2026-11-05.json",
+  "source_sha256": "c7fbac24685bb6478d81a820288628937978d209251d418c1301c9444f30f264",
+  "mode": "live_model_http_sse",
+  "sample_note": "临时合成档案；从同一六轮中摘取，不是新增独立样本。",
+  "turns": [
+    {
+      "turn": 0,
+      "message": "按档案背包，制作两个C4还缺多少材料？",
+      "new_conversation": false,
+      "actual": {
+        "operation": "craft",
+        "inventory": {
+          "sulfur": 1000
+        },
+        "hp": null,
+        "workbench": 3,
+        "action": "new",
+        "event": null,
+        "revision": 1,
+        "backpack": {
+          "sulfur": 1000
+        },
+        "profile_workbench": 3,
+        "goals": {
+          "explosive.timed": 2
+        },
+        "sulfur_needed": 3400,
+        "workbench_status": "satisfied"
+      },
+      "passed": true
+    },
+    {
+      "turn": 3,
+      "message": "我刚死了，背包丢了",
+      "new_conversation": false,
+      "actual": {
+        "operation": null,
+        "inventory": null,
+        "hp": null,
+        "workbench": null,
+        "action": "inspect",
+        "event": "death",
+        "revision": 2,
+        "backpack": {},
+        "profile_workbench": 3,
+        "goals": null,
+        "sulfur_needed": null,
+        "workbench_status": null
+      },
+      "passed": true
+    },
+    {
+      "turn": 4,
+      "message": "按档案背包，制作两个C4还缺多少材料？",
+      "new_conversation": true,
+      "actual": {
+        "operation": "craft",
+        "inventory": {},
+        "hp": null,
+        "workbench": 3,
+        "action": "new",
+        "event": null,
+        "revision": 2,
+        "backpack": {},
+        "profile_workbench": 3,
+        "goals": {
+          "explosive.timed": 2
+        },
+        "sulfur_needed": 4400,
+        "workbench_status": "satisfied"
+      },
+      "passed": true
+    },
+    {
+      "turn": 5,
+      "message": "我有1级工作台，继续计算",
+      "new_conversation": false,
+      "actual": {
+        "operation": "craft",
+        "inventory": {},
+        "hp": null,
+        "workbench": 1,
+        "action": "continue",
+        "event": null,
+        "revision": 2,
+        "backpack": {},
+        "profile_workbench": 3,
+        "goals": {
+          "explosive.timed": 2
+        },
+        "sulfur_needed": 4400,
+        "workbench_status": "blocked"
+      },
+      "passed": true
+    }
+  ]
+}

@@ -1,0 +1,217 @@
+{
+  "mode": "live_model_http_sse",
+  "model": "gpt-5.6-sol",
+  "api_mode": "responses",
+  "grader_sha256": "795453ee614b4bc9850421098dde1025625168713d737c5b9b1407764d862263",
+  "recorded_at": "2026-11-04T22:28:00.590381+00:00",
+  "source_sha256": "c7fbac24685bb6478d81a820288628937978d209251d418c1301c9444f30f264",
+  "rule_provenance": {
+    "snapshot_id": "rustdata-pc-vanilla-2026-11-01",
+    "retrieved_at": "2026-11-01",
+    "ruleset": "pc_vanilla",
+    "game_build": null,
+    "verification": "third_party_snapshot_not_ingame_verified",
+    "provider": "RustData",
+    "source_url": "https://rust-data.com/zh/tools/raid-calculator",
+    "source_versions": [
+      "v4:3:66a9a92f0d54f50e"
+    ],
+    "sha256": "11033e0ec886eb101a301c7e3e4ecc8fc9c30a23afeacc67679fecd710bbb3d5"
+  },
+  "call_budget": 3,
+  "turn_count": 6,
+  "passed": 6,
+  "limitations": [
+    "单次六轮文本冒烟，不证明模型泛化准确率。",
+    "本次未调用视觉模型，不验证识图质量。",
+    "使用临时数据库和合成玩家状态，不读写用户现有档案。",
+    "费用没有账单核对，调用数不是金额。"
+  ],
+  "call_count": 3,
+  "turns": [
+    {
+      "turn": 0,
+      "message": "按档案背包，制作两个C4还缺多少材料？",
+      "new_conversation": false,
+      "actual": {
+        "operation": "craft",
+        "inventory": {
+          "sulfur": 1000
+        },
+        "hp": null,
+        "workbench": 3,
+        "action": "new",
+        "event": null,
+        "revision": 1,
+        "backpack": {
+          "sulfur": 1000
+        },
+        "profile_workbench": 3,
+        "goals": {
+          "explosive.timed": 2
+        },
+        "sulfur_needed": 3400,
+        "workbench_status": "satisfied"
+      },
+      "expected": {
+        "operation": "craft",
+        "inventory": {
+          "sulfur": 1000
+        },
+        "goals": {
+          "explosive.timed": 2
+        },
+        "sulfur_needed": 3400
+      },
+      "answer_excerpt": "按你提供的库存，制作 2 个 C4 还差：\n• 4 电子零件\n• 400 金属碎片\n• 120 低品质燃油\n• 3400 硫磺\n• 6000 木炭\n• 10 布\n\n制作前还要确保相关配方能制作。",
+      "passed": true
+    },
+    {
+      "turn": 1,
+      "message": "改成拆一面石墙最省资源",
+      "new_conversation": false,
+      "actual": {
+        "operation": "raid",
+        "inventory": {
+          "sulfur": 1000
+        },
+        "hp": null,
+        "workbench": 3,
+        "action": "switch",
+        "event": null,
+        "revision": 1,
+        "backpack": {
+          "sulfur": 1000
+        },
+        "profile_workbench": 3,
+        "goals": {},
+        "sulfur_needed": null,
+        "workbench_status": null
+      },
+      "expected": {
+        "operation": "raid",
+        "action": "switch"
+      },
+      "answer_excerpt": "在已比较的单一爆炸物方案里，新增硫磺最少的是 2 定时炸弹，需要新增 3400 硫磺。这是按 1 个墙壁 · 石质、每个 500 HP、硬面计算的。未提供当前血量，暂按满血计算。不是所有资源或混搭的全局最优；科技、发射器与其他材料仍需核对。\n\nPC 原版；按每个目标单独命中，无维修、衰减变化或溅射共享。\n粘附爆炸物按成功贴附并爆炸；火箭按直接命中；不计哑火等待。\n仅比较所列单一爆炸物方案的新增硫磺，不代表混搭或所有资源的全局最优。\n发射器、学习蓝图、建造工作台的成本不包含在消耗品成本中。\n\n理解这次结果：先明确目标和适用条件，再解释计算报告；最省资源须明确比较指标和方案范围。",
+      "passed": true
+    },
+    {
+      "turn": 2,
+      "message": "它还剩250血",
+      "new_conversation": false,
+      "actual": {
+        "operation": "raid",
+        "inventory": {
+          "sulfur": 1000
+        },
+        "hp": 250,
+        "workbench": 3,
+        "action": "continue",
+        "event": null,
+        "revision": 1,
+        "backpack": {
+          "sulfur": 1000
+        },
+        "profile_workbench": 3,
+        "goals": {},
+        "sulfur_needed": null,
+        "workbench_status": null
+      },
+      "expected": {
+        "operation": "raid",
+        "hp": 250
+      },
+      "answer_excerpt": "在已比较的单一爆炸物方案里，新增硫磺最少的是 1 定时炸弹，需要新增 1200 硫磺。这是按 1 个墙壁 · 石质、每个 250 HP、硬面计算的。不是所有资源或混搭的全局最优；科技、发射器与其他材料仍需核对。\n\nPC 原版；按每个目标单独命中，无维修、衰减变化或溅射共享。\n粘附爆炸物按成功贴附并爆炸；火箭按直接命中；不计哑火等待。\n仅比较所列单一爆炸物方案的新增硫磺，不代表混搭或所有资源的全局最优。\n发射器、学习蓝图、建造工作台的成本不包含在消耗品成本中。",
+      "passed": true
+    },
+    {
+      "turn": 3,
+      "message": "我刚死了，背包丢了",
+      "new_conversation": false,
+      "actual": {
+        "operation": null,
+        "inventory": null,
+        "hp": null,
+        "workbench": null,
+        "action": "inspect",
+        "event": "death",
+        "revision": 2,
+        "backpack": {},
+        "profile_workbench": 3,
+        "goals": null,
+        "sulfur_needed": null,
+        "workbench_status": null
+      },
+      "expected": {
+        "event": "death",
+        "backpack": {},
+        "revision": 2
+      },
+      "answer_excerpt": "已将旧背包标记为失效并保留历史，当前背包已清零。其他容器没有清零。",
+      "passed": true
+    },
+    {
+      "turn": 4,
+      "message": "按档案背包，制作两个C4还缺多少材料？",
+      "new_conversation": true,
+      "actual": {
+        "operation": "craft",
+        "inventory": {},
+        "hp": null,
+        "workbench": 3,
+        "action": "new",
+        "event": null,
+        "revision": 2,
+        "backpack": {},
+        "profile_workbench": 3,
+        "goals": {
+          "explosive.timed": 2
+        },
+        "sulfur_needed": 4400,
+        "workbench_status": "satisfied"
+      },
+      "expected": {
+        "operation": "craft",
+        "inventory": {},
+        "revision": 2,
+        "goals": {
+          "explosive.timed": 2
+        },
+        "sulfur_needed": 4400
+      },
+      "answer_excerpt": "按你提供的库存，制作 2 个 C4 还差：\n• 4 电子零件\n• 400 金属碎片\n• 120 低品质燃油\n• 4400 硫磺\n• 6000 木炭\n• 10 布\n\n制作前还要确保相关配方能制作。",
+      "passed": true
+    },
+    {
+      "turn": 5,
+      "message": "我有1级工作台，继续计算",
+      "new_conversation": false,
+      "actual": {
+        "operation": "craft",
+        "inventory": {},
+        "hp": null,
+        "workbench": 1,
+        "action": "continue",
+        "event": null,
+        "revision": 2,
+        "backpack": {},
+        "profile_workbench": 3,
+        "goals": {
+          "explosive.timed": 2
+        },
+        "sulfur_needed": 4400,
+        "workbench_status": "blocked"
+      },
+      "expected": {
+        "operation": "craft",
+        "workbench": 1,
+        "profile_workbench": 3,
+        "workbench_status": "blocked"
+      },
+      "answer_excerpt": "按你提供的库存，制作 2 定时炸弹 还差：\n• 4 电子零件\n• 400 金属碎片\n• 120 低品质燃油\n• 4400 硫磺\n• 6000 木炭\n• 10 布\n\n你目前的工作台等级还不够，需要 3 级工作台。制作前还要确保相关配方能制作。\n\n理解这次结果：分别核对工具报告里的工作台条件和已知配方条件，未知条件不能当作已满足。\n\n当前自报与档案有差异，本轮按当前自报条件计算或建议；档案未覆盖，请核对后保存。",
+      "passed": true
+    }
+  ],
+  "source": "../../../../evals/results/intent-state-v1-live-audited-2026-11-05.json",
+  "export_note": "真实文本模型、临时合成档案；业务字段与原文节选，死亡轮只保留事件回执，不保留测试档案名称和时间。没有视觉模型调用。"
+}
