@@ -35,6 +35,67 @@ def digest(raw):
     return hashlib.sha256(raw).hexdigest()
 
 
+def evaluation_configuration(settings):
+    vision = settings.for_vision()
+    return {
+        "schema": "evaluation-configuration-v2",
+        "text_model": settings.model,
+        "vision_model": vision.model,
+        "text_endpoint_sha256": digest(settings.base_url.encode()),
+        "vision_endpoint_sha256": digest(vision.base_url.encode()),
+        "api_mode": settings.api_mode,
+        "vision_api_mode": vision.api_mode,
+        "instruction_role": settings.instruction_role,
+        "output_token_parameter": settings.output_token_parameter,
+        "max_output_tokens": settings.max_output_tokens,
+        "vision_max_output_tokens": vision.max_output_tokens,
+        "vision_enabled": settings.vision_enabled,
+        "vision_detail": settings.vision_detail,
+        "history_turns": settings.history_turns,
+        "context_char_limit": settings.context_char_limit,
+        "memory_context_char_limit": settings.memory_context_char_limit,
+        "search_provider": settings.search_provider,
+        "request_timeout_seconds": settings.request_timeout_seconds,
+        "advice_timeout_seconds": settings.advice_timeout_seconds,
+        "memory_timeout_seconds": settings.memory_timeout_seconds,
+        "attachment_max_bytes": settings.attachment_max_bytes,
+        "attachment_max_pixels": settings.attachment_max_pixels,
+        "visual_draft_hours": settings.visual_draft_hours,
+    }
+
+
+def validate_captured_runs(report, dataset):
+    runs = report.get("runs")
+    if not isinstance(runs, list) or not runs:
+        raise ValueError("captured_report_requires_runs")
+    cases = {case["id"]: case for case in dataset["cases"]}
+    keys = []
+    for record in runs:
+        case_id = record.get("case_id")
+        repeat = record.get("repeat")
+        if case_id not in cases or not isinstance(repeat, int) or isinstance(repeat, bool) or repeat < 1:
+            raise ValueError("invalid_captured_run_identity")
+        if record.get("expected") != cases[case_id]:
+            raise ValueError("captured_run_case_mismatch")
+        if not isinstance(record.get("steps"), list) or not isinstance(record.get("model_calls"), list):
+            raise ValueError("invalid_captured_run_artifacts")
+        keys.append((case_id, repeat))
+    if len(keys) != len(set(keys)):
+        raise ValueError("duplicate_captured_run")
+    selection = report.get("selection")
+    if selection:
+        if not isinstance(selection, dict):
+            raise ValueError("captured_run_manifest_mismatch")
+        selected = selection.get("case_ids")
+        repeat = selection.get("repeat")
+        if (not isinstance(selected, list) or not selected or any(case_id not in cases for case_id in selected)
+                or not isinstance(repeat, int) or isinstance(repeat, bool) or repeat < 1):
+            raise ValueError("captured_run_manifest_mismatch")
+        expected = [(case_id, iteration) for iteration in range(1, repeat + 1) for case_id in selected]
+        if selection.get("planned_runs") != len(expected) or keys != expected:
+            raise ValueError("captured_run_manifest_mismatch")
+
+
 def save_report(destination, report):
     destination.parent.mkdir(parents=True, exist_ok=True)
     temporary = destination.with_suffix(destination.suffix + ".tmp")
@@ -233,13 +294,11 @@ async def live(args, dataset):
               "rules_sha256": digest((ROOT / "src/rust_coach/calculations/rules.json").read_bytes()),
               "source_manifest": source_manifest(ROOT),
               "fixture_sha256": {variant: digest(fixture_bytes(dataset, args.cases, variant)) for variant in variants},
-              "configuration": {"text_model": settings.model, "vision_model": settings.for_vision().model,
-                                "text_endpoint_sha256": digest(settings.base_url.encode()), "vision_endpoint_sha256": digest(settings.for_vision().base_url.encode()),
-                                "api_mode": settings.api_mode, "vision_api_mode": settings.for_vision().api_mode,
-                                "search_provider": settings.search_provider, "request_timeout_seconds": settings.request_timeout_seconds,
-                                "advice_timeout_seconds": settings.advice_timeout_seconds, "max_output_tokens": settings.max_output_tokens},
+              "configuration": evaluation_configuration(settings),
               "transport": "existing ASGI HTTP upload and SSE chat endpoints, no external browser",
               "budget": {"max_model_calls": args.max_model_calls, "max_seconds": args.max_seconds},
+              "selection": {"case_ids": [case["id"] for case in cases], "repeat": args.repeat,
+                            "planned_runs": len(cases) * args.repeat},
               "runs": [{"case_id": case["id"], "repeat": repeat + 1, "expected": case, "steps": [], "model_calls": [],
                         "status": "not_run", "execution_status": "not_run"} for repeat in range(args.repeat) for case in cases], "status": "running"}
 
@@ -293,6 +352,10 @@ def replay(args, dataset):
         raise SystemExit("Dataset differs from captured run; do not silently rescore against another oracle.")
     if report.get("dataset") != dataset:
         raise SystemExit("Embedded dataset differs from captured dataset hash.")
+    try:
+        validate_captured_runs(report, dataset)
+    except ValueError as error:
+        raise SystemExit(f"Captured report is incomplete or inconsistent: {error}.") from error
     cases = {case["id"]: case for case in dataset["cases"]}
     replayed = copy.deepcopy(report)
     replayed.update(mode="saved_output_rescore", source=str(args.replay), source_sha256=digest(args.replay.read_bytes()),
@@ -302,6 +365,9 @@ def replay(args, dataset):
     if "fixture_sha256" not in replayed:
         replayed["fixture_sha256"] = {"original": report.get("image_sha256"), "occluded": report.get("occluded_sha256")}
         replayed["provenance_limitation"] = "Legacy capture lacks per-file source manifest and endpoint fingerprints; retained as unknown."
+    if "selection" not in replayed:
+        limitation = "Legacy capture lacks an explicit planned-run manifest; captured runs were validated for identity and uniqueness only."
+        replayed["provenance_limitation"] = "; ".join(filter(None, (replayed.get("provenance_limitation"), limitation)))
     for record in replayed["runs"]:
         original = record.get("assessment")
         record["assessment"] = score_case(dataset, cases[record["case_id"]], record)

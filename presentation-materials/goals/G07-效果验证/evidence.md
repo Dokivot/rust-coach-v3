@@ -4,9 +4,9 @@
 
 ## 日期与版本状态
 
-当前 Git HEAD 为 `aca007d`，但工作树已有上一轮未提交的评测代码、文档、案例及结果文件，不能用该提交号单独代表实现。完整 HEAD、文件哈希和原有改动清单保存在 [版本清单](assets/source-manifest.json)。材料目录是本次新增，原有业务与评测实现未修改。
+真实运行捕获时的 Git HEAD 为 `aca007d`，当时未提交实现的完整文件哈希保存在[历史版本清单](assets/source-manifest.json)；实现随后进入 `99f1a7d`。当前审查修复位于该提交之上的工作树，未修改历史捕获或模型输出，最新软件验证见[深度审查](../../../docs/inventory-evaluation-audit-2026-11-05.md)。
 
-真实新图批次于北京时间 2026-11-05 04:33:42—04:39:25 执行，主／视觉模型均为当时配置的 `gpt-5.6-sol`，Responses 接口；每案例一次，共9次运行。捕获报告与最终重判的判定器哈希不同，因为报告在评测工具完善期间捕获，最终结论由完成后的判定器重判并合并复核。本次核对的是**最终判定器**与当前源码一致，不伪称最初捕获时已使用完全相同的判定器。
+真实新图批次于北京时间 2026-11-05 04:33:42—04:39:25 执行，主／视觉模型均为当时配置的 `gpt-5.6-sol`，Responses 接口；每案例一次，共9次运行。捕获报告与最终重判的判定器哈希不同，因为报告在评测工具完善期间捕获，最终结论由完成后的判定器重判并合并复核。当前审查又增加了报告完整性防护，因此源码哈希再次变化；真实结果回归逐项确认9个 assessment 未变，不伪称最初捕获时已使用当前工具。
 
 本次没有重跑真实模型实验；执行本地软件回归并重新计算保存输出，证据见 [核验记录](assets/verification.txt)。图片标注已保存在版本化案例中，依据为用户确认；最终表达复核身份是 `coding_agent`，并非独立人工盲评。
 
@@ -18,7 +18,7 @@
 | G07-E02 | 能检出“错误库存前提下算术自洽”的回答 | [零件图](assets/inventory-components.png)、[代表案例](assets/representative-cases.json)、[人工标注](../../../evals/inventory-acceptance-v2.json) | `components_craft`，第0轮；普通工作台，不展开燃油 | 齿轮20→电子零件20、电子零件2→炸药2；先错在视觉，后影响缺口 | 证明本例定位能力，不证明已修复识图；局部库存与规则版本仍有限制 |
 | G07-E03 | 能区分潜在视觉错误与被隔离的预算影响 | [历史图案例](assets/representative-cases.json)、[最终判定](../../../evals/results/inventory-acceptance-v2-reviewed-2026-11-05.json)、[图表数据](assets/chart-data.json) | 历史图、对手图、31分钟过期观测三例；只查对应库存隔离断言 | 3个隔离断言通过；历史、对手图仍保留视觉失败；未知HP另有1个正确澄清案例 | 3/3是隔离检查，不是3个案例整体通过；31分钟由隔离数据库受控置旧，非实际等待 |
 | G07-E04 | 算术、图像事实和规则版本被分别核对 | [独立规则证据](../../../evals/results/inventory-rule-evidence-2026-11-05.json)、[最终判定](../../../evals/results/inventory-acceptance-v2-reviewed-2026-11-05.json)、[图表数据](assets/chart-data.json) | 独立Wiki配方手算表；十个C4、工作台火药、不展开燃油 | 8个制作结果按**实际采用库存**计算均匹配；规则build继续待核验 | 8/8不能证明库存正确或当前游戏规则正确；非通用配方求解金标 |
-| G07-E05 | 评测边界处理有软件回归支撑 | [本次测试记录](assets/verification.txt)、[版本清单](assets/source-manifest.json) | 当前含未提交修改的工作树；本地pytest，未启动真实模型批次 | 本次517项测试通过，9.62秒 | 软件测试覆盖范围内通过；不等于建议质量提升，不是游戏真实效果样本 |
+| G07-E05 | 评测边界处理有软件回归支撑 | [历史测试记录](assets/verification.txt)、[当前深度审查](../../../docs/inventory-evaluation-audit-2026-11-05.md) | 审查工作树；本地pytest与离线重判，未启动真实模型批次 | 审查检查点521项通过；当前评测专项34项通过；9案例重判仍为5失败、3待核验、1通过 | 软件测试覆盖范围内通过；不等于建议质量提升，不是游戏真实效果样本 |
 | G07-E06 | 保存结果可复核；不兼容对照不会认证模型改进 | [本次核验](assets/verification.txt)、[历史复现报告](../../../evals/results/inventory-v2-reproducibility-2026-11-05.json)、[不兼容对照](../../../evals/results/inventory-grader-v1-v2-comparison-2026-11-05.json) | 本次用当前判定器重算同一捕获并合并既有复核；没有新模型调用 | 9个最终assessment与保存结果一致；历史对照标记判定器／复核协议不兼容 | 只证明重判一致；历史复现报告的一个副本位于未版本化data目录，本材料不依赖那个副本 |
 | G07-E07 | 实际交付是小型评测闭环，非完整生产平台 | [优先级规划](../../../docs/improvement-priority-plan.md)、[评测架构设计](../../../docs/architecture-evaluation-observability-layer.md)、[实施报告](../../../docs/inventory-evaluation-v2.md) | 将规划、当前代码与落地结果交叉核对 | 本地隔离执行、版本化报告、显式复核、人工审核反馈已实现；统一生产追踪等仍是差距 | 文档设计不单独作为实现证据；替代方案对比和停止边界中本次归纳已在brief标明 |
 | G07-E08 | 标注、复核和预算失效不会静默伪装成功 | [专项测试源码](../../../tests/test_inventory_evaluation.py)、[本次全量测试](assets/verification.txt)、[评测入口](../../../evals/README.md) | 合成缺输出／不确定标注／哈希冲突／0次预算／在途超时等关键场景 | 测试确认阻断或待核验、拒绝冲突复核、取消在途调用、剩余案例not_run；反馈须人工核实后生成新版本 | 测试机制有效，不等于已在生产中长期验证自动反馈闭环 |
@@ -61,7 +61,7 @@
 <a id="g07-e05"></a>
 ### G07-E05：当前软件回归
 
-[核验文本](assets/verification.txt) 保存本次执行命令、退出码与完成输出，测试对应源码哈希在版本清单中。没有沿用上一轮的测试数字冒充新验证，也没有把517解释为517个真实游戏问题都答对。
+[历史核验文本](assets/verification.txt) 保存材料打包时的517项结果与源码哈希；[当前深度审查](../../../docs/inventory-evaluation-audit-2026-11-05.md)记录修复检查点的521项全量结果和当前34项评测专项结果。两者都只是软件测试，不代表同等数量的真实游戏问题答对。
 
 关键回归位置：[标注不确定性传播](../../../tests/test_inventory_evaluation.py#L34)、[缺计算阻断](../../../tests/test_inventory_evaluation.py#L45)、[先前轮次错误](../../../tests/test_inventory_evaluation.py#L52)、[合理澄清复核](../../../tests/test_inventory_evaluation.py#L102)。
 

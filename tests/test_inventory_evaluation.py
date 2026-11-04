@@ -8,7 +8,7 @@ import httpx
 import pytest
 
 from evals import inventory_baseline as runner
-from evals.inventory_evidence import apply_reviews, compare_reports, promote_feedback, review_template, validate_dataset
+from evals.inventory_evidence import apply_reviews, compare_reports, file_digest, promote_feedback, review_template, validate_dataset
 from evals.inventory_grading import object_digest, score_case
 from rust_coach.config import Settings
 from rust_coach.contracts import ModelReply
@@ -114,7 +114,7 @@ def test_per_turn_review_can_finish_clarification_without_overriding_failure():
     assert apply_reviews(report, review, "source-hash")["runs"][0]["assessment"]["status"] == "fail"
 
 
-@pytest.mark.parametrize("mutation", ["source", "turn", "duplicate", "evidence", "reviewer"])
+@pytest.mark.parametrize("mutation", ["source", "turn", "duplicate", "evidence", "reviewer", "revision"])
 def test_review_conflicts_and_missing_provenance_are_rejected(mutation):
     record = craft_record({})
     record.update(case_id="text_craft", repeat=1, assessment=score_case(DATASET, case("text_craft"), record))
@@ -130,6 +130,8 @@ def test_review_conflicts_and_missing_provenance_are_rejected(mutation):
         review["entries"].append(copy.deepcopy(entry))
     elif mutation == "evidence":
         entry["evidence_refs"] = ["steps/0/turn/nonexistent"]
+    elif mutation == "revision":
+        review["revision"] = 0
     else:
         entry["reviewer"] = None
     with pytest.raises(ValueError):
@@ -146,6 +148,23 @@ def test_comparison_rejects_grader_changes_and_does_not_claim_improvement():
     assert not result["comparable"]
     assert result["experiment"] == "saved_output_regrading"
     assert not result["model_improvement_proven"]
+
+
+def test_behavior_affecting_configuration_is_captured_and_compared():
+    settings = Settings(_env_file=None, api_key="fixture-secret", vision_detail="original", history_turns=7)
+    configuration = runner.evaluation_configuration(settings)
+    assert configuration["schema"] == "evaluation-configuration-v2"
+    assert configuration["vision_detail"] == "original"
+    assert configuration["history_turns"] == 7
+    assert configuration["vision_max_output_tokens"] == 8192
+
+    report = {key: "same" for key in ("dataset_sha256", "grader_version", "grader_sha256", "rules_sha256", "fixture_sha256")}
+    report.update(mode="live", configuration=configuration, runs=[])
+    after = copy.deepcopy(report)
+    after["configuration"]["vision_detail"] = "high"
+    result = compare_reports(report, after)
+    assert not result["comparable"]
+    assert "incompatible_or_missing:configuration" in result["reasons"]
 
 
 def test_feedback_requires_human_verification_and_new_version():
@@ -247,3 +266,45 @@ def test_fixture_hash_change_is_rejected():
     dataset["images"]["wide"]["sha256"] = "changed"
     with pytest.raises(ValueError, match="fixture_hash_mismatch"):
         validate_dataset(dataset, ROOT / "evals/inventory-acceptance-v2.json")
+
+
+def test_captured_run_manifest_rejects_duplicate_and_mismatched_cases():
+    dataset = json.loads((ROOT / "evals/inventory-acceptance-v2.json").read_text())
+    selected = dataset["cases"][:2]
+    report = {
+        "selection": {"case_ids": [case["id"] for case in selected], "repeat": 1, "planned_runs": 2},
+        "runs": [{"case_id": case["id"], "repeat": 1, "expected": case, "steps": [], "model_calls": []}
+                 for case in selected],
+    }
+    runner.validate_captured_runs(report, dataset)
+    report["runs"][1] = copy.deepcopy(report["runs"][0])
+    with pytest.raises(ValueError, match="duplicate_captured_run"):
+        runner.validate_captured_runs(report, dataset)
+    report["runs"][1]["case_id"] = selected[1]["id"]
+    with pytest.raises(ValueError, match="case_mismatch"):
+        runner.validate_captured_runs(report, dataset)
+
+
+def test_saved_real_run_proves_failure_and_clarification_without_conflating_arithmetic():
+    dataset_path = ROOT / "evals/inventory-acceptance-v2.json"
+    capture_path = ROOT / "evals/results/inventory-acceptance-v2-live-2026-11-05.json"
+    review_path = ROOT / "evals/results/inventory-acceptance-v2-review-2026-11-05.json"
+    reviewed_path = ROOT / "evals/results/inventory-acceptance-v2-reviewed-2026-11-05.json"
+    dataset = json.loads(dataset_path.read_text())
+    report = json.loads(capture_path.read_text())
+    runner.validate_captured_runs(report, dataset)
+    cases = {case["id"]: case for case in dataset["cases"]}
+    rescored = copy.deepcopy(report)
+    for record in rescored["runs"]:
+        record["assessment"] = score_case(dataset, cases[record["case_id"]], record)
+    reviewed = apply_reviews(rescored, json.loads(review_path.read_text()), file_digest(capture_path))
+    runs = {record["case_id"]: record for record in reviewed["runs"]}
+    saved = {record["case_id"]: record for record in json.loads(reviewed_path.read_text())["runs"]}
+    assert all(record["assessment"] == saved[case_id]["assessment"] for case_id, record in runs.items())
+
+    components = runs["components_craft"]["assessment"]
+    assert components["status"] == "fail"
+    assert components["first_error_stage"] == "vision"
+    assert checked(components, "arithmetic_given_admitted_inventory")["status"] == "pass"
+    assert checked(components, "recipe_arithmetic")["status"] == "fail"
+    assert runs["damaged_unknown_hp"]["assessment"]["status"] == "pass"

@@ -100,16 +100,26 @@ def review_template(report, source_sha256):
 def apply_reviews(report, review, source_sha256):
     if review.get("version") != "expression-review-v2" or review["source_sha256"] != source_sha256:
         raise ValueError("review_source_mismatch")
+    if (not isinstance(review.get("revision"), int) or isinstance(review["revision"], bool)
+            or review["revision"] < 1 or not isinstance(review.get("entries"), list)):
+        raise ValueError("invalid_review_revision_or_entries")
     result = copy.deepcopy(report)
     runs = {(run["case_id"], run["repeat"]): run for run in result["runs"]}
+    if len(runs) != len(result["runs"]):
+        raise ValueError("duplicate_runs_cannot_be_reviewed")
     seen = set()
     for entry in review["entries"]:
         key = (entry["case_id"], entry["repeat"], entry["turn_index"])
         if key in seen:
             raise ValueError("conflicting_reviews_require_new_revision")
         seen.add(key)
+        if key[:2] not in runs or not isinstance(key[2], int) or key[2] < 0:
+            raise ValueError("review_run_missing")
         run = runs[key[:2]]
-        turn = run["steps"][key[2]]["turn"]
+        try:
+            turn = run["steps"][key[2]]["turn"]
+        except (IndexError, KeyError, TypeError) as error:
+            raise ValueError("review_turn_missing") from error
         if object_digest(turn) != entry["turn_sha256"]:
             raise ValueError("review_turn_mismatch")
         status = entry["status"]
