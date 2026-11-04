@@ -28,6 +28,7 @@ from rust_coach.attachments.store import AttachmentStore
 from rust_coach.vision.service import VisionService
 from rust_coach.memory.api import memory_router
 from rust_coach.progress import chat_events
+from rust_coach.knowledge.schemas import KnowledgeFeedback
 
 
 logger = logging.getLogger("rust_coach")
@@ -60,6 +61,7 @@ def create_app(settings: Settings | None = None, model: ChatModel | None = None,
             app.state.runtime = ChatRuntime(settings, model or CompatibleChatModel(settings, client, stream_responses=True), store,
                 calculation_model=model or CompatibleChatModel(settings, client, stream_responses=True), advice_service=advice,
                 vision_service=vision, memory_model=memory_adapter)
+            calculator.knowledge = app.state.runtime.knowledge
             app.state.state_model = model or CompatibleChatModel(settings, client, stream_responses=True)
             app.state.runtime.memory.schedule()
             try:
@@ -115,10 +117,11 @@ def create_app(settings: Settings | None = None, model: ChatModel | None = None,
         return {
             "model": settings.model,
             "configured": settings.configured,
-            "capabilities": {"chat": settings.configured, "knowledge": settings.search_provider != "off",
+            "capabilities": {"chat": settings.configured, "knowledge": True,
                              "web_search": settings.search_configured, "decision": settings.configured,
                              "calculators": True, "player_state": True, "memory": True, "adaptive_teaching": True},
             "search_provider": settings.search_provider,
+            "knowledge_release": request.app.state.runtime.knowledge.reference(),
             "history_turns": settings.history_turns,
             "presentation": {"persona_version": ResponseContext().persona_version,
                              "preferences_schema": PresentationPreferences.model_json_schema()},
@@ -141,6 +144,30 @@ def create_app(settings: Settings | None = None, model: ChatModel | None = None,
     @app.get("/api/calculations/catalog")
     async def calculation_catalog():
         return calculator.catalog.public()
+
+    @app.get("/api/knowledge")
+    async def knowledge_status(request: Request):
+        knowledge = request.app.state.runtime.knowledge
+        return {**knowledge.reference(), "snapshot": knowledge.catalog.provenance(),
+                "verification": "build_unverified_no_independent_human_review"}
+
+    @app.get("/api/knowledge/documents/{document_id}")
+    async def knowledge_document(document_id: str, request: Request):
+        snapshot = request.app.state.runtime.knowledge.registry.snapshot()
+        document = next((item for item in snapshot["release"]["documents"] if item["id"] == document_id), None)
+        if document is None:
+            raise AppError("knowledge_document_not_found", "当前知识包中没有该证据。", 404)
+        return {**document, "release_id": snapshot["release_id"], "revoked": snapshot["revoked"].get(document_id)}
+
+    @app.post("/api/conversations/{conversation_id}/knowledge-feedback")
+    async def knowledge_feedback(conversation_id: UUID, payload: KnowledgeFeedback, request: Request):
+        runtime = request.app.state.runtime
+        conversation = runtime.store.get(str(conversation_id))
+        turn = next((turn for turn in conversation.turns if turn.request_id == payload.turn_request_id), None)
+        reference = (turn.presentation or {}).get("knowledge") if turn else None
+        if not reference:
+            raise AppError("knowledge_feedback_invalid", "该回答没有可反馈的知识引用。", 422)
+        return runtime.knowledge.registry.feedback(str(conversation_id), payload, reference)
 
     @app.post("/api/calculations")
     async def calculate(payload: CalculationRequest):

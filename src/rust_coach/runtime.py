@@ -23,6 +23,7 @@ from rust_coach.architecture.input import InputLayer
 from rust_coach.architecture.observability import emit_trace, new_trace
 from rust_coach.architecture.task_context import inventory_selection, previous_working_state
 from rust_coach.player_state.working import effective_state, explicit_event
+from rust_coach.knowledge.service import LocalKnowledge
 
 
 logger = logging.getLogger("rust_coach")
@@ -57,7 +58,10 @@ class ChatRuntime:
         self.settings = settings
         self.store = store
         self.player_states = PlayerStateStore(store)
-        self.graph = build_chat_graph(model, settings.instruction_role, calculation_model, advice_service, vision_service)
+        self.knowledge = LocalKnowledge(store)
+        self.graph = build_chat_graph(model, settings.instruction_role, calculation_model, advice_service, vision_service, self.knowledge)
+        if advice_service and getattr(advice_service, "calculator", None):
+            advice_service.calculator.knowledge = self.knowledge
         self.advice_service = advice_service
         self.vision_service = vision_service
         self.lock = asyncio.Lock()
@@ -77,6 +81,11 @@ class ChatRuntime:
                                 request.presentation_preferences.model_dump() if request.presentation_preferences else None)):
                         raise AppError("request_conflict", "请求标识已用于另一条消息，请重新发送。", 409)
                     report_stage("replay")
+                    saved_knowledge = (turn.presentation or {}).get("knowledge")
+                    if saved_knowledge:
+                        self.knowledge.registry.validate(saved_knowledge)
+                    elif turn.calculation and turn.calculation.get("status") == "calculated":
+                        raise AppError("knowledge_unversioned_history", "历史计算没有知识包版本，不能作为当前结果复用；请发送新请求重新计算。", 409)
                     return turn
             if len(conversation.turns) >= 100:
                 raise AppError("conversation_full", "当前会话已达到 100 轮，请创建新对话。", 409)
@@ -116,6 +125,7 @@ class ChatRuntime:
                         (json.dumps(turn.memory), conversation_id, turn.request_id))
                 return turn
             profile = self.memory.store.profile()
+            knowledge_reference = self.knowledge.reference()
             excluded = self.memory.store.history_exclusions(conversation_id)
             conversation = conversation.model_copy(update={"turns": [turn for turn in conversation.turns
                 if turn.request_id not in excluded and turn.created_at > profile["history_floor"]]})
@@ -148,6 +158,11 @@ class ChatRuntime:
             used_chars = len(request.message) + len(state_context or "") + len(json.dumps(prepared["context"], ensure_ascii=False))
             for turn in reversed(conversation.turns[-self.settings.history_turns:]):
                 if (turn.player_state_ref or {}).get("scope_id") != scope_id:
+                    continue
+                historical_knowledge = (turn.presentation or {}).get("knowledge") or (turn.presentation or {}).get("knowledge_context")
+                if historical_knowledge and any(historical_knowledge.get(key) != value for key, value in knowledge_reference.items()):
+                    continue
+                if not historical_knowledge and (turn.calculation or self.knowledge.need(turn.user)["entities"]):
                     continue
                 turn_chars = len(turn.user) + len(turn.assistant)
                 if used_chars + turn_chars > self.settings.context_char_limit:
@@ -187,6 +202,11 @@ class ChatRuntime:
                         references={"event": receipt["event"], "revision": receipt["revision"], "observation_id": receipt["observation_id"]})
                 previous_advice = conversation.turns[-1].advice if conversation.turns and (
                     conversation.turns[-1].player_state_ref or {}).get("scope_id") == scope_id else None
+                previous_reference = ((conversation.turns[-1].presentation or {}).get("knowledge") or
+                                      (conversation.turns[-1].presentation or {}).get("knowledge_context")) if previous_advice else None
+                if previous_reference:
+                    if any(previous_reference.get(key) != value for key, value in knowledge_reference.items()):
+                        previous_advice = None
                 visual_ref = str(request.visual_draft_id) if request.visual_draft_id else None
                 if not visual_ref and not request.attachment_ids:
                     visual_ref = self.recent_visual(conversation,request.message,scope_id)
@@ -219,6 +239,7 @@ class ChatRuntime:
                         "player_snapshot": task_snapshot, "persistent_snapshot": snapshot, "inventory_container": inventory_container,
                         "working_state": working, "state_view": state_view, "state_receipt": receipt,
                         "inventory_selection": selection,
+                        "knowledge_reference": knowledge_reference,
                         "previous_calculation": previous_input,
                         "previous_advice": previous_advice,
                         "pending_message": previous.get("pending_message") if previous else None,
@@ -246,12 +267,14 @@ class ChatRuntime:
             presentation = result.get("presentation")
             if presentation:
                 presentation["request_preferences"] = request.presentation_preferences.model_dump() if request.presentation_preferences else None
+                presentation["knowledge_context"] = knowledge_reference
             visual = result.get("visual")
             if visual:
                 visual["request_identity"] = self.visual_identity(request)
             report_stage("save")
             with self.store.connection() as connection:
                 connection.execute("BEGIN IMMEDIATE")
+                self.knowledge.registry.validate(knowledge_reference, connection)
                 binding = connection.execute("SELECT scope_id FROM conversation_player_scope WHERE conversation_id=?",
                                              (conversation_id,)).fetchone()
                 if (binding["scope_id"] if binding else None) != scope_id:

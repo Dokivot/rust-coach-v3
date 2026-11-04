@@ -35,7 +35,7 @@ function render(turns) {
     VisionUI: {init() {}},
     fetch: () => new Promise(() => {}),
     requestAnimationFrame: callback => callback(),
-    fixture: {turns},
+    fixture: {id: "original-conversation", turns},
   });
   vm.runInContext(readFileSync("src/rust_coach/static/app.js", "utf8"), context);
   vm.runInContext("conversation = fixture; renderConversation();", context);
@@ -85,6 +85,37 @@ test("English answers use an English disclosure label", () => {
   }}]);
   assert.equal(messages.children[1].children[1].textContent, "Answer");
   assert.equal(messages.children[1].children[2].children[0].textContent, "View calculations, observations and sources");
+});
+
+test("knowledge feedback stays attached to its original conversation and cited evidence", async () => {
+  const {context, messages} = render([{request_id: "turn-1", user: "C4配方", assistant: "快照配方", presentation: {
+    context: {language: "zh"}, knowledge: {documents: [{id: "recipe:explosive.timed"}], rule_dependencies: []},
+    blocks: [{placement: "detail", text: "来源"}],
+  }}]);
+  const form = messages.children[1].children[2].children[2];
+  const reason = form.children[1].children[0];
+  reason.value = "来源是否适用？";
+  const calls = [];
+  context.crypto = {randomUUID: () => "feedback-1"};
+  context.fetch = async (path, options) => {
+    calls.push({path, payload: JSON.parse(options.body)});
+    return {ok: true, json: async () => ({status: "pending_review"})};
+  };
+  vm.runInContext('conversation = {id: "different-conversation", turns: []};', context);
+  await form.events.submit({preventDefault() {}});
+  assert.equal(calls[0].payload.turn_request_id, "turn-1");
+  assert.deepEqual(calls[0].payload.document_ids, ["recipe:explosive.timed"]);
+  assert.equal(calls[0].path, "/api/conversations/original-conversation/knowledge-feedback");
+  assert.match(form.children[3].textContent, /不会自动修改规则/);
+  await form.events.submit({preventDefault() {}});
+  assert.equal(calls.length, 1);
+});
+
+test("knowledge command can be sent without model credentials", async () => {
+  const ui = await sendingUI();
+  vm.runInContext("configured = false;", ui.context);
+  await ui.submit("/knowledge C4配方是什么");
+  assert.equal(ui.calls.messages.length, 1);
 });
 
 function deferred() {

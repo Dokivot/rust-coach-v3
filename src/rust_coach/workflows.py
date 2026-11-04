@@ -65,10 +65,12 @@ class ChatState(TypedDict):
     extracted_calculation: dict | None
     state_receipt: dict | None
     state_view: dict
+    knowledge: dict
+    knowledge_reference: dict
 
 
-def build_chat_graph(model: ChatModel, instruction_role="system", calculation_model: ChatModel | None = None, advice_service=None, vision_service=None):
-    service = CalculationService(calculation_model or model, instruction_role)
+def build_chat_graph(model: ChatModel, instruction_role="system", calculation_model: ChatModel | None = None, advice_service=None, vision_service=None, knowledge_service=None):
+    service = CalculationService(calculation_model or model, instruction_role, knowledge_service)
     input_layer = InputLayer()
     understanding_layer = UnderstandingLayer()
     decision_layer = DecisionLayer()
@@ -113,6 +115,8 @@ def build_chat_graph(model: ChatModel, instruction_role="system", calculation_mo
 
     async def visual_input(state):
         request = state.get("chat_request")
+        if request and not request.attachment_ids and knowledge_service and knowledge_service.handles(request.message, state.get("previous_calculation")):
+            return {"visual": None, "parsed_input": state.get("parsed_input")}
         if not request or not (request.attachment_ids or state.get("visual_ref")):
             parsed = state.get("parsed_input")
             if parsed is None and request:
@@ -187,6 +191,8 @@ def build_chat_graph(model: ChatModel, instruction_role="system", calculation_mo
         elif state.get("state_receipt") and (state["state_receipt"]["event"] == "scope_changed" or
                 not re.search(r"算|造|制作|合成|拆|炸|还差|多少|建议|怎么办", text)):
             node, reason, action = "player_state", "state_event_committed", "inspect"
+        elif knowledge_service and knowledge_service.handles(text, previous):
+            node, reason, action = "knowledge", "fixed_snapshot_knowledge_request", "inspect"
         elif advice_service and text.startswith(("/coach", "/search")):
             node, reason = "advice", "explicit_advice_request"
         elif conversational(text):
@@ -335,6 +341,32 @@ def build_chat_graph(model: ChatModel, instruction_role="system", calculation_mo
         )
         return {**output, **with_decision_result(state, decision_result)}
 
+    def knowledge(state):
+        report_stage("retrieve")
+        evidence = knowledge_service.retrieve(state["messages"][-1].content, state.get("previous_calculation"))
+        task = CoachTaskRepresentation.model_validate(state["task"])
+        result = DecisionResult(task_id=task.task_id, status="conditional" if evidence["status"] == "supported_snapshot" else "blocked",
+            result_kind="chat", solution={"knowledge_status": evidence["status"]},
+            supported_claims=tuple({"id": document["id"], "text": document["text"], "source": document["source"]} for document in evidence["documents"]),
+            evidence_refs=tuple(document["id"] for document in evidence["documents"]), limitations=tuple(evidence["limitations"]))
+        architecture = dict(state.get("architecture") or {})
+        architecture["trace"] = emit_trace(architecture.get("trace"), layer="knowledge", component="local-retrieval",
+            event="retrieval.completed", status="ok" if evidence["status"] == "supported_snapshot" else "blocked",
+            references={"status": evidence["status"], "release": evidence["release_id"], "revision": evidence["registry_revision"],
+                "selected": len(evidence["documents"]), "excluded": len(evidence["excluded"]), "missing": len(evidence["missing"]),
+                "context_chars": evidence.get("context_chars", 0), "model_calls": evidence["model_calls"], "network_calls": evidence["network_calls"],
+                "elapsed_ms": evidence["elapsed_ms"], "cache_hit": evidence["cache_hit"]})
+        updates = with_decision_result({**state, "architecture": architecture}, result)
+        blocked_calculation = None
+        message = state["messages"][-1].content
+        if evidence["status"] in {"scope_mismatch", "latest_unverified"} and operation_hint(message):
+            blocked_calculation = {"status": "needs_input", "input": None, "pending_message": message,
+                                   "error_code": evidence["status"]}
+            updates["architecture"]["working_state"] = None
+            updates["working_state"] = None
+        return {"reply": ModelReply(content=knowledge_service.render(evidence)), "calculation": blocked_calculation,
+                "knowledge": evidence, **updates}
+
     def visual_observe(state):
         reply = ModelReply(content="已识别截图中的可见内容。你可以直接继续问材料缺口、基地局部风险或装备情况；如果识别有误，直接告诉我即可。")
         task = CoachTaskRepresentation.model_validate(state["task"])
@@ -350,14 +382,16 @@ def build_chat_graph(model: ChatModel, instruction_role="system", calculation_mo
     builder.add_node("advice", advice)
     builder.add_node("visual_input",visual_input)
     builder.add_node("visual_observe",visual_observe)
+    builder.add_node("knowledge", knowledge)
     builder.add_node("finalize_response", finalize_response)
     builder.add_edge(START, "visual_input")
     builder.add_edge("visual_input","route")
-    builder.add_conditional_edges("route", lambda state: state["route"], {"chat": "chat", "calculate": "calculate", "player_state": "player_state", "advice": "advice", "visual_observe": "visual_observe"})
+    builder.add_conditional_edges("route", lambda state: state["route"], {"chat": "chat", "calculate": "calculate", "player_state": "player_state", "advice": "advice", "visual_observe": "visual_observe", "knowledge": "knowledge"})
     builder.add_conditional_edges("calculate", lambda state: state["route"], {"chat": "chat", "done": "finalize_response"})
     builder.add_edge("chat", "finalize_response")
     builder.add_edge("player_state", "finalize_response")
     builder.add_edge("advice", "finalize_response")
     builder.add_edge("visual_observe","finalize_response")
+    builder.add_edge("knowledge", "finalize_response")
     builder.add_edge("finalize_response", END)
     return builder.compile()

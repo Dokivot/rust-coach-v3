@@ -12,8 +12,9 @@ from rust_coach.progress import report_stage
 class Calculator:
     algorithm_version = "craft-dag-1/raid-single-method-1"
 
-    def __init__(self):
+    def __init__(self, knowledge=None):
         self.catalog = RuleCatalog()
+        self.knowledge = knowledge
 
     def calculate(self, request: CalculationRequest):
         report_stage("calculate_craft" if request.operation == "craft" else "calculate_raid")
@@ -35,10 +36,14 @@ class Calculator:
         else:
             result = self.raid(request)
         provenance = catalog.provenance()
+        knowledge = self.knowledge.calculation_evidence(request) if self.knowledge else None
         identity = {"input": normalized, "snapshot": provenance["sha256"], "algorithm": self.algorithm_version}
+        if knowledge:
+            self.knowledge.registry.validate(knowledge)
         return {"status": "calculated", "operation": request.operation, "input": normalized,
                 "result": result, "provenance": provenance, "algorithm": self.algorithm_version,
-                "calculation_id": hashlib.sha256(json.dumps(identity, sort_keys=True).encode()).hexdigest()}
+                "calculation_id": hashlib.sha256(json.dumps(identity, sort_keys=True).encode()).hexdigest(),
+                **({"knowledge": knowledge} if knowledge else {})}
 
     def craft(self, goals, request):
         expand_fuel = request.expand_fuel or "lowgradefuel" in goals

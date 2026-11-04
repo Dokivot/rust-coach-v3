@@ -85,6 +85,23 @@ async def test_advice_progress_only_reports_retrieval_when_used(tmp_path, retrie
     assert events[-1]["type"] == "result" and len(model.calls) == 2
 
 
+async def test_advice_calculations_cannot_use_revoked_dependencies(tmp_path):
+    plan = copy.deepcopy(PLAN)
+    plan["topics"] = []
+    plan["candidates"] = [plan["candidates"][0], {"id": "craft", "title": "准备C4", "kind": "craft",
+        "required_fields": [], "goals": {"explosive.timed": 1}}]
+    model = ScriptedModel([plan, answer()])
+    settings = Settings(_env_file=None, database_path=tmp_path / "knowledge-advice.sqlite3")
+    store = ConversationStore(settings.database_path)
+    runtime = ChatRuntime(settings, model, store, advice_service=AdviceService(model, FakeResearch()))
+    runtime.knowledge.registry.revoke(runtime.knowledge.reference()["release_id"], "recipe:explosives", "fixture withdrawal")
+    turn = await runtime.chat(store.create().id, ChatRequest(request_id=uuid4(), message="/coach 比较下一步行动"))
+    candidate = turn.advice["evaluations"]["craft"]
+    assert candidate["status"] == "unverified"
+    assert candidate["calculation"] is None
+    assert "recipe:explosives" in candidate["reason"]
+
+
 @pytest.fixture
 def stores(tmp_path):
     conversations = ConversationStore(tmp_path / "test.sqlite3")

@@ -1,0 +1,209 @@
+[
+  {
+    "id": "explain:rounding",
+    "title": "为什么拆墙数量向上取整",
+    "text": "拆除数量按每个目标分别计算：ceil(当前生命值 / 对该目标和朝向的有效伤害)。不足一次命中的余量仍需要一次，不能向下取整。有效伤害必须来自本快照，不能把其他目标的基础伤害直接代入。",
+    "terms": "rounding ceil health damage",
+    "entities": [],
+    "claims": [
+      "rounding"
+    ],
+    "kind": "explanation",
+    "source": "implementation:craft-dag-1/raid-single-method-1:rounding",
+    "verification": "implementation_explanation"
+  },
+  {
+    "id": "explain:targets",
+    "title": "多个目标不能合并生命值",
+    "text": "多个独立墙门应分别向上取整，再乘目标数量；不能合并总血量后只取整一次。本计算不假设溅射能共享命中，也不推断实际游戏已经执行了拆除。",
+    "terms": "multiple targets health separate ceil",
+    "entities": [],
+    "claims": [
+      "targets"
+    ],
+    "kind": "explanation",
+    "source": "implementation:craft-dag-1/raid-single-method-1:targets",
+    "verification": "implementation_explanation"
+  },
+  {
+    "id": "explain:optimization",
+    "title": "最省资源的比较范围",
+    "text": "本项目的最省资源是比较已收录单一爆炸物方案所需新增硫磺，考虑有效库存抵扣。它不是所有材料、所有混搭方案或战术风险的全局最优。发射器、工作台建设和蓝图学习成本不计入消耗品成本。",
+    "terms": "optimization sulfur single method cheapest optimal",
+    "entities": [],
+    "claims": [
+      "optimization"
+    ],
+    "kind": "explanation",
+    "source": "implementation:craft-dag-1/raid-single-method-1:optimization",
+    "verification": "implementation_explanation"
+  },
+  {
+    "id": "explain:inventory",
+    "title": "截图库存与材料抵扣",
+    "text": "制作缺口先使用已有成品，再处理缺少的中间材料和原料，不能重复花费同一份库存。截图未展示或无法识别的材料不等于零；局部截图只支持条件性预算。计算不会扣减游戏背包。",
+    "terms": "inventory deduction partial screenshot materials",
+    "entities": [],
+    "claims": [
+      "inventory"
+    ],
+    "kind": "explanation",
+    "source": "implementation:craft-dag-1/raid-single-method-1:inventory",
+    "verification": "implementation_explanation"
+  },
+  {
+    "id": "explain:technology",
+    "title": "工作台与蓝图是不同前置条件",
+    "text": "配方中的工作台等级是制作条件，玩家是否已经解锁相应蓝图还要单独核对。可以先算材料预算，但工作台不足或蓝图未知时不能承诺现在可制作。",
+    "terms": "technology workbench blueprint requirement",
+    "entities": [],
+    "claims": [
+      "technology"
+    ],
+    "kind": "explanation",
+    "source": "implementation:craft-dag-1/raid-single-method-1:technology",
+    "verification": "implementation_explanation"
+  },
+  {
+    "id": "explain:batch",
+    "title": "制作批次与剩余产出",
+    "text": "配方按批次产出，缺少数量除以每批产出后向上取整。多出来的产出记录为批次余量；已有中间材料先抵扣，再展开其依赖，避免重复需求。",
+    "terms": "batch yield recipe ingredients craft",
+    "entities": [],
+    "claims": [
+      "batch"
+    ],
+    "kind": "explanation",
+    "source": "implementation:craft-dag-1/raid-single-method-1:batch",
+    "verification": "implementation_explanation"
+  },
+  {
+    "id": "explain:mixing",
+    "title": "火药配方路径必须一致",
+    "text": "工作台和混合台是不同的火药配方路径。只有明确选定的路径参与整个依赖计算，不能取两条路径中的最小消耗拼成新配方。混合台配方来自快照中的mix记录。",
+    "terms": "mixing gunpowder recipe table",
+    "entities": [],
+    "claims": [
+      "mixing"
+    ],
+    "kind": "explanation",
+    "source": "implementation:craft-dag-1/raid-single-method-1:mixing",
+    "verification": "implementation_explanation"
+  },
+  {
+    "id": "explain:fuel",
+    "title": "燃油展开边界",
+    "text": "本计算默认把低品质燃油作为需要取得的材料，不自动展开其制作原料。显式选择展开燃油或以燃油本身为制作目标时才展开；比较结果必须保持相同展开选项。",
+    "terms": "fuel expansion ingredients lowgradefuel",
+    "entities": [],
+    "claims": [
+      "fuel"
+    ],
+    "kind": "explanation",
+    "source": "implementation:craft-dag-1/raid-single-method-1:fuel",
+    "verification": "implementation_explanation"
+  },
+  {
+    "id": "explain:version",
+    "title": "固定快照的版本边界",
+    "text": "本演示使用rustdata-pc-vanilla-2026-11-01。快照日期与抓取日期不是游戏build认证；其他补丁、预发布分支和修改服资料不能直接覆盖该快照。此次整理没有独立Rust专家复核。",
+    "terms": "version snapshot provenance source",
+    "entities": [],
+    "claims": [
+      "version"
+    ],
+    "kind": "explanation",
+    "source": "implementation:craft-dag-1/raid-single-method-1:version",
+    "verification": "implementation_explanation"
+  },
+  {
+    "id": "explain:unknown_hp",
+    "title": "受损目标但血量未知",
+    "text": "未说明受损时可以按满血计算并声明假设；明确受损但不知道剩余血量时，必须先补充当前血量，不能悄悄当作满血，也不能由模型猜一个数。",
+    "terms": "unknown damaged health hp clarification",
+    "entities": [],
+    "claims": [
+      "unknown_hp"
+    ],
+    "kind": "explanation",
+    "source": "implementation:craft-dag-1/raid-single-method-1:unknown_hp",
+    "verification": "implementation_explanation"
+  },
+  {
+    "id": "explain:conditions",
+    "title": "伤害与命中条件",
+    "text": "拆除计算采用所选目标、材质与硬面或软面的伤害记录。按各目标独立命中，无维修、衰减变化或溅射共享；火箭按直接命中，粘附爆炸物按成功贴附并爆炸。",
+    "terms": "conditions side damage hard soft splash",
+    "entities": [],
+    "claims": [
+      "conditions"
+    ],
+    "kind": "explanation",
+    "source": "implementation:craft-dag-1/raid-single-method-1:conditions",
+    "verification": "implementation_explanation"
+  },
+  {
+    "id": "explain:feedback",
+    "title": "资料冲突与纠正边界",
+    "text": "网页中的原文存在不等于支持当前结论。资料冲突应核对具体主张、适用版本和前提，不能按多数票或平均数改规则。用户反馈先作为待核实记录，不能自动成为公共游戏事实。",
+    "terms": "conflict feedback evidence quotation",
+    "entities": [],
+    "claims": [
+      "feedback"
+    ],
+    "kind": "explanation",
+    "source": "implementation:craft-dag-1/raid-single-method-1:feedback",
+    "verification": "implementation_explanation"
+  },
+  {
+    "id": "excerpt:c4",
+    "title": "C4已保存Wiki配方摘录",
+    "text": "Craft Ingredient Quantity Explosives 20 Cloth 5 Tech Trash 2 Craft Stat Value Workbench Requirement Workbench Level 3 Yield 1 Craft Time by Workbench Workbench Craft Time Workbench Level 3 30 sec",
+    "terms": "recipe craft ingredients",
+    "entities": [
+      "explosive.timed"
+    ],
+    "claims": [
+      "crosscheck"
+    ],
+    "kind": "captured_excerpt",
+    "source": "https://wiki.facepunch.com/rust/item/explosive.timed",
+    "source_hash": "3510d16ada6a174007ff1b2690dd3e5926b6b50806a0c5431fe78707aa00dc27",
+    "fetched_at": "2026-11-04T19:33:15.954313+00:00",
+    "verification": "excerpt_crosscheck_build_unknown"
+  },
+  {
+    "id": "excerpt:explosives",
+    "title": "炸药已保存Wiki配方摘录",
+    "text": "Craft Ingredient Quantity Gun Powder 50 Metal Fragments 10 Sulfur 10 Low Grade Fuel 3 Craft Stat Value Workbench Requirement Workbench Level 3 Yield 1 Craft Time by Workbench Workbench Craft Time Workbench Level 3 5 sec",
+    "terms": "recipe craft ingredients",
+    "entities": [
+      "explosives"
+    ],
+    "claims": [
+      "crosscheck"
+    ],
+    "kind": "captured_excerpt",
+    "source": "https://wiki.facepunch.com/rust/item/explosives",
+    "source_hash": "3e1f6f1db200bf8d04685ba31017ea4b1919aa405b850f125a08ca33fdcb5fff",
+    "fetched_at": "2026-11-04T19:33:16.767571+00:00",
+    "verification": "excerpt_crosscheck_build_unknown"
+  },
+  {
+    "id": "excerpt:gunpowder",
+    "title": "火药已保存Wiki配方摘录",
+    "text": "Craft Ingredient Quantity Charcoal 30 Sulfur 20 Craft Stat Value Workbench Requirement Workbench Level 1 Yield 10 Craft Time by Workbench Workbench Craft Time Workbench Level 1 2 sec Workbench Level 2 1 sec Workbench Level 3 1 sec",
+    "terms": "recipe craft ingredients",
+    "entities": [
+      "gunpowder"
+    ],
+    "claims": [
+      "crosscheck"
+    ],
+    "kind": "captured_excerpt",
+    "source": "https://wiki.facepunch.com/rust/item/gunpowder",
+    "source_hash": "961dadf3acf56283e8b87df348625bdfcee86479c122f622dbd7f0e890c9a6e0",
+    "fetched_at": "2026-11-04T19:33:17.521991+00:00",
+    "verification": "excerpt_crosscheck_build_unknown"
+  }
+]

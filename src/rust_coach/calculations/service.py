@@ -20,10 +20,10 @@ logger = logging.getLogger("rust_coach")
 
 
 class CalculationService:
-    def __init__(self, model, instruction_role="system"):
+    def __init__(self, model, instruction_role="system", knowledge=None):
         self.model = model
         self.instruction_role = instruction_role
-        self.calculator = Calculator()
+        self.calculator = Calculator(knowledge)
 
     def matches(self, message, previous, pending_message=None):
         if message.startswith("/calc"):

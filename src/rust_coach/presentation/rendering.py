@@ -347,7 +347,22 @@ def finalize_response(state):
             checks.extend({"code": issue, "status": "blocked"} for issue in issues)
     else:
         kind = "chat"
-        add("chat", state["reply"].content, "narrative")
+        add("chat", state["reply"].content, "protected" if state.get("knowledge") else "narrative")
+    knowledge = state.get("knowledge") or (calculation or {}).get("knowledge")
+    if not knowledge and advice:
+        references = [evaluation["calculation"]["knowledge"] for evaluation in advice.get("evaluations", {}).values()
+                      if evaluation.get("calculation") and evaluation["calculation"].get("knowledge")]
+        if references:
+            knowledge = {**references[0], "rule_dependencies": list(dict.fromkeys(
+                identifier for reference in references for identifier in reference.get("rule_dependencies", [])))}
+    if knowledge:
+        payload = {"business": payload, "knowledge": knowledge}
+        sources = [f"{document['id']}：{document['title']}；来源 {document['source']}" for document in knowledge.get("documents", [])]
+        sources.extend(knowledge.get("rule_dependencies", []))
+        sources.extend("未采用 " + item["id"] + "：" + item["reason"] for item in knowledge.get("excluded", []))
+        add("knowledge_evidence", "演示知识包：" + knowledge["release_id"] + "\n" + "\n".join(sources) +
+            "\n生成时采用状态：" + knowledge["status"] + "；未认证游戏build。后续使用会重新校验，历史记录不代表最新认证。\n" +
+            "\n".join(knowledge["limitations"]), placement="detail")
     receipt = state.get("state_receipt")
     if receipt:
         add("state_event_receipt", receipt["message"], reference=receipt["observation_id"])
@@ -393,6 +408,8 @@ def finalize_response(state):
                     "protected_payload_hash": payload_hash, "protected_blocks_hash": blocks_hash,
                     "assertions": [assertion.model_dump(mode="json") for assertion in assertions],
                     "checks": checks, "repair_count": repairs, "fallback_reason": fallback}
+    if knowledge:
+        presentation["knowledge"] = knowledge
     decision_data = state.get("decision_result")
     if decision_data:
         decision_result = DecisionResult.model_validate(decision_data)

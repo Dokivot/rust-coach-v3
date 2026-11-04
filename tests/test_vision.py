@@ -125,6 +125,30 @@ def test_automatic_image_does_not_override_explicit_profile_inventory(setup):
     assert turn["presentation"]["architecture"]["task"]["uncertainty"]["factual"] == "conflict"
 
 
+def test_screenshot_craft_raid_explanation_and_revocation_use_one_release(setup):
+    client, application, model, owner = setup
+    model.task = "craft"
+    first = analyze(client, owner, upload(client, owner), message="截图材料制作火药")
+    turns = []
+    for message in ["改成拆一面石墙最省资源", "它还剩250血", "为什么250血还需要一颗C4"]:
+        response = client.post(f"/api/conversations/{owner}/messages", json={"request_id": str(uuid4()), "message": message})
+        assert response.status_code == 200, response.text
+        turns.append(response.json())
+    raid, health, explanation = turns
+    reference = first["presentation"]["knowledge"]
+    assert all(turn["presentation"]["knowledge"]["release_sha256"] == reference["release_sha256"] for turn in turns)
+    assert raid["calculation"]["input"]["inventory"] == {"sulfur": 100}
+    assert health["calculation"]["result"]["hp_each"] == 250
+    assert {document["id"] for document in explanation["presentation"]["knowledge"]["documents"]} >= {
+        "explain:rounding", "raid:building:base-wall:stone"}
+    assert explanation["presentation"]["architecture"]["task"]["execution_node"] == "knowledge"
+    application.state.runtime.knowledge.registry.revoke(reference["release_id"], "raid:building:base-wall:stone", "fixture withdrawal")
+    response = client.post(f"/api/conversations/{owner}/messages", json={"request_id": str(uuid4()), "message": "它还剩200血"})
+    assert response.status_code == 200
+    assert response.json()["calculation"]["error_code"] == "knowledge_evidence_unavailable"
+    assert len(model.calls) == 1
+
+
 def test_text_task_wins_when_vision_only_reports_observations(setup, monkeypatch):
     client, _, model, owner = setup
     original = model.complete

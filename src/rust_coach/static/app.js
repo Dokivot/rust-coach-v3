@@ -81,7 +81,7 @@ function setError(message = "") {
 }
 
 function updateControls() {
-  const local = input.value.trim() === "/state" || input.value.trim().startsWith("/calc ") || /^\/memory(?:\s|$)/.test(input.value.trim());
+  const local = input.value.trim() === "/state" || input.value.trim().startsWith("/calc ") || /^\/(?:memory|knowledge)(?:\s|$)/.test(input.value.trim());
   input.disabled = busy || !conversation;
   sendButton.disabled = busy || (!configured && !local) || !conversation || (!input.value.trim() && !VisionUI.hasImages());
   document.querySelector("#new-chat").disabled = busy;
@@ -151,6 +151,7 @@ function renderConversation() {
         content.textContent = block.text;
         details.append(content);
       }
+      appendKnowledgeFeedback(details, turn, conversation.id);
       assistantMessage.append(details);
     }
   }
@@ -182,6 +183,58 @@ function renderConversation() {
   requestAnimationFrame(() => { scrollArea.scrollTop = scrollArea.scrollHeight; });
 }
 
+function appendKnowledgeFeedback(details, turn, conversationId) {
+  const knowledge = turn.presentation?.knowledge;
+  if (!knowledge) return;
+  const identifiers = [...new Set([...(knowledge.documents || []).map(item => item.id), ...(knowledge.rule_dependencies || [])])];
+  if (!identifiers.length) return;
+  const form = document.createElement("form");
+  const evidenceLabel = document.createElement("label");
+  evidenceLabel.textContent = "反馈存在问题的依据 ";
+  const evidence = document.createElement("select");
+  for (const identifier of identifiers) {
+    const option = document.createElement("option");
+    option.value = identifier;
+    option.textContent = identifier;
+    evidence.append(option);
+  }
+  evidence.value = identifiers[0];
+  evidenceLabel.append(evidence);
+  const reasonLabel = document.createElement("label");
+  reasonLabel.textContent = " 问题说明 ";
+  const reason = document.createElement("input");
+  reason.type = "text";
+  reason.required = true;
+  reason.maxLength = 1000;
+  reasonLabel.append(reason);
+  const submit = document.createElement("button");
+  submit.type = "submit";
+  submit.textContent = "提交待核实反馈";
+  const status = document.createElement("span");
+  status.setAttribute("role", "status");
+  let pending = null;
+  form.addEventListener("submit", async event => {
+    event.preventDefault();
+    if (submit.disabled || !reason.value.trim()) return;
+    if (!pending || pending.reason !== reason.value.trim() || pending.document_ids[0] !== evidence.value) {
+      pending = {request_id: crypto.randomUUID(), turn_request_id: turn.request_id,
+        document_ids: [evidence.value], reason: reason.value.trim()};
+    }
+    submit.disabled = true;
+    status.textContent = "正在保存…";
+    try {
+      await api("/api/conversations/" + conversationId + "/knowledge-feedback", {method: "POST", body: JSON.stringify(pending)});
+      status.textContent = "已保存待核实反馈；不会自动修改规则。";
+      reason.disabled = evidence.disabled = true;
+    } catch (error) {
+      status.textContent = error.message;
+      submit.disabled = false;
+    }
+  });
+  form.append(evidenceLabel, reasonLabel, submit, status);
+  details.append(form);
+}
+
 async function createConversation() {
   const created = await api("/api/conversations", {method: "POST", body: "{}"});
   VisionUI.clear();
@@ -194,7 +247,7 @@ async function createConversation() {
 document.querySelector("#chat-form").addEventListener("submit", async event => {
   event.preventDefault();
   const message = input.value.trim();
-  const local = message === "/state" || message.startsWith("/calc ") || /^\/memory(?:\s|$)/.test(message);
+  const local = message === "/state" || message.startsWith("/calc ") || /^\/(?:memory|knowledge)(?:\s|$)/.test(message);
   if ((!message && !VisionUI.hasImages()) || busy || (!configured && !local) || !conversation) return;
   busy = true;
   setError();

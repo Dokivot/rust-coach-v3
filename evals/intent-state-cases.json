@@ -69,7 +69,7 @@
           "message": "解释一下合成批次",
           "expected": {
             "route": "chat",
-            "calls": 1
+            "calls": 0
           }
         }
       ]
