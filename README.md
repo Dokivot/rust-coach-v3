@@ -73,6 +73,7 @@ node --test tests/test_chat_ui.cjs
 ## 目标架构
 
 - [完整技术设计文档](docs/technical-design.md)：基于当前代码和既有设计计划，统一说明六层架构、实现状态、差距与后续路线。
+- [独立阅读版 PDF](output/pdf/Rust-Coach-技术设计文档.pdf)：含封面、目录、章节书签、完整正文及可放大的矢量架构图，可直接对外分享。
 - [六层核心架构总览](docs/technical-architecture-target.svg)：一张图展示核心模块、主要数据流、共享依赖及当前/目标状态；每层三个核心模块。
 - [总览图编辑源](docs/diagrams/build_architecture.py)与[验收记录](docs/technical-architecture-overview-validation.md)：固定网格、正交连线及实际浏览器渲染检查。
 - [技术设计原始验收记录](docs/technical-design-validation.md)：代码基线与已有回归结果；旧版细节图仅作历史资料。

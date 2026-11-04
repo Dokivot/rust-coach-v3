@@ -1,0 +1,1504 @@
+{
+  "mode": "saved_output_rescore",
+  "source": "evals/results/inventory-baseline-live-2026-11-05.json",
+  "source_sha256": "6f1a1707edcb7a7a1b1352afcee96bc0987313880f876e1f0775d6760d57b5bc",
+  "model_calls": 0,
+  "limitation": "Rechecks saved outputs only; does not run the application or evaluate model stability.",
+  "runs": [
+    {
+      "case_id": "text_craft",
+      "repeat": 1,
+      "assessment": {
+        "status": "pending",
+        "first_error_stage": null,
+        "first_error_check": null,
+        "checks": [
+          {
+            "name": "craft_route",
+            "stage": "intent",
+            "status": "pass",
+            "expected": "craft",
+            "actual": "craft",
+            "comparison_matches": true
+          },
+          {
+            "name": "craft_goal",
+            "stage": "parameters",
+            "status": "pass",
+            "expected": {
+              "explosive.timed": 10
+            },
+            "actual": {
+              "explosive.timed": 10
+            },
+            "comparison_matches": true
+          },
+          {
+            "name": "zero_or_image_inventory",
+            "stage": "state",
+            "status": "pass",
+            "expected": {},
+            "actual": {},
+            "comparison_matches": true
+          },
+          {
+            "name": "recipe_arithmetic",
+            "stage": "calculation",
+            "status": "pass",
+            "expected": {
+              "techparts": 20,
+              "cloth": 50,
+              "metal.fragments": 2000,
+              "lowgradefuel": 600,
+              "sulfur": 22000,
+              "charcoal": 30000
+            },
+            "actual": {
+              "techparts": 20,
+              "metal.fragments": 2000,
+              "lowgradefuel": 600,
+              "sulfur": 22000,
+              "charcoal": 30000,
+              "cloth": 50
+            },
+            "comparison_matches": true
+          },
+          {
+            "name": "inventory_deduction",
+            "stage": "calculation",
+            "status": "pass",
+            "expected": {},
+            "actual": {},
+            "comparison_matches": true
+          },
+          {
+            "name": "game_version",
+            "stage": "rules",
+            "status": "pending",
+            "expected": "independently verified game build",
+            "actual": "pending_game_build_verification",
+            "comparison_matches": false
+          },
+          {
+            "name": "final_expression_review",
+            "stage": "expression",
+            "status": "pending",
+            "expected": "Review every answer for correct conditions, unsupported certainty, unnecessary refusal or questions",
+            "actual": "not automatically judged",
+            "comparison_matches": false
+          }
+        ],
+        "review": null
+      },
+      "matches_recorded_assessment": true
+    },
+    {
+      "case_id": "clear_inventory",
+      "repeat": 1,
+      "assessment": {
+        "status": "fail",
+        "first_error_stage": "vision",
+        "first_error_check": "identified_items_and_counts",
+        "checks": [
+          {
+            "name": "identified_items_and_counts",
+            "stage": "vision",
+            "status": "fail",
+            "expected": {
+              "wood": 8147,
+              "stones": 550,
+              "metal.fragments": 946,
+              "charcoal": 4,
+              "sulfur": 140
+            },
+            "actual": {
+              "wood": 8147,
+              "stones": 550,
+              "cloth": 946,
+              "metal.refined": 4,
+              "sulfur": 140
+            },
+            "comparison_matches": false
+          },
+          {
+            "name": "partial_inventory",
+            "stage": "state",
+            "status": "pass",
+            "expected": false,
+            "actual": false,
+            "comparison_matches": true
+          },
+          {
+            "name": "inventory_admitted",
+            "stage": "state",
+            "status": "fail",
+            "expected": {
+              "wood": 8147,
+              "stones": 550,
+              "metal.fragments": 946,
+              "charcoal": 4,
+              "sulfur": 140
+            },
+            "actual": {
+              "wood": 8147,
+              "stones": 550,
+              "cloth": 946,
+              "metal.refined": 4,
+              "sulfur": 140
+            },
+            "comparison_matches": false
+          },
+          {
+            "name": "craft_route",
+            "stage": "intent",
+            "status": "pass",
+            "expected": "craft",
+            "actual": "craft",
+            "comparison_matches": true
+          },
+          {
+            "name": "craft_goal",
+            "stage": "parameters",
+            "status": "pass",
+            "expected": {
+              "explosive.timed": 10
+            },
+            "actual": {
+              "explosive.timed": 10
+            },
+            "comparison_matches": true
+          },
+          {
+            "name": "zero_or_image_inventory",
+            "stage": "state",
+            "status": "fail",
+            "expected": {
+              "wood": 8147,
+              "stones": 550,
+              "metal.fragments": 946,
+              "charcoal": 4,
+              "sulfur": 140
+            },
+            "actual": {
+              "wood": 8147,
+              "stones": 550,
+              "cloth": 946,
+              "metal.refined": 4,
+              "sulfur": 140
+            },
+            "comparison_matches": false
+          },
+          {
+            "name": "recipe_arithmetic",
+            "stage": "calculation",
+            "status": "fail",
+            "expected": {
+              "techparts": 20,
+              "cloth": 50,
+              "metal.fragments": 1054,
+              "lowgradefuel": 600,
+              "sulfur": 21860,
+              "charcoal": 29996
+            },
+            "actual": {
+              "techparts": 20,
+              "metal.fragments": 2000,
+              "lowgradefuel": 600,
+              "sulfur": 21860,
+              "charcoal": 30000
+            },
+            "comparison_matches": false
+          },
+          {
+            "name": "inventory_deduction",
+            "stage": "calculation",
+            "status": "fail",
+            "expected": {
+              "metal.fragments": 946,
+              "sulfur": 140,
+              "charcoal": 4
+            },
+            "actual": {
+              "sulfur": 140,
+              "cloth": 50
+            },
+            "comparison_matches": false
+          },
+          {
+            "name": "game_version",
+            "stage": "rules",
+            "status": "pending",
+            "expected": "independently verified game build",
+            "actual": "pending_game_build_verification",
+            "comparison_matches": false
+          },
+          {
+            "name": "final_expression_review",
+            "stage": "expression",
+            "status": "pending",
+            "expected": "Review every answer for correct conditions, unsupported certainty, unnecessary refusal or questions",
+            "actual": "not automatically judged",
+            "comparison_matches": false
+          }
+        ],
+        "review": null
+      },
+      "matches_recorded_assessment": true
+    },
+    {
+      "case_id": "occluded_inventory",
+      "repeat": 1,
+      "assessment": {
+        "status": "fail",
+        "first_error_stage": "vision",
+        "first_error_check": "identified_items_and_counts",
+        "checks": [
+          {
+            "name": "identified_items_and_counts",
+            "stage": "vision",
+            "status": "fail",
+            "expected": {
+              "wood": 8147,
+              "stones": 550,
+              "metal.fragments": 946,
+              "charcoal": 4
+            },
+            "actual": {
+              "wood": 8147,
+              "metal.fragments": 550,
+              "cloth": 946,
+              "charcoal": 4
+            },
+            "comparison_matches": false
+          },
+          {
+            "name": "partial_inventory",
+            "stage": "state",
+            "status": "pass",
+            "expected": false,
+            "actual": false,
+            "comparison_matches": true
+          },
+          {
+            "name": "inventory_admitted",
+            "stage": "state",
+            "status": "fail",
+            "expected": {
+              "wood": 8147,
+              "stones": 550,
+              "metal.fragments": 946,
+              "charcoal": 4
+            },
+            "actual": {
+              "wood": 8147,
+              "metal.fragments": 550,
+              "cloth": 946,
+              "charcoal": 4
+            },
+            "comparison_matches": false
+          },
+          {
+            "name": "craft_route",
+            "stage": "intent",
+            "status": "pass",
+            "expected": "craft",
+            "actual": "craft",
+            "comparison_matches": true
+          },
+          {
+            "name": "craft_goal",
+            "stage": "parameters",
+            "status": "pass",
+            "expected": {
+              "explosive.timed": 10
+            },
+            "actual": {
+              "explosive.timed": 10
+            },
+            "comparison_matches": true
+          },
+          {
+            "name": "zero_or_image_inventory",
+            "stage": "state",
+            "status": "fail",
+            "expected": {
+              "wood": 8147,
+              "stones": 550,
+              "metal.fragments": 946,
+              "charcoal": 4
+            },
+            "actual": {
+              "wood": 8147,
+              "metal.fragments": 550,
+              "cloth": 946,
+              "charcoal": 4
+            },
+            "comparison_matches": false
+          },
+          {
+            "name": "recipe_arithmetic",
+            "stage": "calculation",
+            "status": "fail",
+            "expected": {
+              "techparts": 20,
+              "cloth": 50,
+              "metal.fragments": 1054,
+              "lowgradefuel": 600,
+              "sulfur": 22000,
+              "charcoal": 29996
+            },
+            "actual": {
+              "techparts": 20,
+              "metal.fragments": 1450,
+              "lowgradefuel": 600,
+              "sulfur": 22000,
+              "charcoal": 29996
+            },
+            "comparison_matches": false
+          },
+          {
+            "name": "inventory_deduction",
+            "stage": "calculation",
+            "status": "fail",
+            "expected": {
+              "metal.fragments": 946,
+              "charcoal": 4
+            },
+            "actual": {
+              "metal.fragments": 550,
+              "charcoal": 4,
+              "cloth": 50
+            },
+            "comparison_matches": false
+          },
+          {
+            "name": "game_version",
+            "stage": "rules",
+            "status": "pending",
+            "expected": "independently verified game build",
+            "actual": "pending_game_build_verification",
+            "comparison_matches": false
+          },
+          {
+            "name": "final_expression_review",
+            "stage": "expression",
+            "status": "pending",
+            "expected": "Review every answer for correct conditions, unsupported certainty, unnecessary refusal or questions",
+            "actual": "not automatically judged",
+            "comparison_matches": false
+          }
+        ],
+        "review": null
+      },
+      "matches_recorded_assessment": true
+    },
+    {
+      "case_id": "historical_inventory",
+      "repeat": 1,
+      "assessment": {
+        "status": "pending",
+        "first_error_stage": null,
+        "first_error_check": null,
+        "checks": [
+          {
+            "name": "no_invalid_inventory",
+            "stage": "state",
+            "status": "pass",
+            "expected": "no historical/opponent/expired deductions",
+            "actual": {
+              "inventory": null,
+              "used": {}
+            },
+            "comparison_matches": true
+          },
+          {
+            "name": "final_expression_review",
+            "stage": "expression",
+            "status": "pending",
+            "expected": "Review every answer for correct conditions, unsupported certainty, unnecessary refusal or questions",
+            "actual": "not automatically judged",
+            "comparison_matches": false
+          }
+        ],
+        "review": null
+      },
+      "matches_recorded_assessment": true
+    },
+    {
+      "case_id": "opponent_inventory",
+      "repeat": 1,
+      "assessment": {
+        "status": "pending",
+        "first_error_stage": null,
+        "first_error_check": null,
+        "checks": [
+          {
+            "name": "no_invalid_inventory",
+            "stage": "state",
+            "status": "pass",
+            "expected": "no historical/opponent/expired deductions",
+            "actual": {
+              "inventory": null,
+              "used": {}
+            },
+            "comparison_matches": true
+          },
+          {
+            "name": "final_expression_review",
+            "stage": "expression",
+            "status": "pending",
+            "expected": "Review every answer for correct conditions, unsupported certainty, unnecessary refusal or questions",
+            "actual": "not automatically judged",
+            "comparison_matches": false
+          }
+        ],
+        "review": null
+      },
+      "matches_recorded_assessment": true
+    },
+    {
+      "case_id": "expired_inventory",
+      "repeat": 1,
+      "assessment": {
+        "status": "pending",
+        "first_error_stage": null,
+        "first_error_check": null,
+        "checks": [
+          {
+            "name": "no_invalid_inventory",
+            "stage": "state",
+            "status": "pass",
+            "expected": "no historical/opponent/expired deductions",
+            "actual": {
+              "inventory": null,
+              "used": {}
+            },
+            "comparison_matches": true
+          },
+          {
+            "name": "final_expression_review",
+            "stage": "expression",
+            "status": "pending",
+            "expected": "Review every answer for correct conditions, unsupported certainty, unnecessary refusal or questions",
+            "actual": "not automatically judged",
+            "comparison_matches": false
+          }
+        ],
+        "review": null
+      },
+      "matches_recorded_assessment": true
+    },
+    {
+      "case_id": "damaged_unknown_hp",
+      "repeat": 1,
+      "assessment": {
+        "status": "pending",
+        "first_error_stage": null,
+        "first_error_check": null,
+        "checks": [
+          {
+            "name": "damaged_target_not_defaulted",
+            "stage": "parameters",
+            "status": "pass",
+            "expected": "needs_input, no full-health calculation",
+            "actual": "needs_input",
+            "comparison_matches": true
+          },
+          {
+            "name": "final_expression_review",
+            "stage": "expression",
+            "status": "pending",
+            "expected": "Review every answer for correct conditions, unsupported certainty, unnecessary refusal or questions",
+            "actual": "not automatically judged",
+            "comparison_matches": false
+          }
+        ],
+        "review": null
+      },
+      "matches_recorded_assessment": true
+    },
+    {
+      "case_id": "craft_to_raid",
+      "repeat": 1,
+      "assessment": {
+        "status": "pending",
+        "first_error_stage": null,
+        "first_error_check": null,
+        "checks": [
+          {
+            "name": "identified_items_and_counts",
+            "stage": "vision",
+            "status": "pass",
+            "expected": {
+              "wood": 8147,
+              "stones": 550,
+              "metal.fragments": 946,
+              "charcoal": 4,
+              "sulfur": 140
+            },
+            "actual": {
+              "wood": 8147,
+              "stones": 550,
+              "metal.fragments": 946,
+              "charcoal": 4,
+              "sulfur": 140
+            },
+            "comparison_matches": true
+          },
+          {
+            "name": "partial_inventory",
+            "stage": "state",
+            "status": "pass",
+            "expected": false,
+            "actual": false,
+            "comparison_matches": true
+          },
+          {
+            "name": "inventory_admitted",
+            "stage": "state",
+            "status": "pass",
+            "expected": {
+              "wood": 8147,
+              "stones": 550,
+              "metal.fragments": 946,
+              "charcoal": 4,
+              "sulfur": 140
+            },
+            "actual": {
+              "wood": 8147,
+              "stones": 550,
+              "metal.fragments": 946,
+              "charcoal": 4,
+              "sulfur": 140
+            },
+            "comparison_matches": true
+          },
+          {
+            "name": "craft_route",
+            "stage": "intent",
+            "status": "pass",
+            "expected": "craft",
+            "actual": "craft",
+            "comparison_matches": true
+          },
+          {
+            "name": "craft_goal",
+            "stage": "parameters",
+            "status": "pass",
+            "expected": {
+              "explosive.timed": 10
+            },
+            "actual": {
+              "explosive.timed": 10
+            },
+            "comparison_matches": true
+          },
+          {
+            "name": "zero_or_image_inventory",
+            "stage": "state",
+            "status": "pass",
+            "expected": {
+              "wood": 8147,
+              "stones": 550,
+              "metal.fragments": 946,
+              "charcoal": 4,
+              "sulfur": 140
+            },
+            "actual": {
+              "wood": 8147,
+              "stones": 550,
+              "metal.fragments": 946,
+              "charcoal": 4,
+              "sulfur": 140
+            },
+            "comparison_matches": true
+          },
+          {
+            "name": "recipe_arithmetic",
+            "stage": "calculation",
+            "status": "pass",
+            "expected": {
+              "techparts": 20,
+              "cloth": 50,
+              "metal.fragments": 1054,
+              "lowgradefuel": 600,
+              "sulfur": 21860,
+              "charcoal": 29996
+            },
+            "actual": {
+              "techparts": 20,
+              "metal.fragments": 1054,
+              "lowgradefuel": 600,
+              "sulfur": 21860,
+              "charcoal": 29996,
+              "cloth": 50
+            },
+            "comparison_matches": true
+          },
+          {
+            "name": "inventory_deduction",
+            "stage": "calculation",
+            "status": "pass",
+            "expected": {
+              "metal.fragments": 946,
+              "sulfur": 140,
+              "charcoal": 4
+            },
+            "actual": {
+              "metal.fragments": 946,
+              "sulfur": 140,
+              "charcoal": 4
+            },
+            "comparison_matches": true
+          },
+          {
+            "name": "game_version",
+            "stage": "rules",
+            "status": "pending",
+            "expected": "independently verified game build",
+            "actual": "pending_game_build_verification",
+            "comparison_matches": false
+          },
+          {
+            "name": "raid_route",
+            "stage": "intent",
+            "status": "pass",
+            "expected": "raid",
+            "actual": "raid",
+            "comparison_matches": true
+          },
+          {
+            "name": "raid_target",
+            "stage": "parameters",
+            "status": "pass",
+            "expected": "one stone wall; no craft goal",
+            "actual": {
+              "target": "building:base-wall:stone",
+              "count": 1,
+              "goals": {}
+            },
+            "comparison_matches": true
+          },
+          {
+            "name": "raid_hp_input",
+            "stage": "parameters",
+            "status": "pass",
+            "expected": null,
+            "actual": null,
+            "comparison_matches": true
+          },
+          {
+            "name": "raid_rule_independent_verification",
+            "stage": "rules",
+            "status": "pending",
+            "expected": 2,
+            "actual": 2,
+            "comparison_matches": true
+          },
+          {
+            "name": "comparison_scope",
+            "stage": "parameters",
+            "status": "pass",
+            "expected": "minimum_additional_sulfur_among_single_method_options",
+            "actual": "minimum_additional_sulfur_among_single_method_options",
+            "comparison_matches": true
+          },
+          {
+            "name": "raid_route",
+            "stage": "intent",
+            "status": "pass",
+            "expected": "raid",
+            "actual": "raid",
+            "comparison_matches": true
+          },
+          {
+            "name": "raid_target",
+            "stage": "parameters",
+            "status": "pass",
+            "expected": "one stone wall; no craft goal",
+            "actual": {
+              "target": "building:base-wall:stone",
+              "count": 1,
+              "goals": {}
+            },
+            "comparison_matches": true
+          },
+          {
+            "name": "raid_hp_input",
+            "stage": "parameters",
+            "status": "pass",
+            "expected": 250,
+            "actual": 250,
+            "comparison_matches": true
+          },
+          {
+            "name": "raid_rule_independent_verification",
+            "stage": "rules",
+            "status": "pending",
+            "expected": 1,
+            "actual": 1,
+            "comparison_matches": true
+          },
+          {
+            "name": "comparison_scope",
+            "stage": "parameters",
+            "status": "pass",
+            "expected": "minimum_additional_sulfur_among_single_method_options",
+            "actual": "minimum_additional_sulfur_among_single_method_options",
+            "comparison_matches": true
+          },
+          {
+            "name": "final_expression_review",
+            "stage": "expression",
+            "status": "pending",
+            "expected": "Review every answer for correct conditions, unsupported certainty, unnecessary refusal or questions",
+            "actual": "not automatically judged",
+            "comparison_matches": false
+          }
+        ],
+        "review": null
+      },
+      "matches_recorded_assessment": true
+    },
+    {
+      "case_id": "text_craft",
+      "repeat": 2,
+      "assessment": {
+        "status": "pending",
+        "first_error_stage": null,
+        "first_error_check": null,
+        "checks": [
+          {
+            "name": "craft_route",
+            "stage": "intent",
+            "status": "pass",
+            "expected": "craft",
+            "actual": "craft",
+            "comparison_matches": true
+          },
+          {
+            "name": "craft_goal",
+            "stage": "parameters",
+            "status": "pass",
+            "expected": {
+              "explosive.timed": 10
+            },
+            "actual": {
+              "explosive.timed": 10
+            },
+            "comparison_matches": true
+          },
+          {
+            "name": "zero_or_image_inventory",
+            "stage": "state",
+            "status": "pass",
+            "expected": {},
+            "actual": {},
+            "comparison_matches": true
+          },
+          {
+            "name": "recipe_arithmetic",
+            "stage": "calculation",
+            "status": "pass",
+            "expected": {
+              "techparts": 20,
+              "cloth": 50,
+              "metal.fragments": 2000,
+              "lowgradefuel": 600,
+              "sulfur": 22000,
+              "charcoal": 30000
+            },
+            "actual": {
+              "techparts": 20,
+              "metal.fragments": 2000,
+              "lowgradefuel": 600,
+              "sulfur": 22000,
+              "charcoal": 30000,
+              "cloth": 50
+            },
+            "comparison_matches": true
+          },
+          {
+            "name": "inventory_deduction",
+            "stage": "calculation",
+            "status": "pass",
+            "expected": {},
+            "actual": {},
+            "comparison_matches": true
+          },
+          {
+            "name": "game_version",
+            "stage": "rules",
+            "status": "pending",
+            "expected": "independently verified game build",
+            "actual": "pending_game_build_verification",
+            "comparison_matches": false
+          },
+          {
+            "name": "final_expression_review",
+            "stage": "expression",
+            "status": "pending",
+            "expected": "Review every answer for correct conditions, unsupported certainty, unnecessary refusal or questions",
+            "actual": "not automatically judged",
+            "comparison_matches": false
+          }
+        ],
+        "review": null
+      },
+      "matches_recorded_assessment": true
+    },
+    {
+      "case_id": "clear_inventory",
+      "repeat": 2,
+      "assessment": {
+        "status": "fail",
+        "first_error_stage": "vision",
+        "first_error_check": "identified_items_and_counts",
+        "checks": [
+          {
+            "name": "identified_items_and_counts",
+            "stage": "vision",
+            "status": "fail",
+            "expected": {
+              "wood": 8147,
+              "stones": 550,
+              "metal.fragments": 946,
+              "charcoal": 4,
+              "sulfur": 140
+            },
+            "actual": {
+              "wood": 8147,
+              "stones": 550,
+              "cloth": 946,
+              "metal.refined": 4,
+              "sulfur": 140
+            },
+            "comparison_matches": false
+          },
+          {
+            "name": "partial_inventory",
+            "stage": "state",
+            "status": "pass",
+            "expected": false,
+            "actual": false,
+            "comparison_matches": true
+          },
+          {
+            "name": "inventory_admitted",
+            "stage": "state",
+            "status": "fail",
+            "expected": {
+              "wood": 8147,
+              "stones": 550,
+              "metal.fragments": 946,
+              "charcoal": 4,
+              "sulfur": 140
+            },
+            "actual": {
+              "wood": 8147,
+              "stones": 550,
+              "cloth": 946,
+              "metal.refined": 4,
+              "sulfur": 140
+            },
+            "comparison_matches": false
+          },
+          {
+            "name": "craft_route",
+            "stage": "intent",
+            "status": "pass",
+            "expected": "craft",
+            "actual": "craft",
+            "comparison_matches": true
+          },
+          {
+            "name": "craft_goal",
+            "stage": "parameters",
+            "status": "pass",
+            "expected": {
+              "explosive.timed": 10
+            },
+            "actual": {
+              "explosive.timed": 10
+            },
+            "comparison_matches": true
+          },
+          {
+            "name": "zero_or_image_inventory",
+            "stage": "state",
+            "status": "fail",
+            "expected": {
+              "wood": 8147,
+              "stones": 550,
+              "metal.fragments": 946,
+              "charcoal": 4,
+              "sulfur": 140
+            },
+            "actual": {
+              "wood": 8147,
+              "stones": 550,
+              "cloth": 946,
+              "metal.refined": 4,
+              "sulfur": 140
+            },
+            "comparison_matches": false
+          },
+          {
+            "name": "recipe_arithmetic",
+            "stage": "calculation",
+            "status": "fail",
+            "expected": {
+              "techparts": 20,
+              "cloth": 50,
+              "metal.fragments": 1054,
+              "lowgradefuel": 600,
+              "sulfur": 21860,
+              "charcoal": 29996
+            },
+            "actual": {
+              "techparts": 20,
+              "metal.fragments": 2000,
+              "lowgradefuel": 600,
+              "sulfur": 21860,
+              "charcoal": 30000
+            },
+            "comparison_matches": false
+          },
+          {
+            "name": "inventory_deduction",
+            "stage": "calculation",
+            "status": "fail",
+            "expected": {
+              "metal.fragments": 946,
+              "sulfur": 140,
+              "charcoal": 4
+            },
+            "actual": {
+              "sulfur": 140,
+              "cloth": 50
+            },
+            "comparison_matches": false
+          },
+          {
+            "name": "game_version",
+            "stage": "rules",
+            "status": "pending",
+            "expected": "independently verified game build",
+            "actual": "pending_game_build_verification",
+            "comparison_matches": false
+          },
+          {
+            "name": "final_expression_review",
+            "stage": "expression",
+            "status": "pending",
+            "expected": "Review every answer for correct conditions, unsupported certainty, unnecessary refusal or questions",
+            "actual": "not automatically judged",
+            "comparison_matches": false
+          }
+        ],
+        "review": null
+      },
+      "matches_recorded_assessment": true
+    },
+    {
+      "case_id": "occluded_inventory",
+      "repeat": 2,
+      "assessment": {
+        "status": "fail",
+        "first_error_stage": "vision",
+        "first_error_check": "identified_items_and_counts",
+        "checks": [
+          {
+            "name": "identified_items_and_counts",
+            "stage": "vision",
+            "status": "fail",
+            "expected": {
+              "wood": 8147,
+              "stones": 550,
+              "metal.fragments": 946,
+              "charcoal": 4
+            },
+            "actual": {
+              "wood": 8147,
+              "stones": 550,
+              "cloth": 946,
+              "metal.refined": 4
+            },
+            "comparison_matches": false
+          },
+          {
+            "name": "partial_inventory",
+            "stage": "state",
+            "status": "pass",
+            "expected": false,
+            "actual": false,
+            "comparison_matches": true
+          },
+          {
+            "name": "inventory_admitted",
+            "stage": "state",
+            "status": "fail",
+            "expected": {
+              "wood": 8147,
+              "stones": 550,
+              "metal.fragments": 946,
+              "charcoal": 4
+            },
+            "actual": {
+              "wood": 8147,
+              "stones": 550,
+              "cloth": 946,
+              "metal.refined": 4
+            },
+            "comparison_matches": false
+          },
+          {
+            "name": "craft_route",
+            "stage": "intent",
+            "status": "pass",
+            "expected": "craft",
+            "actual": "craft",
+            "comparison_matches": true
+          },
+          {
+            "name": "craft_goal",
+            "stage": "parameters",
+            "status": "pass",
+            "expected": {
+              "explosive.timed": 10
+            },
+            "actual": {
+              "explosive.timed": 10
+            },
+            "comparison_matches": true
+          },
+          {
+            "name": "zero_or_image_inventory",
+            "stage": "state",
+            "status": "fail",
+            "expected": {
+              "wood": 8147,
+              "stones": 550,
+              "metal.fragments": 946,
+              "charcoal": 4
+            },
+            "actual": {
+              "wood": 8147,
+              "stones": 550,
+              "cloth": 946,
+              "metal.refined": 4
+            },
+            "comparison_matches": false
+          },
+          {
+            "name": "recipe_arithmetic",
+            "stage": "calculation",
+            "status": "fail",
+            "expected": {
+              "techparts": 20,
+              "cloth": 50,
+              "metal.fragments": 1054,
+              "lowgradefuel": 600,
+              "sulfur": 22000,
+              "charcoal": 29996
+            },
+            "actual": {
+              "techparts": 20,
+              "metal.fragments": 2000,
+              "lowgradefuel": 600,
+              "sulfur": 22000,
+              "charcoal": 30000
+            },
+            "comparison_matches": false
+          },
+          {
+            "name": "inventory_deduction",
+            "stage": "calculation",
+            "status": "fail",
+            "expected": {
+              "metal.fragments": 946,
+              "charcoal": 4
+            },
+            "actual": {
+              "cloth": 50
+            },
+            "comparison_matches": false
+          },
+          {
+            "name": "game_version",
+            "stage": "rules",
+            "status": "pending",
+            "expected": "independently verified game build",
+            "actual": "pending_game_build_verification",
+            "comparison_matches": false
+          },
+          {
+            "name": "final_expression_review",
+            "stage": "expression",
+            "status": "pending",
+            "expected": "Review every answer for correct conditions, unsupported certainty, unnecessary refusal or questions",
+            "actual": "not automatically judged",
+            "comparison_matches": false
+          }
+        ],
+        "review": null
+      },
+      "matches_recorded_assessment": true
+    },
+    {
+      "case_id": "historical_inventory",
+      "repeat": 2,
+      "assessment": {
+        "status": "pending",
+        "first_error_stage": null,
+        "first_error_check": null,
+        "checks": [
+          {
+            "name": "no_invalid_inventory",
+            "stage": "state",
+            "status": "pass",
+            "expected": "no historical/opponent/expired deductions",
+            "actual": {
+              "inventory": null,
+              "used": {}
+            },
+            "comparison_matches": true
+          },
+          {
+            "name": "final_expression_review",
+            "stage": "expression",
+            "status": "pending",
+            "expected": "Review every answer for correct conditions, unsupported certainty, unnecessary refusal or questions",
+            "actual": "not automatically judged",
+            "comparison_matches": false
+          }
+        ],
+        "review": null
+      },
+      "matches_recorded_assessment": true
+    },
+    {
+      "case_id": "opponent_inventory",
+      "repeat": 2,
+      "assessment": {
+        "status": "pending",
+        "first_error_stage": null,
+        "first_error_check": null,
+        "checks": [
+          {
+            "name": "no_invalid_inventory",
+            "stage": "state",
+            "status": "pass",
+            "expected": "no historical/opponent/expired deductions",
+            "actual": {
+              "inventory": null,
+              "used": {}
+            },
+            "comparison_matches": true
+          },
+          {
+            "name": "final_expression_review",
+            "stage": "expression",
+            "status": "pending",
+            "expected": "Review every answer for correct conditions, unsupported certainty, unnecessary refusal or questions",
+            "actual": "not automatically judged",
+            "comparison_matches": false
+          }
+        ],
+        "review": null
+      },
+      "matches_recorded_assessment": true
+    },
+    {
+      "case_id": "expired_inventory",
+      "repeat": 2,
+      "assessment": {
+        "status": "pending",
+        "first_error_stage": null,
+        "first_error_check": null,
+        "checks": [
+          {
+            "name": "no_invalid_inventory",
+            "stage": "state",
+            "status": "pass",
+            "expected": "no historical/opponent/expired deductions",
+            "actual": {
+              "inventory": null,
+              "used": {}
+            },
+            "comparison_matches": true
+          },
+          {
+            "name": "final_expression_review",
+            "stage": "expression",
+            "status": "pending",
+            "expected": "Review every answer for correct conditions, unsupported certainty, unnecessary refusal or questions",
+            "actual": "not automatically judged",
+            "comparison_matches": false
+          }
+        ],
+        "review": null
+      },
+      "matches_recorded_assessment": true
+    },
+    {
+      "case_id": "damaged_unknown_hp",
+      "repeat": 2,
+      "assessment": {
+        "status": "pending",
+        "first_error_stage": null,
+        "first_error_check": null,
+        "checks": [
+          {
+            "name": "damaged_target_not_defaulted",
+            "stage": "parameters",
+            "status": "pass",
+            "expected": "needs_input, no full-health calculation",
+            "actual": "needs_input",
+            "comparison_matches": true
+          },
+          {
+            "name": "final_expression_review",
+            "stage": "expression",
+            "status": "pending",
+            "expected": "Review every answer for correct conditions, unsupported certainty, unnecessary refusal or questions",
+            "actual": "not automatically judged",
+            "comparison_matches": false
+          }
+        ],
+        "review": null
+      },
+      "matches_recorded_assessment": true
+    },
+    {
+      "case_id": "craft_to_raid",
+      "repeat": 2,
+      "assessment": {
+        "status": "fail",
+        "first_error_stage": "vision",
+        "first_error_check": "identified_items_and_counts",
+        "checks": [
+          {
+            "name": "identified_items_and_counts",
+            "stage": "vision",
+            "status": "fail",
+            "expected": {
+              "wood": 8147,
+              "stones": 550,
+              "metal.fragments": 946,
+              "charcoal": 4,
+              "sulfur": 140
+            },
+            "actual": {
+              "wood": 8147,
+              "stones": 550
+            },
+            "comparison_matches": false
+          },
+          {
+            "name": "partial_inventory",
+            "stage": "state",
+            "status": "pass",
+            "expected": false,
+            "actual": false,
+            "comparison_matches": true
+          },
+          {
+            "name": "inventory_admitted",
+            "stage": "state",
+            "status": "fail",
+            "expected": {
+              "wood": 8147,
+              "stones": 550,
+              "metal.fragments": 946,
+              "charcoal": 4,
+              "sulfur": 140
+            },
+            "actual": {
+              "wood": 8147,
+              "stones": 550
+            },
+            "comparison_matches": false
+          },
+          {
+            "name": "craft_route",
+            "stage": "intent",
+            "status": "pass",
+            "expected": "craft",
+            "actual": "craft",
+            "comparison_matches": true
+          },
+          {
+            "name": "craft_goal",
+            "stage": "parameters",
+            "status": "pass",
+            "expected": {
+              "explosive.timed": 10
+            },
+            "actual": {
+              "explosive.timed": 10
+            },
+            "comparison_matches": true
+          },
+          {
+            "name": "zero_or_image_inventory",
+            "stage": "state",
+            "status": "fail",
+            "expected": {
+              "wood": 8147,
+              "stones": 550,
+              "metal.fragments": 946,
+              "charcoal": 4,
+              "sulfur": 140
+            },
+            "actual": {
+              "wood": 8147,
+              "stones": 550
+            },
+            "comparison_matches": false
+          },
+          {
+            "name": "recipe_arithmetic",
+            "stage": "calculation",
+            "status": "fail",
+            "expected": {
+              "techparts": 20,
+              "cloth": 50,
+              "metal.fragments": 1054,
+              "lowgradefuel": 600,
+              "sulfur": 21860,
+              "charcoal": 29996
+            },
+            "actual": {
+              "techparts": 20,
+              "metal.fragments": 2000,
+              "lowgradefuel": 600,
+              "sulfur": 22000,
+              "charcoal": 30000,
+              "cloth": 50
+            },
+            "comparison_matches": false
+          },
+          {
+            "name": "inventory_deduction",
+            "stage": "calculation",
+            "status": "fail",
+            "expected": {
+              "metal.fragments": 946,
+              "sulfur": 140,
+              "charcoal": 4
+            },
+            "actual": {},
+            "comparison_matches": false
+          },
+          {
+            "name": "game_version",
+            "stage": "rules",
+            "status": "pending",
+            "expected": "independently verified game build",
+            "actual": "pending_game_build_verification",
+            "comparison_matches": false
+          },
+          {
+            "name": "raid_route",
+            "stage": "intent",
+            "status": "pass",
+            "expected": "raid",
+            "actual": "raid",
+            "comparison_matches": true
+          },
+          {
+            "name": "raid_target",
+            "stage": "parameters",
+            "status": "pass",
+            "expected": "one stone wall; no craft goal",
+            "actual": {
+              "target": "building:base-wall:stone",
+              "count": 1,
+              "goals": {}
+            },
+            "comparison_matches": true
+          },
+          {
+            "name": "raid_hp_input",
+            "stage": "parameters",
+            "status": "pass",
+            "expected": null,
+            "actual": null,
+            "comparison_matches": true
+          },
+          {
+            "name": "raid_rule_independent_verification",
+            "stage": "rules",
+            "status": "pending",
+            "expected": 2,
+            "actual": 2,
+            "comparison_matches": true
+          },
+          {
+            "name": "comparison_scope",
+            "stage": "parameters",
+            "status": "pass",
+            "expected": "minimum_additional_sulfur_among_single_method_options",
+            "actual": "minimum_additional_sulfur_among_single_method_options",
+            "comparison_matches": true
+          },
+          {
+            "name": "raid_route",
+            "stage": "intent",
+            "status": "pass",
+            "expected": "raid",
+            "actual": "raid",
+            "comparison_matches": true
+          },
+          {
+            "name": "raid_target",
+            "stage": "parameters",
+            "status": "pass",
+            "expected": "one stone wall; no craft goal",
+            "actual": {
+              "target": "building:base-wall:stone",
+              "count": 1,
+              "goals": {}
+            },
+            "comparison_matches": true
+          },
+          {
+            "name": "raid_hp_input",
+            "stage": "parameters",
+            "status": "pass",
+            "expected": 250,
+            "actual": 250,
+            "comparison_matches": true
+          },
+          {
+            "name": "raid_rule_independent_verification",
+            "stage": "rules",
+            "status": "pending",
+            "expected": 1,
+            "actual": 1,
+            "comparison_matches": true
+          },
+          {
+            "name": "comparison_scope",
+            "stage": "parameters",
+            "status": "pass",
+            "expected": "minimum_additional_sulfur_among_single_method_options",
+            "actual": "minimum_additional_sulfur_among_single_method_options",
+            "comparison_matches": true
+          },
+          {
+            "name": "final_expression_review",
+            "stage": "expression",
+            "status": "pending",
+            "expected": "Review every answer for correct conditions, unsupported certainty, unnecessary refusal or questions",
+            "actual": "not automatically judged",
+            "comparison_matches": false
+          }
+        ],
+        "review": null
+      },
+      "matches_recorded_assessment": true
+    }
+  ]
+}

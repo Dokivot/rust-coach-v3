@@ -1,0 +1,63 @@
+{
+  "purpose": "Independent recipe cross-check; no production catalog was used to compute expected quantities",
+  "build_status": "unverified",
+  "sources": [
+    {
+      "url": "https://wiki.facepunch.com/rust/item/explosive.timed",
+      "retrieved_at": "2026-11-04T19:33:15.954313+00:00",
+      "game_build": null,
+      "http_status": 200,
+      "sha256": "3510d16ada6a174007ff1b2690dd3e5926b6b50806a0c5431fe78707aa00dc27",
+      "final_url": "https://wiki.facepunch.com/rust/item/explosive.timed",
+      "excerpt": "Craft Ingredient Quantity Explosives 20 Cloth 5 Tech Trash 2 Craft Stat Value Workbench Requirement Workbench Level 3 Yield 1 Craft Time by Workbench Workbench Craft Time Workbench Level 3 30 sec",
+      "status": "craft_table_captured"
+    },
+    {
+      "url": "https://wiki.facepunch.com/rust/item/explosives",
+      "retrieved_at": "2026-11-04T19:33:16.767571+00:00",
+      "game_build": null,
+      "http_status": 200,
+      "sha256": "3e1f6f1db200bf8d04685ba31017ea4b1919aa405b850f125a08ca33fdcb5fff",
+      "final_url": "https://wiki.facepunch.com/rust/item/explosives",
+      "excerpt": "Craft Ingredient Quantity Gun Powder 50 Metal Fragments 10 Sulfur 10 Low Grade Fuel 3 Craft Stat Value Workbench Requirement Workbench Level 3 Yield 1 Craft Time by Workbench Workbench Craft Time Workbench Level 3 5 sec",
+      "status": "craft_table_captured"
+    },
+    {
+      "url": "https://wiki.facepunch.com/rust/item/gunpowder",
+      "retrieved_at": "2026-11-04T19:33:17.521991+00:00",
+      "game_build": null,
+      "http_status": 200,
+      "sha256": "961dadf3acf56283e8b87df348625bdfcee86479c122f622dbd7f0e890c9a6e0",
+      "final_url": "https://wiki.facepunch.com/rust/item/gunpowder",
+      "excerpt": "Craft Ingredient Quantity Charcoal 30 Sulfur 20 Craft Stat Value Workbench Requirement Workbench Level 1 Yield 10 Craft Time by Workbench Workbench Craft Time Workbench Level 1 2 sec Workbench Level 2 1 sec Workbench Level 3 1 sec",
+      "status": "craft_table_captured"
+    }
+  ],
+  "worksheet": {
+    "c4_10": {
+      "explosives": 200,
+      "cloth": 50,
+      "techparts": 20
+    },
+    "explosives_200": {
+      "gunpowder": 10000,
+      "metal.fragments": 2000,
+      "sulfur": 2000,
+      "lowgradefuel": 600
+    },
+    "gunpowder_10000": {
+      "batches": 1000,
+      "sulfur": 20000,
+      "charcoal": 30000
+    },
+    "total": {
+      "techparts": 20,
+      "cloth": 50,
+      "metal.fragments": 2000,
+      "lowgradefuel": 600,
+      "sulfur": 22000,
+      "charcoal": 30000
+    }
+  },
+  "raid": "Stone wall HP and C4 damage remain provisional; not independently verified"
+}
