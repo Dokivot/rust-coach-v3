@@ -1,0 +1,127 @@
+{
+  "recorded_at": "2026-11-04T22:22:54.456982+00:00",
+  "head": "9f6ab3f8017feab1ec3999c384ae7b44d7c65a87",
+  "dirty": true,
+  "source_sha256": "d5a48211fafd71245eb1b828ecb5ccc03336541b3bd277b2d493e139d5e8e807",
+  "source_hash_algorithm": "SHA256(sorted src/rust_coach/**/*.py: relative POSIX path UTF-8 followed by file bytes)",
+  "rule_provenance": {
+    "snapshot_id": "rustdata-pc-vanilla-2026-11-01",
+    "retrieved_at": "2026-11-01",
+    "ruleset": "pc_vanilla",
+    "game_build": null,
+    "verification": "third_party_snapshot_not_ingame_verified",
+    "provider": "RustData",
+    "source_url": "https://rust-data.com/zh/tools/raid-calculator",
+    "source_versions": [
+      "v4:3:66a9a92f0d54f50e"
+    ],
+    "sha256": "11033e0ec886eb101a301c7e3e4ecc8fc9c30a23afeacc67679fecd710bbb3d5"
+  },
+  "reports": {
+    "baseline": {
+      "mode": "scripted_http_sse",
+      "source_sha256": "314a2a6049b4020dba4f0e711c5a1cbe4a910d9fa5b850b82582de84eda633d6",
+      "dataset_sha256": "df072b97c94d9a50b2ef2b90bb78a82ab926a3b7b7c75db146a738ecc2f934c9",
+      "grader_sha256": "5892342ca3e93888d277dfe0fecb508f0d170678d886f2f38476f05fc4544db0",
+      "rule_provenance": {
+        "snapshot_id": "rustdata-pc-vanilla-2026-11-01",
+        "retrieved_at": "2026-11-01",
+        "ruleset": "pc_vanilla",
+        "game_build": null,
+        "verification": "third_party_snapshot_not_ingame_verified",
+        "provider": "RustData",
+        "source_url": "https://rust-data.com/zh/tools/raid-calculator",
+        "source_versions": [
+          "v4:3:66a9a92f0d54f50e"
+        ],
+        "sha256": "11033e0ec886eb101a301c7e3e4ecc8fc9c30a23afeacc67679fecd710bbb3d5"
+      },
+      "case_count": 40,
+      "turn_count": 54,
+      "passed": 10,
+      "source_matches_materials": false,
+      "path": "../../../../evals/results/intent-state-v1-baseline-2026-11-05.json",
+      "rule_matches_materials": true,
+      "dataset_matches_materials": true,
+      "grader_matches_materials": true
+    },
+    "current": {
+      "mode": "scripted_http_sse",
+      "source_sha256": "5fe25661a030628a3128091f749873bbee09f08a6f8e83ffce019b956b113176",
+      "dataset_sha256": "df072b97c94d9a50b2ef2b90bb78a82ab926a3b7b7c75db146a738ecc2f934c9",
+      "grader_sha256": "5892342ca3e93888d277dfe0fecb508f0d170678d886f2f38476f05fc4544db0",
+      "rule_provenance": {
+        "snapshot_id": "rustdata-pc-vanilla-2026-11-01",
+        "retrieved_at": "2026-11-01",
+        "ruleset": "pc_vanilla",
+        "game_build": null,
+        "verification": "third_party_snapshot_not_ingame_verified",
+        "provider": "RustData",
+        "source_url": "https://rust-data.com/zh/tools/raid-calculator",
+        "source_versions": [
+          "v4:3:66a9a92f0d54f50e"
+        ],
+        "sha256": "11033e0ec886eb101a301c7e3e4ecc8fc9c30a23afeacc67679fecd710bbb3d5"
+      },
+      "case_count": 40,
+      "turn_count": 54,
+      "passed": 40,
+      "source_matches_materials": false,
+      "path": "../../../../evals/results/intent-state-v1-current-2026-11-05.json",
+      "rule_matches_materials": true,
+      "dataset_matches_materials": true,
+      "grader_matches_materials": true
+    },
+    "live": {
+      "mode": "live_model_http_sse",
+      "source_sha256": "5fe25661a030628a3128091f749873bbee09f08a6f8e83ffce019b956b113176",
+      "dataset_sha256": null,
+      "grader_sha256": null,
+      "rule_provenance": {
+        "snapshot_id": "rustdata-pc-vanilla-2026-11-01",
+        "retrieved_at": "2026-11-01",
+        "ruleset": "pc_vanilla",
+        "game_build": null,
+        "verification": "third_party_snapshot_not_ingame_verified",
+        "provider": "RustData",
+        "source_url": "https://rust-data.com/zh/tools/raid-calculator",
+        "source_versions": [
+          "v4:3:66a9a92f0d54f50e"
+        ],
+        "sha256": "11033e0ec886eb101a301c7e3e4ecc8fc9c30a23afeacc67679fecd710bbb3d5"
+      },
+      "case_count": null,
+      "turn_count": 6,
+      "passed": 6,
+      "source_matches_materials": false,
+      "path": "../../../../evals/results/intent-state-v1-live-2026-11-05.json",
+      "rule_matches_materials": true
+    }
+  },
+  "file_sha256": {
+    "../../../../evals/intent-state-cases.json": "df072b97c94d9a50b2ef2b90bb78a82ab926a3b7b7c75db146a738ecc2f934c9",
+    "../../../../evals/intent_state.py": "5892342ca3e93888d277dfe0fecb508f0d170678d886f2f38476f05fc4544db0",
+    "../../../../evals/intent_state_live.py": "aaf88b6cfa07e9b289ab9aae2ec2d99f6fcac6c042496eedebc914687e0ebe85",
+    "../../../../docs/intent-state-implementation.md": "b3fc5362da1e22f658bd68c29f86f14218ae9a887838c116187cabde9cf004e2",
+    "../../../../tests/test_intent_state_audit.py": "70ab66950cd459835286aef51968587d462604553adccdfc7c0bcfe9c0056f23",
+    "../../../../tests/test_intent_state.py": "3091209dd274b9085be170d9adb7012fe658d2122984075f0f8f7d68fbd92b22",
+    "../../../../tests/test_intent_state_evaluation.py": "802354dcc66fde10d8243ef0de0f10a6c7dfa6fdf1aa4a2173119dd01e8e58e1",
+    "../../../../tests/test_player_state.py": "aa2d853008094bfc45450a81c36d0f415411d51b7dc815b5f57f723213fc875b",
+    "../../../../tests/test_vision.py": "9def39b0e8d556e904ce643665fdf4476a1afcd0d0aa3853d622d87581020dc9",
+    "../../../../evals/results/intent-state-v1-baseline-2026-11-05.json": "dc9fea739f4898a214686a8c24df2fad62b597f99229eed3f33b042ddcbe47c2",
+    "../../../../evals/results/intent-state-v1-current-2026-11-05.json": "d4a221882f82345c78bdae9efc8cd0ebf29b91c101a61f9c4d66eaa45a374376",
+    "../../../../evals/results/intent-state-v1-live-2026-11-05.json": "aeec068fefec70d23ee920af1a1c053d1b3bb968ee8ea622f02f35b54461be50"
+  },
+  "current_verification": {
+    "test_command": ".venv/bin/python -m pytest -q tests/test_intent_state_audit.py tests/test_intent_state.py tests/test_intent_state_evaluation.py tests/test_player_state.py tests/test_vision.py",
+    "passed": 186,
+    "elapsed_seconds": 8.25,
+    "full_suite_rerun": false,
+    "live_rerun": false,
+    "fixture_report": "fixed-evaluation.json",
+    "fixture_source_matches": true,
+    "fixture_case_count": 40,
+    "fixture_turn_count": 54,
+    "fixture_passed": 40
+  }
+}

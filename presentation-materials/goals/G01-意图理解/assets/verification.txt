@@ -1,0 +1,25 @@
+核验日期：2026-11-05（Asia/Shanghai）
+Git HEAD：9f6ab3f8017feab1ec3999c384ae7b44d7c65a87
+状态：存在未提交业务修改及未跟踪文件；提交号不能单独代表本次版本。
+当前 Python 业务源码 SHA256：d5a48211fafd71245eb1b828ecb5ccc03336541b3bd277b2d493e139d5e8e807
+哈希算法及测试/报告文件哈希：source-manifest.json。
+
+执行：
+.venv/bin/python -m pytest -q tests/test_intent_state_audit.py tests/test_intent_state.py tests/test_intent_state_evaluation.py tests/test_player_state.py tests/test_vision.py
+终端最终输出：186 passed in 8.25s
+退出码：0
+
+为保存可核验的逐项判定，另执行一次同一固定集：
+.venv/bin/python -m evals.intent_state --output <独立本地输出文件>
+终端输出：{"mode": "scripted_http_sse", "case_count": 40, "turn_count": 54, "passed": 40, "failed": 0}
+退出码：0
+结果选择性导出为 fixed-evaluation.json；省略随机ID及耗时字段，不更改判定。
+这是第二次执行同一40例，不是新增独立样本；186个测试中的评测测试也包含同一固定集。
+
+已有报告核验：
+baseline/current 数据集哈希、判定器哈希、规则快照一致，且均匹配当前文件。
+历史实施版 current 与 live 的源码哈希均为 5fe25661a030628a3128091f749873bbee09f08a6f8e83ffce019b956b113176，与当前源码不同。
+本次重新执行固定夹具评测，与当前源码哈希匹配；本次未重新执行真实模型实验。
+历史 live：6/6轮，3次文本模型调用，没有视觉模型调用。
+历史文档记载的559项全量Python和16项DOM并非本次重新验证的结果，不用于当前通过数。
+未运行昂贵实验，未写入用户业务数据库。
