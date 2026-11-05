@@ -1,0 +1,480 @@
+{
+  "derived_from": "evals/results/performance-fixture.json",
+  "source_recorded_at": "2026-11-05T01:59:17.530333+00:00",
+  "source_sha256": "3871361822ede2715436230e35b670943ac529f990af7611607f5544717c14ad",
+  "mode": "synthetic_model_real_application_http_sse",
+  "independent_new_run": false,
+  "selection": "repeat=1; seven representative scenarios; records copied without altering values",
+  "limitations": [
+    "合成模型和图片；非真实速度或账单",
+    "来自历史报告精简投影，不含完整span或最终回答",
+    "与CSV同源，不另计样本"
+  ],
+  "samples": [
+    {
+      "scenario": "image_cold",
+      "repeat": 1,
+      "input": "制作十份火药",
+      "http_elapsed_ms": 34.73,
+      "checks": {
+        "terminal": true,
+        "model_calls": true,
+        "no_provider_requests": true,
+        "recording_complete": true,
+        "no_shared_budget": true,
+        "calculation": true,
+        "inventory": true
+      },
+      "passed": true,
+      "outcome": {
+        "route": "calculate",
+        "reason": "visual_calculation_request",
+        "task_id": "b91e05be-607f-5b8b-95ea-4765be8b6d65",
+        "trace_id": "fa1c1cfc-4d3f-46c1-ae96-782eceb19aae",
+        "calculation_status": "calculated",
+        "advice_status": null,
+        "knowledge_status": "supported_snapshot",
+        "fallback_reason": null,
+        "truncated": false,
+        "replayed": false
+      },
+      "summary": {
+        "model_calls": 1,
+        "web_requests": 0,
+        "failed_calls": 0,
+        "cancelled_calls": 0,
+        "billed_cost": null,
+        "cost_status": "unknown",
+        "recording_status": "complete"
+      },
+      "server_elapsed_ms": 32.535,
+      "observations": [
+        {
+          "name": "context",
+          "history_messages": 0,
+          "history_chars": 0,
+          "messages": 2,
+          "text_chars": 1934
+        },
+        {
+          "name": "vision_cache",
+          "hit": false,
+          "images": 1
+        },
+        {
+          "name": "route",
+          "execution_node": "calculate",
+          "reason": "visual_calculation_request",
+          "action": "new"
+        }
+      ],
+      "calls": [
+        {
+          "name": "vision",
+          "kind": "model",
+          "duration_ms": 6.104,
+          "status": "completed",
+          "adapter": "injected",
+          "dispatched": false,
+          "input_text_chars": 10395,
+          "image_count": 1,
+          "max_output_tokens": 8192,
+          "usage": {
+            "status": "complete",
+            "input_tokens": 100,
+            "output_tokens": 40,
+            "cached_input_tokens": 0,
+            "reasoning_tokens": null,
+            "total_tokens": 140
+          }
+        }
+      ]
+    },
+    {
+      "scenario": "image_warm",
+      "repeat": 1,
+      "input": "制作十份火药",
+      "http_elapsed_ms": 19.972,
+      "checks": {
+        "terminal": true,
+        "model_calls": true,
+        "no_provider_requests": true,
+        "recording_complete": true,
+        "no_shared_budget": true,
+        "calculation": true,
+        "inventory": true
+      },
+      "passed": true,
+      "outcome": {
+        "route": "calculate",
+        "reason": "visual_calculation_request",
+        "task_id": "b91e05be-607f-5b8b-95ea-4765be8b6d65",
+        "trace_id": "4d714f36-36ab-456f-b947-6ee78c184dbb",
+        "calculation_status": "calculated",
+        "advice_status": null,
+        "knowledge_status": "supported_snapshot",
+        "fallback_reason": null,
+        "truncated": false,
+        "replayed": false
+      },
+      "summary": {
+        "model_calls": 0,
+        "web_requests": 0,
+        "failed_calls": 0,
+        "cancelled_calls": 0,
+        "billed_cost": null,
+        "cost_status": "no_external_calls",
+        "recording_status": "complete"
+      },
+      "server_elapsed_ms": 18.096,
+      "observations": [
+        {
+          "name": "context",
+          "history_messages": 2,
+          "history_chars": 118,
+          "messages": 4,
+          "text_chars": 2071
+        },
+        {
+          "name": "vision_cache",
+          "hit": true,
+          "images": 1
+        },
+        {
+          "name": "route",
+          "execution_node": "calculate",
+          "reason": "visual_calculation_request",
+          "action": "continue"
+        }
+      ],
+      "calls": []
+    },
+    {
+      "scenario": "raid_switch",
+      "repeat": 1,
+      "input": "改成拆一面石墙最省资源",
+      "http_elapsed_ms": 19.561,
+      "checks": {
+        "terminal": true,
+        "model_calls": true,
+        "no_provider_requests": true,
+        "recording_complete": true,
+        "no_shared_budget": true,
+        "calculation": true
+      },
+      "passed": true,
+      "outcome": {
+        "route": "calculate",
+        "reason": "explicit_calculation_question",
+        "task_id": "f0a5bbc3-a61d-5668-a477-55911063e709",
+        "trace_id": "7e8d8483-ae9b-47c0-bb8a-485b90697b53",
+        "calculation_status": "calculated",
+        "advice_status": null,
+        "knowledge_status": "supported_snapshot",
+        "fallback_reason": null,
+        "truncated": false,
+        "replayed": false
+      },
+      "summary": {
+        "model_calls": 0,
+        "web_requests": 0,
+        "failed_calls": 0,
+        "cancelled_calls": 0,
+        "billed_cost": null,
+        "cost_status": "no_external_calls",
+        "recording_status": "complete"
+      },
+      "server_elapsed_ms": 17.501,
+      "observations": [
+        {
+          "name": "context",
+          "history_messages": 4,
+          "history_chars": 236,
+          "messages": 6,
+          "text_chars": 2185
+        },
+        {
+          "name": "visual_draft_reused"
+        },
+        {
+          "name": "calculation_parse",
+          "path": "standard_raid"
+        },
+        {
+          "name": "route",
+          "execution_node": "calculate",
+          "reason": "explicit_calculation_question",
+          "action": "switch"
+        }
+      ],
+      "calls": []
+    },
+    {
+      "scenario": "hp_followup",
+      "repeat": 1,
+      "input": "它还剩250血",
+      "http_elapsed_ms": 17.489,
+      "checks": {
+        "terminal": true,
+        "model_calls": true,
+        "no_provider_requests": true,
+        "recording_complete": true,
+        "no_shared_budget": true,
+        "calculation": true,
+        "hp": true
+      },
+      "passed": true,
+      "outcome": {
+        "route": "calculate",
+        "reason": "calculation_or_followup",
+        "task_id": "f0a5bbc3-a61d-5668-a477-55911063e709",
+        "trace_id": "bd670828-d136-4f45-bbc6-b30c42479ee7",
+        "calculation_status": "calculated",
+        "advice_status": null,
+        "knowledge_status": "supported_snapshot",
+        "fallback_reason": null,
+        "truncated": false,
+        "replayed": false
+      },
+      "summary": {
+        "model_calls": 0,
+        "web_requests": 0,
+        "failed_calls": 0,
+        "cancelled_calls": 0,
+        "billed_cost": null,
+        "cost_status": "no_external_calls",
+        "recording_status": "complete"
+      },
+      "server_elapsed_ms": 15.467,
+      "observations": [
+        {
+          "name": "context",
+          "history_messages": 6,
+          "history_chars": 565,
+          "messages": 8,
+          "text_chars": 2445
+        },
+        {
+          "name": "visual_draft_reused"
+        },
+        {
+          "name": "calculation_parse",
+          "path": "contextual"
+        },
+        {
+          "name": "route",
+          "execution_node": "calculate",
+          "reason": "calculation_or_followup",
+          "action": "continue"
+        }
+      ],
+      "calls": []
+    },
+    {
+      "scenario": "request_replay",
+      "repeat": 1,
+      "input": "/calc {\"operation\":\"raid\",\"target\":\"building:base-wall:stone\",\"hp\":250}",
+      "http_elapsed_ms": 4.862,
+      "checks": {
+        "terminal": true,
+        "model_calls": true,
+        "no_provider_requests": true,
+        "recording_complete": true,
+        "no_shared_budget": true
+      },
+      "passed": true,
+      "outcome": {
+        "route": "calculate",
+        "reason": "calculation_or_followup",
+        "task_id": "6c375fb2-3a72-560b-89c1-a18ad12c691d",
+        "trace_id": "ffd86ae8-b25c-41ed-90c7-77678b9ab9b3",
+        "calculation_status": "calculated",
+        "advice_status": null,
+        "knowledge_status": "supported_snapshot",
+        "fallback_reason": null,
+        "truncated": false,
+        "replayed": true
+      },
+      "summary": {
+        "model_calls": 0,
+        "web_requests": 0,
+        "failed_calls": 0,
+        "cancelled_calls": 0,
+        "billed_cost": null,
+        "cost_status": "no_external_calls",
+        "recording_status": "complete"
+      },
+      "server_elapsed_ms": 2.901,
+      "observations": [],
+      "calls": []
+    },
+    {
+      "scenario": "model_failure",
+      "repeat": 1,
+      "input": "你好",
+      "http_elapsed_ms": 19.223,
+      "checks": {
+        "terminal": true,
+        "model_calls": true,
+        "no_provider_requests": true,
+        "recording_complete": true,
+        "no_shared_budget": true
+      },
+      "passed": true,
+      "outcome": null,
+      "summary": {
+        "model_calls": 1,
+        "web_requests": 0,
+        "failed_calls": 1,
+        "cancelled_calls": 0,
+        "billed_cost": null,
+        "cost_status": "unknown",
+        "recording_status": "complete"
+      },
+      "server_elapsed_ms": 17.693,
+      "observations": [
+        {
+          "name": "context",
+          "history_messages": 14,
+          "history_chars": 1537,
+          "messages": 16,
+          "text_chars": 3412
+        },
+        {
+          "name": "visual_draft_reused"
+        },
+        {
+          "name": "route",
+          "execution_node": "chat",
+          "reason": "conversation_without_calculation",
+          "action": "continue"
+        }
+      ],
+      "calls": [
+        {
+          "name": "chat",
+          "kind": "model",
+          "duration_ms": 6.18,
+          "status": "failed",
+          "adapter": "injected",
+          "dispatched": false,
+          "input_text_chars": 4281,
+          "image_count": 0,
+          "max_output_tokens": 2048,
+          "usage": {
+            "status": "missing",
+            "input_tokens": null,
+            "output_tokens": null,
+            "cached_input_tokens": null,
+            "reasoning_tokens": null,
+            "total_tokens": null
+          },
+          "error_code": "model_timeout"
+        }
+      ]
+    },
+    {
+      "scenario": "image_repair",
+      "repeat": 1,
+      "input": "请制作十份火药",
+      "http_elapsed_ms": 39.078,
+      "checks": {
+        "terminal": true,
+        "model_calls": true,
+        "no_provider_requests": true,
+        "recording_complete": true,
+        "no_shared_budget": true,
+        "calculation": true,
+        "inventory": true
+      },
+      "passed": true,
+      "outcome": {
+        "route": "calculate",
+        "reason": "visual_calculation_request",
+        "task_id": "eb15c84c-9c42-595d-8c64-8c90ac250a66",
+        "trace_id": "cd30040a-5742-47e3-9e42-e03f9543c356",
+        "calculation_status": "calculated",
+        "advice_status": null,
+        "knowledge_status": "supported_snapshot",
+        "fallback_reason": null,
+        "truncated": false,
+        "replayed": false
+      },
+      "summary": {
+        "model_calls": 2,
+        "web_requests": 0,
+        "failed_calls": 0,
+        "cancelled_calls": 0,
+        "billed_cost": null,
+        "cost_status": "unknown",
+        "recording_status": "complete"
+      },
+      "server_elapsed_ms": 37.162,
+      "observations": [
+        {
+          "name": "context",
+          "history_messages": 16,
+          "history_chars": 1551,
+          "messages": 18,
+          "text_chars": 3505
+        },
+        {
+          "name": "vision_cache",
+          "hit": false,
+          "images": 1
+        },
+        {
+          "name": "vision_schema_rejected",
+          "attempt": 1,
+          "repair_available": true
+        },
+        {
+          "name": "route",
+          "execution_node": "calculate",
+          "reason": "visual_calculation_request",
+          "action": "switch"
+        }
+      ],
+      "calls": [
+        {
+          "name": "vision",
+          "kind": "model",
+          "duration_ms": 6.074,
+          "status": "completed",
+          "adapter": "injected",
+          "dispatched": false,
+          "input_text_chars": 10529,
+          "image_count": 1,
+          "max_output_tokens": 8192,
+          "usage": {
+            "status": "missing",
+            "input_tokens": null,
+            "output_tokens": null,
+            "cached_input_tokens": null,
+            "reasoning_tokens": null,
+            "total_tokens": null
+          }
+        },
+        {
+          "name": "vision",
+          "kind": "model",
+          "duration_ms": 6.216,
+          "status": "completed",
+          "adapter": "injected",
+          "dispatched": false,
+          "input_text_chars": 10605,
+          "image_count": 1,
+          "max_output_tokens": 8192,
+          "usage": {
+            "status": "complete",
+            "input_tokens": 100,
+            "output_tokens": 40,
+            "cached_input_tokens": 0,
+            "reasoning_tokens": null,
+            "total_tokens": 140
+          }
+        }
+      ]
+    }
+  ]
+}

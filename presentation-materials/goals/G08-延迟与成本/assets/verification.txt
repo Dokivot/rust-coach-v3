@@ -1,0 +1,62 @@
+G08 material verification
+Date: 2026-11-05
+Business HEAD: 932f7dea82cc27e16b0e3fe25578f98b6d199d1f (feat: cost monitor)
+Scope: presentation materials only. Business implementation was already committed before material writes.
+
+CURRENT TARGETED PYTHON RUN
+Command: .venv/bin/python -m pytest -q tests/test_performance.py
+...........................                                              [100%]
+27 passed in 1.50s
+
+CURRENT DOM RUN
+Command: node --test tests/test_chat_ui.cjs tests/test_performance_ui.cjs
+✔ details expose reports and sources as inert text after the short answer (4.048041ms)
+✔ legacy and detailed answers avoid empty or duplicate disclosures (0.59825ms)
+✔ English answers use an English disclosure label (0.544042ms)
+✔ knowledge feedback stays attached to its original conversation and cited evidence (1.230417ms)
+✔ knowledge command can be sent without model credentials (4.330416ms)
+✔ performance disclosure stays attached to the original request and exposes incomplete accounting (0.654375ms)
+✔ sending moves images immediately and replaces previews with saved images: image only (1.744ms)
+✔ sending moves images immediately and replaces previews with saved images: 看看这张图 (1.023583ms)
+✔ server failure restores the exact draft and retries with the same request and uploads (1.450833ms)
+✔ network failure restores the exact draft and retries with the same request and uploads (0.781458ms)
+✔ partial upload failure restores all files and retries only the missing upload (0.735916ms)
+✔ editing restored attachments creates a new request and releases only discarded previews (0.821166ms)
+✔ editing restored text creates a new request without reuploading images (0.591792ms)
+✔ starting a new conversation releases a restored draft without carrying its attachments (0.704125ms)
+✔ real stage frames update the UI before the answer and preserve the screenshot draft (5.6615ms)
+✔ stream error restores the draft and keeps retries idempotent (0.737584ms)
+✔ stream disconnect restores the draft and keeps retries idempotent (1.050917ms)
+✔ stream wrong-request restores the draft and keeps retries idempotent (0.734ms)
+✔ stream wrong-result restores the draft and keeps retries idempotent (1.331959ms)
+✔ diagnostics show failed and unfinished runs as inert text and report loading errors (5.494916ms)
+ℹ tests 20
+ℹ suites 0
+ℹ pass 20
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 80.0485
+
+HISTORICAL EVIDENCE
+docs/latency-cost-implementation.md records full Python 684 passing in 25.04s and DOM 20 passing from implementation validation.
+Full Python suite was NOT rerun in this materials turn; the targeted 27 are within that suite.
+Saved evals/results/performance-fixture.json: recorded_at 2026-11-05T01:59:17.530333+00:00, 11 scenarios x 3 = 33/33.
+Saved report hashes match current business source/rules/evaluator.
+No independent new three-repetition evaluation was saved. Targeted test invokes evaluate(1), already included in its 27 tests.
+No paid model calls or real browser acceptance performed.
+Fixtures are synthetic models and images, using actual application TestClient HTTP/SSE, calculator, persistence, and accounting.
+No latency/cost improvement, bill amount, or SLA acceptance is claimed.
+
+MATERIAL CHECKS
+PASS: 106 relative links and anchors in G08 Markdown and shared index resolve.
+PASS: brief has eight required sections; talk-track has four sections and three interview questions.
+PASS: embedded Mermaid exactly matches assets/data-flow.mmd; data versus control and asynchronous branches are labeled.
+Mermaid was checked as source; no Mermaid renderer is installed, so no rendered-image validation is claimed.
+PASS: 11 CSV rows and 7 representative records match the saved historical report; these are derived materials, not new independent samples.
+PASS: all 76 source hashes embedded in the historical report match current files; all 84 hashes in the material manifest match.
+PASS: shared index keeps existing goal entries and marks G01/G02/G05/G06/G07 source applicability for review.
+PASS: 255 non-material tracked/nonignored files retain their content hashes from the pre-write snapshot; zero changes outside presentation-materials/.
+PASS: git diff --check -- presentation-materials.
+Important conclusions map to E01-E06; illustrative business inputs, synthetic reports, current tests, historical full-suite results and future measurements are distinguished.

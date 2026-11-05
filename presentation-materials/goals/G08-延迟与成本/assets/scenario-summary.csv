@@ -1,0 +1,12 @@
+scenario,label,samples,passed,model_calls_each,measurement_mode,source_recorded_at
+image_cold,首次截图制作,3,3,1,synthetic_model_real_application_http_sse,2026-11-05T01:59:17.530333+00:00
+image_warm,同图热复用,3,3,0,synthetic_model_real_application_http_sse,2026-11-05T01:59:17.530333+00:00
+raid_switch,切换拆石墙,3,3,0,synthetic_model_real_application_http_sse,2026-11-05T01:59:17.530333+00:00
+hp_followup,血量250追问,3,3,0,synthetic_model_real_application_http_sse,2026-11-05T01:59:17.530333+00:00
+knowledge_cold,冷知识查询,3,3,0,synthetic_model_real_application_http_sse,2026-11-05T01:59:17.530333+00:00
+knowledge_warm,热知识查询,3,3,0,synthetic_model_real_application_http_sse,2026-11-05T01:59:17.530333+00:00
+local_calculation,本地拆墙命令,3,3,0,synthetic_model_real_application_http_sse,2026-11-05T01:59:17.530333+00:00
+request_replay,成功请求重放,3,3,0,synthetic_model_real_application_http_sse,2026-11-05T01:59:17.530333+00:00
+model_failure,模拟模型失败,3,3,1,synthetic_model_real_application_http_sse,2026-11-05T01:59:17.530333+00:00
+retry_after_failure,同请求失败后重试,3,3,1,synthetic_model_real_application_http_sse,2026-11-05T01:59:17.530333+00:00
+image_repair,视觉结构修复,3,3,2,synthetic_model_real_application_http_sse,2026-11-05T01:59:17.530333+00:00
