@@ -19,6 +19,7 @@ from rust_coach.vision.schemas import VisualExtraction
 from rust_coach.vision.context import automatic_input, item_identity_status, resolve_screenshots, visual_input
 from rust_coach.player_state.domain import model_context
 from rust_coach.vision.corrections import correct_observation
+from rust_coach.performance import measured, observe
 
 
 logger = logging.getLogger("rust_coach")
@@ -52,11 +53,11 @@ class VisionService:
             "detail":settings.vision_detail,"version":VERSION,"catalog":self.calculator.catalog.sha256})
         self.probe_lock = asyncio.Lock()
         builder = StateGraph(VisionState)
-        builder.add_node("prepare",self.prepare)
-        builder.add_node("extract",self.extract)
-        builder.add_node("validate",self.validate)
-        builder.add_node("refine",self.refine)
-        builder.add_node("persist",self.persist)
+        builder.add_node("prepare", measured("vision.prepare")(self.prepare))
+        builder.add_node("extract", measured("vision.extract")(self.extract))
+        builder.add_node("validate", measured("vision.validate")(self.validate))
+        builder.add_node("refine", measured("vision.refine")(self.refine))
+        builder.add_node("persist", measured("vision.persist")(self.persist))
         builder.add_edge(START,"prepare")
         builder.add_conditional_edges("prepare",lambda state: "validate" if state.get("extraction") else "extract",{"validate":"validate","extract":"extract"})
         builder.add_edge("extract","validate")
@@ -103,6 +104,7 @@ class VisionService:
             "context":request["image_context"],"history":state.get("context_history",[]),
             "snapshot":state.get("snapshot"),"config":self.config_id,"extraction_policy":"inventory-default-v1"})
         cached = self.drafts.cache(conversation_id,key)
+        observe("vision_cache", hit=bool(cached), images=len(attachments))
         output = {"attachments":attachments,"cache_key":key,"cache_hit":bool(cached),"repairs":0,"usage":[]}
         if cached:
             mapped = {old["id"]:current["id"] for old,current in zip(cached["attachments"],attachments)}
@@ -169,6 +171,7 @@ unknowns 只记录影响当前问题的观测缺失，不重复用户目标，�
                 extraction = VisualExtraction.model_validate(parse_json(reply)).model_dump(mode="json")
                 return {"extraction":extraction,"usage":usage,"repairs":attempt}
             except (ValueError,TypeError) as error:
+                observe("vision_schema_rejected", attempt=attempt + 1, repair_available=not bool(attempt))
                 if attempt:
                     raise AppError("vision_parse_failed","图片识别未返回可靠结构。请缩小到相关区域或转写关键文字后重试。",422) from error
                 reasons = [{"field":entry["loc"],"type":entry["type"],"message":entry["msg"]} for entry in error.errors()] if isinstance(error,ValidationError) else [{"type":"invalid_json"}]
@@ -230,7 +233,9 @@ unknowns 只记录影响当前问题的观测缺失，不重复用户目标，�
                 if type(quantity) is int and 0 <= quantity <= 1_000_000:
                     target.update(quantity=quantity,quantity_status="readable")
             usage = [*state["usage"],reply.usage or {}]
-        except (ValueError,TypeError,KeyError,AppError,TimeoutError):
+        except (ValueError,TypeError,KeyError,AppError,TimeoutError) as error:
+            observe("vision_refinement_failed", reason=getattr(error, "code", type(error).__name__),
+                    resolution="retain_unknown_quantities")
             usage = state["usage"]
         return {"extraction":extraction,"repairs":1,"usage":usage}
 
@@ -254,6 +259,7 @@ unknowns 只记录影响当前问题的观测缺失，不重复用户目标，�
         data = request.model_dump(mode="json")
         prior = self.drafts.find_request(conversation_id,str(request.request_id),signature(data))
         if prior:
+            observe("vision_request_reused")
             return prior
         started = monotonic()
         result = await self.graph.ainvoke({"conversation_id":conversation_id,"request":data,"snapshot":snapshot,

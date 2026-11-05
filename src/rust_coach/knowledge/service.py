@@ -1,4 +1,5 @@
 import json
+from rust_coach.performance import observe
 import re
 import sqlite3
 from time import perf_counter
@@ -212,6 +213,7 @@ class LocalKnowledge:
             except (AppError, ValueError) as error:
                 result.update(status="missing_evidence", missing=[getattr(error, "message", "无法可靠确定解释中的目标或血量")])
         result.update(context_chars=used, elapsed_ms=round((perf_counter() - started) * 1000, 3))
+        observe("knowledge_cache", hit=result["cache_hit"], status=result["status"], context_chars=used)
         self.registry.validate(result)
         return result
 

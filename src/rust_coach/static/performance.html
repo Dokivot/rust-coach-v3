@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>处理耗时与调用 · Rust Coach</title>
+  <link rel="stylesheet" href="/static/styles.css">
+  <script src="/static/performance.js" defer></script>
+</head>
+<body>
+  <main>
+    <h1>处理耗时与调用</h1>
+    <p>用于本地诊断与演示。记录前台、后台、探测、失败和取消；费用未知不等于免费。</p>
+    <p>阶段时间包含子调用，不能相加；阶段提示不是首个有效答案。未结束记录不能当作已完成。</p>
+    <p><a href="/">返回聊天</a> · <button id="refresh" type="button">刷新最近 100 条</button></p>
+    <p id="status" role="status"></p>
+    <section id="runs" aria-label="运行记录"></section>
+  </main>
+</body>
+</html>

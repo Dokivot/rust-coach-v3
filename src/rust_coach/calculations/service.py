@@ -14,6 +14,7 @@ from rust_coach.vision.context import visual_input
 from rust_coach.architecture.task_context import cancelled, continuation, conversational, inventory_selection
 from rust_coach.player_state.inputs import resolve_calculation_input
 from rust_coach.player_state.working import current_assertion, text_facts
+from rust_coach.performance import observe
 
 
 logger = logging.getLogger("rust_coach")
@@ -42,13 +43,17 @@ class CalculationService:
     async def _extract_once(self, messages, previous, pending_message=None, inventory_container=None):
         text = messages[-1].content
         if text.startswith("/calc"):
+            observe("calculation_parse", path="structured")
             return json.loads(text[5:].strip())
         contextual = contextual_request(text, previous, pending_message)
         if contextual:
+            observe("calculation_parse", path="contextual")
             return contextual
         standard = standard_raid_request(text)
         if standard:
+            observe("calculation_parse", path="standard_raid")
             return standard
+        observe("calculation_parse", path="model")
         catalog = self.calculator.catalog
         prompt = """你是 Rust PC 原版计算请求解析器，只返回一个 JSON 对象，不回答游戏数值。
 operation 必须是 raid 或 craft。只提取用户明确提供的信息，数值必须整数；不得编造配方、伤害或结果。
@@ -100,6 +105,7 @@ blueprints 表示用户明确确认可制作的配方（包括默认配方）。
                     self.validate_technology_evidence(parsed, messages[-1].content, previous)
                 return parsed
             except (ValueError, TypeError):
+                observe("calculation_parse_rejected", attempt=attempt + 1, repair_available=attempt + 1 < attempts)
                 if attempt + 1 == attempts:
                     raise
                 logger.info("calculation_parse_retry reason=invalid_schema")

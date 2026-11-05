@@ -33,6 +33,8 @@ COACH_API_KEY=在本地填写你的密钥
 
 Responses 模式下，普通聊天、计算、建议和状态解析均使用上游流式传输（`stream=true`），从文本分片收集回复，兼容结束事件中 `output=[]` 的服务。浏览器实时显示识图、检索、计算、组织语言等实际执行阶段，正文仍在回复收集完成后一次显示。阶段命名、事件协议与验证见 [实时执行阶段](docs/workflow-progress.md)。
 
+回答下方可展开“查看处理耗时与调用”；`/performance` 提供本地诊断页，包含失败、取消和独立后台记录。真实阶段耗时、内部模型调用、网页请求、缓存与usage按请求留存；未知费用不记零。本轮未新增整次请求共享预算，详见 [延迟与成本实施说明](docs/latency-cost-implementation.md)。
+
 如果服务仅支持旧接口，设置 `COACH_API_MODE=chat_completions`，即可调用 `/v1/chat/completions`。此模式默认使用 `max_completion_tokens`；如服务不支持，在 `.env` 设置 `COACH_OUTPUT_TOKEN_PARAMETER=max_tokens`。该配置只影响 Chat Completions，Responses 始终使用 `max_output_tokens`。两种模式均可通过 `COACH_MAX_OUTPUT_TOKENS` 设置输出上限，通过 `COACH_INSTRUCTION_ROLE=system` 或 `developer` 配置指令消息角色。
 
 ## 首版边界

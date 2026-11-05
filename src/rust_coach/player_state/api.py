@@ -48,9 +48,10 @@ def player_state_router(calculator, settings):
             current = request.app.state.runtime.player_states.get(str(scope_id))
             observed_at = datetime.now(timezone.utc).isoformat()
             try:
-                async with asyncio.timeout(settings.request_timeout_seconds):
-                    result = await preview_changes(request.app.state.state_model, payload.message,
-                        (await fields())["items"], settings.instruction_role)
+                with request.app.state.runtime.performance.run("player_state_preview"):
+                    async with asyncio.timeout(settings.request_timeout_seconds):
+                        result = await preview_changes(request.app.state.state_model, payload.message,
+                            (await fields())["items"], settings.instruction_role)
             except TimeoutError as error:
                 raise AppError("model_timeout", "状态解析超时，请使用表单或稍后重试。", 504) from error
             if result["status"] == "draft":

@@ -5,6 +5,7 @@ from contextvars import ContextVar
 from typing import Callable
 
 from rust_coach.contracts import AppError
+from rust_coach.performance import progress
 
 
 logger = logging.getLogger("rust_coach")
@@ -31,6 +32,8 @@ _progress_sink: ContextVar[Callable[[str], None] | None] = ContextVar("progress_
 
 
 def report_stage(stage: str):
+    if stage in STAGE_LABELS:
+        progress(stage)
     sink = _progress_sink.get()
     if sink is not None and stage in STAGE_LABELS:
         sink(stage)

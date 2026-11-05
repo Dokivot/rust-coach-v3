@@ -118,6 +118,28 @@ test("knowledge command can be sent without model credentials", async () => {
   assert.equal(ui.calls.messages.length, 1);
 });
 
+test("performance disclosure stays attached to the original request and exposes incomplete accounting", async () => {
+  const {context, messages} = render([{request_id: "turn-1", user: "你好", assistant: "你好"}]);
+  const details = messages.children[1].children[2];
+  const paths = [];
+  context.fetch = async path => {
+    paths.push(path);
+    return {ok: true, json: async () => ({runs: [{kind: "chat", duration_ms: 25,
+      summary: {model_calls: 0, web_requests: 0}, outcome: {replayed: true}, status: "completed"}],
+      summary: {recording_status: "incomplete"}, background_memory_status: "pending", truncated: true})};
+  };
+  vm.runInContext('conversation = {id: "another", turns: []};', context);
+  await details.children[2].events.click();
+  assert.equal(paths[0], "/api/conversations/original-conversation/performance?request_id=turn-1");
+  assert.match(details.children[1].textContent, /复用了已有回答/);
+  assert.match(details.children[1].textContent, /费用未知/);
+  assert.match(details.children[1].textContent, /计量记录不完整/);
+  assert.match(details.children[1].textContent, /后台记忆尚未完成/);
+  context.fetch = async () => { throw new Error("unavailable"); };
+  await details.children[2].events.click();
+  assert.match(details.children[1].textContent, /无法读取计量记录/);
+});
+
 function deferred() {
   let resolve;
   const promise = new Promise(complete => { resolve = complete; });
@@ -374,7 +396,8 @@ test("real stage frames update the UI before the answer and preserve the screens
   await submission;
   assert.equal(ui.element("#messages").children.length, 2);
   assert.equal(ui.element("#messages").children[1].children[1].textContent, "已分析。");
-  assert.equal(ui.element("#messages").children[1].children.length, 2);
+  assert.equal(ui.element("#messages").children[1].children.length, 3);
+  assert.equal(ui.element("#messages").children[1].children[2].children[0].textContent, "查看处理耗时与调用");
   assert.equal(ui.element("#send-status").textContent, "");
   assert.deepEqual(ui.urls.revoked, ui.urls.created);
   assert.equal(stream.cancelled(), true);

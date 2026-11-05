@@ -5,6 +5,7 @@ from uuid import UUID, uuid4
 from datetime import datetime, timezone
 
 from langgraph.graph import END, START, StateGraph
+from rust_coach.performance import measured, observe
 
 from rust_coach.contracts import AppError, ChatRequest, ModelMessage, ModelReply
 from rust_coach.llm import ChatModel
@@ -133,6 +134,7 @@ def build_chat_graph(model: ChatModel, instruction_role="system", calculation_mo
             draft = await vision_service.analyze(state["conversation_id"],request,persistent,history)
         else:
             draft = vision_service.drafts.get(state["conversation_id"],state["visual_ref"])
+            observe("visual_draft_reused")
             corrected = vision_service.correct(state["conversation_id"], request, draft)
             if corrected:
                 draft = corrected
@@ -257,6 +259,7 @@ def build_chat_graph(model: ChatModel, instruction_role="system", calculation_mo
             goals=task.goals, state_ref=task.state_ref, required_evidence=task.required_evidence) if route_kind in {"simple_call", "plan_execute"} else None
         architecture.update(task=task.model_dump(mode="json"), working_state=working,
                             decision_request=decision.model_dump(mode="json") if decision else None)
+        observe("route", execution_node=node, reason=reason, action=action)
         if architecture.get("trace"):
             trace = update_trace_context(architecture["trace"], task_id=str(task.task_id), understanding_revision=task.understanding_revision)
             for event in trace["events"]:
@@ -380,15 +383,15 @@ def build_chat_graph(model: ChatModel, instruction_role="system", calculation_mo
         return {"reply": reply, "calculation": None, **with_decision_result(state, result)}
 
     builder = StateGraph(ChatState)
-    builder.add_node("chat", chat)
-    builder.add_node("route", route)
-    builder.add_node("calculate", calculate)
-    builder.add_node("player_state", player_state)
-    builder.add_node("advice", advice)
-    builder.add_node("visual_input",visual_input)
-    builder.add_node("visual_observe",visual_observe)
-    builder.add_node("knowledge", knowledge)
-    builder.add_node("finalize_response", finalize_response)
+    builder.add_node("chat", measured("generation.chat")(chat))
+    builder.add_node("route", measured("understanding.route")(route))
+    builder.add_node("calculate", measured("decision.calculate")(calculate))
+    builder.add_node("player_state", measured("state.read")(player_state))
+    builder.add_node("advice", measured("decision.advice")(advice))
+    builder.add_node("visual_input", measured("input.visual")(visual_input))
+    builder.add_node("visual_observe", measured("generation.observation")(visual_observe))
+    builder.add_node("knowledge", measured("knowledge.local")(knowledge))
+    builder.add_node("finalize_response", measured("generation.finalize")(finalize_response))
     builder.add_edge(START, "visual_input")
     builder.add_edge("visual_input","route")
     builder.add_conditional_edges("route", lambda state: state["route"], {"chat": "chat", "calculate": "calculate", "player_state": "player_state", "advice": "advice", "visual_observe": "visual_observe", "knowledge": "knowledge"})

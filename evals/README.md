@@ -1,5 +1,9 @@
 # 库存与拆墙诊断基线
 
+## 延迟与调用计量回归
+
+`uv run python -m evals.performance --repetitions 3` 使用合成模型和临时数据库，经过真实上传、HTTP/SSE及计量接口，核对11类场景的结果与调用数。标准输出为JSON，不覆盖报告。包含冷/热复用、拆墙追问、失败重试和结构修复；不是实测模型延迟或账单。未新增在线共享预算，完整口径见 [实施说明](../docs/latency-cost-implementation.md)。
+
 ## 固定知识检索与时效评测
 
 `uv run python -m evals.knowledge --output data/knowledge-evaluation-new.json` 运行24个固定案例，比较既有粗主题谓词的本地适配、加资格过滤、精确查询加FTS5三个策略。输出文件拒绝覆盖，保留语料/代码/规则hash和逐例判断。16个开发案例、8个首轮运行前冻结的预留案例共享规则语料，不是来源独立的盲测。对照不调用网络或模型，不代表旧版真实在线行为或游戏知识正确率。完整结果与边界见 [知识实施报告](../docs/knowledge-implementation.md)。

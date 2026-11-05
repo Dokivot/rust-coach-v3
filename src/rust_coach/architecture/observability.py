@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
-from time import monotonic
 from uuid import UUID
 
 from rust_coach.architecture.contracts import SpanEvent, TraceContext
@@ -24,7 +23,6 @@ def emit_trace(
     """Append a redacted, serializable event to the task trace."""
     result = trace or {"context": {}, "events": []}
     context = result.get("context") or {}
-    started = monotonic()
     item = SpanEvent(
         trace_id=context["trace_id"],
         task_id=context["task_id"],
@@ -37,8 +35,8 @@ def emit_trace(
         event=event,
         status=status,
         started_at=datetime.now(timezone.utc),
-        ended_at=datetime.now(timezone.utc),
-        duration_ms=max(0, round((monotonic() - started) * 1000)),
+        ended_at=None,
+        duration_ms=None,
         references=references or {},
         error_code=error_code,
     )

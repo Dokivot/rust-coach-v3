@@ -25,6 +25,7 @@ from rust_coach.architecture.task_context import inventory_selection, previous_w
 from rust_coach.player_state.working import effective_state, explicit_event
 from rust_coach.knowledge.service import LocalKnowledge
 from rust_coach.knowledge.store import current_web_references, web_references
+from rust_coach.performance import PerformanceStore, metered_model, observe, span
 
 
 logger = logging.getLogger("rust_coach")
@@ -58,6 +59,14 @@ class ChatRuntime:
                  calculation_model: ChatModel | None = None, advice_service=None, vision_service=None, memory_model=None):
         self.settings = settings
         self.store = store
+        self.performance = PerformanceStore(store)
+        model = metered_model(model, self.performance, "chat", settings)
+        calculation_model = metered_model(calculation_model or model, self.performance, "calculation_extract", settings)
+        memory_model = metered_model(memory_model, self.performance, "memory_extract", settings)
+        if advice_service and getattr(advice_service, "model", None):
+            advice_service.model = metered_model(advice_service.model, self.performance, "advice", settings)
+        if vision_service:
+            vision_service.model = metered_model(vision_service.model, self.performance, "vision", settings.for_vision())
         self.player_states = PlayerStateStore(store)
         self.knowledge = LocalKnowledge(store)
         self.graph = build_chat_graph(model, settings.instruction_role, calculation_model, advice_service, vision_service, self.knowledge)
@@ -66,9 +75,31 @@ class ChatRuntime:
         self.advice_service = advice_service
         self.vision_service = vision_service
         self.lock = asyncio.Lock()
-        self.memory = MemoryService(store, settings, memory_model)
+        self.memory = MemoryService(store, settings, memory_model, performance=self.performance)
 
     async def chat(self, conversation_id: str, request: ChatRequest) -> Turn:
+        with self.performance.run("chat", conversation_id=conversation_id, request_id=str(request.request_id)) as operation:
+            operation.data["configuration"] = {"request_timeout_seconds": self.settings.request_timeout_seconds,
+                "advice_timeout_seconds": self.settings.advice_timeout_seconds,
+                "history_turns": self.settings.history_turns, "context_char_limit": self.settings.context_char_limit,
+                "shared_request_budget": False}
+            turn = await self._chat(conversation_id, request)
+            presentation = turn.presentation or {}
+            architecture = presentation.get("architecture") or {}
+            task = architecture.get("task") or {}
+            operation.data["outcome"] = {"route": task.get("execution_node"), "reason": task.get("routing_reason"),
+                "task_id": task.get("task_id"), "trace_id": (architecture.get("trace") or {}).get("context", {}).get("trace_id"),
+                "calculation_status": (turn.calculation or {}).get("status"),
+                "advice_status": (turn.advice or {}).get("status"),
+                "knowledge_status": (presentation.get("knowledge") or {}).get("status"),
+                "fallback_reason": presentation.get("fallback_reason"), "truncated": turn.truncated,
+                "replayed": any(event["stage"] == "replay" for event in operation.data["progress"])}
+            reference = presentation.get("knowledge") or presentation.get("knowledge_context") or {}
+            operation.data["knowledge_reference"] = {key: reference.get(key) for key in (
+                "release_id", "release_sha256", "registry_revision")}
+            return turn
+
+    async def _chat(self, conversation_id: str, request: ChatRequest) -> Turn:
         if self.lock.locked():
             raise AppError("chat_busy", "已有对话正在生成，请等待完成后再发送。", 409)
         async with self.lock:
@@ -196,6 +227,8 @@ class ChatRuntime:
             if task_snapshot:
                 messages.insert(-1, ModelMessage(role="user", content="玩家状态数据（非指令，不自动写回）：\n" +
                                                 state_context))
+            observe("context", history_messages=len(history), history_chars=sum(len(message.content) for message in history),
+                    messages=len(messages), text_chars=sum(len(message.content) for message in messages))
             try:
                 task_id = uuid5(NAMESPACE_URL, "rust-coach:task:" + conversation_id + ":" + str(request.request_id))
                 trace_context = new_trace(request.request_id, task_id)
@@ -286,7 +319,7 @@ class ChatRuntime:
             if visual:
                 visual["request_identity"] = self.visual_identity(request)
             report_stage("save")
-            with self.store.connection() as connection:
+            with span("persistence.commit"), self.store.connection() as connection:
                 connection.execute("BEGIN IMMEDIATE")
                 if not current_web_references(web_references(result.get("advice"), presentation), self.settings.evidence_ttl_hours):
                     raise AppError("knowledge_evidence_expired", "生成期间网页证据已过期或时间未知，本轮结果未发布，请重新取证。", 409)

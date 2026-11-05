@@ -236,7 +236,7 @@ total_latency
 | 生成检查 | `AnswerEnvelope`、`checks`、`fallback_reason`、persona tests | 已有生成门禁字段和离线测试 |
 | 评测脚本 | `presentation/evaluate.py`、`architecture.evaluation`、`evals/inventory_baseline.py`、`tests/test_*` | 库存 V2 已有版本化 JSON 案例、隔离 HTTP 执行、逐轮证据判定和复核；通用契约尚未接入统一评测仓库 |
 | 检索证据 | `EvidenceStore`、网页快照和 advice 引用 | 有局部来源追踪；缺少统一 retrieval span/覆盖指标 |
-| 延迟/成本 | 局部模型调用计数和运行时间 | 尚未全链路采集 token、工具成本和关键路径 |
+| 延迟/成本 | 独立请求/后台运行、真实阶段span、逐次模型和网页调用、usage归一化及诊断页 | 已接入本地应用链路；货币成本和浏览器端到端时间仍未知，未新增共享预算，见[实施说明](latency-cost-implementation.md) |
 | badcase | 日志、文档、`evals/inventory_review.py` | 库存场景支持待审核反馈→人工确认→新版案例及版本对照；尚未形成线上自动采样和完整 Badcase 生命周期 |
 | 发布门禁 | pytest 和人工检查 | 尚未统一质量、成本、延迟阈值的 release gate |
 

@@ -8,6 +8,7 @@ from urllib.parse import urljoin, urlsplit, urlunsplit
 
 import httpx
 from bs4 import BeautifulSoup
+from rust_coach.performance import observe, span
 
 
 logger = logging.getLogger("rust_coach")
@@ -103,6 +104,12 @@ class WebResearch:
         self.settings, self.client, self.store, self.resolver = settings, client, store, resolver
 
     async def _read(self, url, headers=None, *, method="GET", payload=None):
+        with span("search" if method == "POST" else "fetch", "web", host=urlsplit(url).hostname, method=method) as measurement:
+            result = await self._request(url, headers, method=method, payload=payload)
+            measurement["http_status"] = result[0]
+            return result
+
+    async def _request(self, url, headers=None, *, method="GET", payload=None):
         async with self.client.stream(method, url, headers=headers, json=payload,
                                       timeout=10, follow_redirects=False) as response:
             if response.is_redirect:
@@ -172,6 +179,7 @@ class WebResearch:
             return bundle
         key = "web-v3:pc_vanilla:" + self.settings.search_provider + ":" + ",".join(sorted(topics))
         cached = self.store.cached(key) if not force else []
+        observe("web_cache", hit=bool(cached), forced=force)
         if cached:
             return {**bundle, "documents": cached, "cache_hit": True, "events": [{"type": "cache", "count": len(cached)}]}
         try:

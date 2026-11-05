@@ -154,6 +154,7 @@ function renderConversation() {
       appendKnowledgeFeedback(details, turn, conversation.id);
       assistantMessage.append(details);
     }
+    if (turn.request_id) appendPerformance(assistantMessage, conversation.id, turn.request_id);
   }
   if (sendingDraft) {
     const userMessage = addMessage("user", sendingDraft.message || "图片消息", true);
@@ -181,6 +182,50 @@ function renderConversation() {
     }
   }
   requestAnimationFrame(() => { scrollArea.scrollTop = scrollArea.scrollHeight; });
+}
+
+function appendPerformance(message, conversationId, requestId) {
+  const details = document.createElement("details");
+  details.className = "answer-details";
+  const summary = document.createElement("summary");
+  summary.textContent = "查看处理耗时与调用";
+  const content = document.createElement("div");
+  content.className = "answer-detail-content";
+  const refresh = document.createElement("button");
+  refresh.type = "button";
+  refresh.textContent = "刷新记录";
+  let loading = false;
+  async function load() {
+    if (loading) return;
+    loading = true;
+    content.textContent = "正在读取记录…";
+    try {
+      const report = await api("/api/conversations/" + conversationId + "/performance?request_id=" + encodeURIComponent(requestId));
+      const labels = {chat: "本次处理", background_memory: "后台记忆", vision_probe: "视觉探测"};
+      const lines = report.runs.map(run => {
+        const elapsed = run.duration_ms === null ? "尚未结束" : (run.duration_ms / 1000).toFixed(3) + " 秒";
+        return (labels[run.kind] || run.kind) + "：" + elapsed + "，模型调用 " + run.summary.model_calls +
+          " 次，网页请求 " + run.summary.web_requests + " 次" +
+          (run.outcome?.replayed ? "，复用了已有回答" : "") +
+          (run.status !== "completed" ? "，状态 " + run.status : "");
+      });
+      if (!lines.length) lines.push("此回答没有已保存的计量记录，可能早于计量功能。");
+      if (report.background_memory_status === "pending") lines.push("后台记忆尚未完成，可稍后刷新。");
+      if (report.truncated) lines.push("仅展示最近记录，汇总不是全部历史消耗。");
+      if (report.summary.recording_status !== "complete") lines.push("计量记录不完整，不能据此核算总消耗。");
+      lines.push("服务端处理耗时，不含图片上传和浏览器传输；前台与后台时间可能重叠，不相加。");
+      lines.push("费用未知：尚未接入供应商价格与账单，不能把调用次数当作金额。");
+      content.textContent = lines.join("\n");
+    } catch (error) {
+      content.textContent = "无法读取计量记录：" + error.message;
+    } finally {
+      loading = false;
+    }
+  }
+  details.addEventListener("toggle", () => { if (details.open) load(); });
+  refresh.addEventListener("click", load);
+  details.append(summary, content, refresh);
+  message.append(details);
 }
 
 function appendKnowledgeFeedback(details, turn, conversationId) {

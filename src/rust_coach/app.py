@@ -5,7 +5,7 @@ from pathlib import Path
 from uuid import UUID, uuid4
 
 import httpx
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Query, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import FileResponse, JSONResponse, Response, StreamingResponse
 from fastapi.staticfiles import StaticFiles
@@ -29,6 +29,7 @@ from rust_coach.vision.service import VisionService
 from rust_coach.memory.api import memory_router
 from rust_coach.progress import chat_events
 from rust_coach.knowledge.schemas import KnowledgeFeedback
+from rust_coach.performance import metered_model
 
 
 logger = logging.getLogger("rust_coach")
@@ -62,7 +63,8 @@ def create_app(settings: Settings | None = None, model: ChatModel | None = None,
                 calculation_model=model or CompatibleChatModel(settings, client, stream_responses=True), advice_service=advice,
                 vision_service=vision, memory_model=memory_adapter)
             calculator.knowledge = app.state.runtime.knowledge
-            app.state.state_model = model or CompatibleChatModel(settings, client, stream_responses=True)
+            app.state.state_model = metered_model(model or CompatibleChatModel(settings, client, stream_responses=True),
+                app.state.runtime.performance, "player_state_extract", settings)
             app.state.runtime.memory.schedule()
             try:
                 yield
@@ -170,11 +172,12 @@ def create_app(settings: Settings | None = None, model: ChatModel | None = None,
         return runtime.knowledge.registry.feedback(str(conversation_id), payload, reference)
 
     @app.post("/api/calculations")
-    async def calculate(payload: CalculationRequest):
-        result = calculator.calculate(payload)
-        logger.info("calculation id=%s operation=%s snapshot=%s", result["calculation_id"],
-                    payload.operation, result["provenance"]["snapshot_id"])
-        return {**result, "text": render_calculation(result, calculator.catalog)}
+    async def calculate(payload: CalculationRequest, request: Request):
+        with request.app.state.runtime.performance.run("local_calculation"):
+            result = calculator.calculate(payload)
+            logger.info("calculation id=%s operation=%s snapshot=%s", result["calculation_id"],
+                        payload.operation, result["provenance"]["snapshot_id"])
+            return {**result, "text": render_calculation(result, calculator.catalog)}
 
     @app.post("/api/conversations", response_model=Conversation, status_code=201)
     async def create_conversation(request: Request):
@@ -185,6 +188,16 @@ def create_app(settings: Settings | None = None, model: ChatModel | None = None,
     @app.get("/api/conversations/{conversation_id}", response_model=Conversation)
     async def get_conversation(conversation_id: UUID, request: Request):
         return request.app.state.runtime.store.get(str(conversation_id))
+
+    @app.get("/api/performance")
+    async def performance(request: Request, limit: int = Query(default=50, ge=1, le=100)):
+        return request.app.state.runtime.performance.inspect(limit=limit)
+
+    @app.get("/api/conversations/{conversation_id}/performance")
+    async def conversation_performance(conversation_id: UUID, request: Request,
+                                       request_id: UUID | None = None, limit: int = Query(default=100, ge=1, le=100)):
+        return request.app.state.runtime.performance.inspect(conversation_id=str(conversation_id),
+            request_id=str(request_id) if request_id else None, limit=limit)
 
     @app.delete("/api/conversations/{conversation_id}", status_code=204)
     async def delete_conversation(conversation_id: UUID, request: Request):
@@ -213,6 +226,10 @@ def create_app(settings: Settings | None = None, model: ChatModel | None = None,
     @app.get("/player-state")
     async def player_state_page():
         return FileResponse(STATIC / "player-state.html")
+
+    @app.get("/performance")
+    async def performance_page():
+        return FileResponse(STATIC / "performance.html")
 
     app.mount("/static", StaticFiles(directory=STATIC), name="static")
     return app

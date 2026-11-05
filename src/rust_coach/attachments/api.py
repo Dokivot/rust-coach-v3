@@ -37,6 +37,10 @@ def attachment_router(settings):
 
     @router.post("/api/conversations/{conversation_id}/attachments",status_code=201)
     async def upload(conversation_id: UUID,request: Request):
+        with request.app.state.runtime.performance.run("attachment_upload", conversation_id=str(conversation_id)):
+            return await upload_image(conversation_id, request)
+
+    async def upload_image(conversation_id, request):
         runtime = request.app.state.runtime
         runtime.store.get(str(conversation_id))
         if upload_lock.locked():
@@ -70,7 +74,8 @@ def attachment_router(settings):
     async def probe(request: Request):
         if request.app.state.runtime.lock.locked():
             raise AppError("chat_busy","请等待当前任务完成。",409)
-        return await request.app.state.vision.probe()
+        with request.app.state.runtime.performance.run("vision_probe"):
+            return await request.app.state.vision.probe()
 
     @router.get("/api/conversations/{conversation_id}/visual-drafts/{draft_id}")
     async def draft(conversation_id: UUID,draft_id: UUID,request: Request):
@@ -78,7 +83,9 @@ def attachment_router(settings):
 
     @router.post("/api/conversations/{conversation_id}/visual-drafts/{draft_id}/confirm")
     async def confirm(conversation_id: UUID,draft_id: UUID,payload: VisualConfirmation,request: Request):
-        return await request.app.state.runtime.confirm_visual(str(conversation_id),str(draft_id),payload)
+        with request.app.state.runtime.performance.run("visual_confirmation", conversation_id=str(conversation_id),
+                                                       request_id=str(payload.confirmation_id)):
+            return await request.app.state.runtime.confirm_visual(str(conversation_id),str(draft_id),payload)
 
     @router.post("/api/conversations/{conversation_id}/visual-drafts/{draft_id}/cancel",status_code=204)
     async def cancel(conversation_id: UUID,draft_id: UUID,request: Request):

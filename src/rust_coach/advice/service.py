@@ -26,6 +26,7 @@ from rust_coach.player_state.schemas import FIELD_DEFINITIONS
 from rust_coach.presentation.contracts import ResponseContext
 from rust_coach.presentation.policy import compile_persona
 from rust_coach.presentation.validation import narrative_issues
+from rust_coach.performance import measured, observe, span
 
 
 logger = logging.getLogger("rust_coach")
@@ -79,7 +80,7 @@ class AdviceService:
         self.calculator = Calculator()
         builder = StateGraph(AdviceState)
         for name in ("prepare", "guide", "plan", "retrieve", "evaluate", "compose", "finish"):
-            builder.add_node(name, getattr(self, name))
+            builder.add_node(name, measured("advice." + name)(getattr(self, name)))
         builder.add_edge(START, "prepare")
         builder.add_conditional_edges("prepare", lambda state: "guide" if state["mode"] == "onboarding" else "plan",
                                       {"guide": "guide", "plan": "plan"})
@@ -217,11 +218,12 @@ class AdviceService:
         locked_selection = None
         for attempt in range(max_repairs + 1):
             try:
-                if attempt:
-                    async with asyncio.timeout(repair_timeout):
+                with span("advice." + (phase or schema.__name__), attempt=attempt + 1):
+                    if attempt:
+                        async with asyncio.timeout(repair_timeout):
+                            reply = await self.model.complete(messages)
+                    else:
                         reply = await self.model.complete(messages)
-                else:
-                    reply = await self.model.complete(messages)
                 if reply.truncated:
                     raise ValueError("truncated_json")
                 content = reply.content.strip()
@@ -241,6 +243,8 @@ class AdviceService:
                     raise ValueError("structured_repair_transport_failed") from error
                 raise
             except (ValueError, TypeError, TimeoutError) as error:
+                observe("advice_validation_rejected", schema=schema.__name__, attempt=attempt + 1,
+                        repair_available=attempt < max_repairs)
                 if diagnostics is not None:
                     diagnostic = guide_diagnostic(error, phase)
                     if diagnostic not in diagnostics:

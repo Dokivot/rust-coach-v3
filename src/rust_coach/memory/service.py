@@ -2,6 +2,8 @@ import asyncio
 import json
 import logging
 import re
+from contextlib import nullcontext
+from contextvars import Context
 from uuid import uuid4
 from time import monotonic
 
@@ -9,16 +11,18 @@ from rust_coach.contracts import AppError, ModelMessage
 from rust_coach.memory.policy import TRIGGER, UNTRUSTED, deterministic_candidates, select_teaching, validate_candidate
 from rust_coach.memory.schemas import CONCEPTS, MemoryCandidate, MemoryExtraction
 from rust_coach.memory.store import MemoryStore, now_iso
+from rust_coach.performance import current_operation
 
 
 logger = logging.getLogger("rust_coach")
 
 
 class MemoryService:
-    def __init__(self, conversations, settings, model=None):
+    def __init__(self, conversations, settings, model=None, performance=None):
         self.store = MemoryStore(conversations)
         self.settings, self.model = settings, model
         self.task = None
+        self.performance = performance
 
     def command(self, message):
         aliases = {"你记住了什么": "/memory", "查看我的记忆": "/memory", "忘掉所有记忆": "/memory forget all",
@@ -83,6 +87,7 @@ class MemoryService:
         applied = self.store.apply(connection, candidates, source, expected_epoch=prepared["epoch"])
         profile = self.store.profile(connection)
         status = "pending" if prepared["pending"] and profile["enabled"] and profile["epoch"] == prepared["epoch"] else "skipped"
+        operation = current_operation()
         metadata = {"version": "memory-v1", "read_revision": prepared["context"].get("revision"),
                     "used_event_ids": [event["id"] for event in prepared["context"].get("events", [])],
                     "used_profile_keys": [key for group in ("preferences", "habits", "learning")
@@ -92,7 +97,8 @@ class MemoryService:
                     "context_chars": len(json.dumps(prepared["context"], ensure_ascii=False)),
                     "teaching": prepared["teaching"], "written_ids": applied,
                     "extraction": {"status": status, "epoch": prepared["epoch"], "attempts": 0,
-                                   "source": source, "previous_teaching": prepared["previous_teaching"]}}
+                                   "source": source, "previous_teaching": prepared["previous_teaching"],
+                                   "origin_run_id": operation.data["id"] if operation else None}}
         connection.execute("UPDATE turns SET memory=? WHERE conversation_id=? AND request_id=?",
             (json.dumps(metadata, ensure_ascii=False), source["conversation_id"], turn.request_id))
         turn.memory = {key: value for key, value in metadata.items() if key != "extraction"}
@@ -126,7 +132,7 @@ class MemoryService:
 
     def schedule(self):
         if self.model is not None and (self.task is None or self.task.done()):
-            self.task = asyncio.create_task(self.drain())
+            self.task = asyncio.create_task(self.drain(), context=Context())
 
     async def close(self):
         if self.task and not self.task.done():
@@ -157,8 +163,12 @@ class MemoryService:
                 connection.execute("UPDATE turns SET memory=? WHERE sequence=?", (json.dumps(metadata, ensure_ascii=False), row["sequence"]))
             try:
                 started = monotonic()
-                async with asyncio.timeout(self.settings.memory_timeout_seconds):
-                    candidates = await self.extract(row["user"], job["previous_teaching"])
+                source = job["source"]
+                measurement = self.performance.run("background_memory", conversation_id=source["conversation_id"],
+                    request_id=source["request_id"], parent_run_id=job.get("origin_run_id")) if self.performance else nullcontext()
+                with measurement:
+                    async with asyncio.timeout(self.settings.memory_timeout_seconds):
+                        candidates = await self.extract(row["user"], job["previous_teaching"])
                 job["elapsed_ms"] = round((monotonic() - started) * 1000)
                 self.finish_job(row["sequence"], metadata, candidates, "complete")
             except asyncio.CancelledError:

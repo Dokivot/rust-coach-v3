@@ -5,6 +5,7 @@ import httpx
 
 from rust_coach.config import Settings
 from rust_coach.contracts import AppError, ImagePart, ModelMessage, ModelReply
+from rust_coach.performance import provider_dispatched, provider_usage
 
 
 class ChatModel(Protocol):
@@ -12,6 +13,8 @@ class ChatModel(Protocol):
 
 
 class CompatibleChatModel:
+    records_transport = True
+
     def __init__(self, settings: Settings, client: httpx.AsyncClient, *, stream_responses: bool = False):
         self.settings = settings
         self.client = client
@@ -47,6 +50,7 @@ class CompatibleChatModel:
             payload.update(messages=serialized_messages)
             payload[self.settings.output_token_parameter] = self.settings.max_output_tokens
         try:
+            provider_dispatched()
             async with self.client.stream(
                 "POST",
                 f"{self.settings.base_url}/{endpoint}",
@@ -76,6 +80,7 @@ class CompatibleChatModel:
                 reply = self._parse_response(data)
             else:
                 data = json.loads(raw)
+                provider_usage(data.get("usage"))
                 choice = data["choices"][0]
                 content = choice["message"].get("content") or choice["message"].get("refusal")
                 if not isinstance(content, str):
@@ -102,6 +107,8 @@ class CompatibleChatModel:
         messages, parts, final = {}, {}, None
         for event in frames:
             kind = event["type"]
+            if isinstance(event.get("response"), dict) and event["response"].get("usage") is not None:
+                provider_usage(event["response"]["usage"])
             if kind == "error" or kind == "response.failed":
                 raise AppError("model_request_failed", "模型生成失败，请稍后重试或检查模型配置。", 502)
             if kind == "response.output_item.added":
@@ -135,6 +142,7 @@ class CompatibleChatModel:
         return self._parse_response({**final, "output": output})
 
     def _parse_response(self, data: dict) -> ModelReply:
+        provider_usage(data.get("usage"))
         if data.get("error") or data.get("status") == "failed":
             raise AppError("model_request_failed", "模型生成失败，请稍后重试或检查模型配置。", 502)
         truncated = data.get("status") == "incomplete"
