@@ -1,0 +1,1986 @@
+{
+  "version": "knowledge-fixed-v1",
+  "baseline_commit": "f120a366c286c60f3a7a6506521036886c77a93c",
+  "dataset_sha256": "8ca5f192ab3ae6fc58eb1af1ae961aea293430e715713429dffa84bc9ed73838",
+  "default_release_sha256": "768bde461cabd576d6dfcf15640c08a69c991822b112b9dd6dc8325cb2032dc3",
+  "source_hashes": {
+    "src/rust_coach/knowledge/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "src/rust_coach/knowledge/bundle.py": "8e647874bd8ba6e9f0bdb3c2a454dd8e0093dc509e8b34e23f98f2669bd4307b",
+    "src/rust_coach/knowledge/manage.py": "0fe1b32f08fce7027378ebef5fb3820adbca32d1d83c495252f7fd6c4e2d0239",
+    "src/rust_coach/knowledge/registry.py": "742d4030b764819e1ea4eb76f8d12429f3e997ffa9dbb8b7f349426a61c06d89",
+    "src/rust_coach/knowledge/schemas.py": "b7d0a893423311df24e2ffac85ec5ecf26e4fbe86ea3bd4e00221552e367d931",
+    "src/rust_coach/knowledge/service.py": "9d21d570c2ea43c6e08b501878bac1b94a34b85ae6b6f6e76baf328b30102953",
+    "src/rust_coach/knowledge/store.py": "c3b02b53f0c9a9bd8d9f4f71c58ed110d07a9f2bf73a22d80ec68cf2b8842773",
+    "src/rust_coach/knowledge/web.py": "ad1d6b94fa52d1d13da6fcd62a2919179e9909e6e9459bb9fed88616f22736e6",
+    "src/rust_coach/knowledge/curated.json": "44620b7061949dffd53fbb10d1c37ef76651f3be60219cc7e9371281a2b3a38c",
+    "src/rust_coach/calculations/rules.json": "11033e0ec886eb101a301c7e3e4ecc8fc9c30a23afeacc67679fecd710bbb3d5",
+    "evals/knowledge.py": "10737dd0d1f808aaa92b0afb4f861c05c0a1d9a10f1e29026d296c153fdd0c4f"
+  },
+  "case_count": 24,
+  "summary": {
+    "B0_coarse": {
+      "passed": 4,
+      "total": 24,
+      "reserved_passed": 2,
+      "reserved_total": 8,
+      "mean_context_chars": 105,
+      "p50_ms": 0.659,
+      "p95_ms": 0.868,
+      "model_calls": 0,
+      "network_calls": 0
+    },
+    "B1_eligible_coarse": {
+      "passed": 7,
+      "total": 24,
+      "reserved_passed": 2,
+      "reserved_total": 8,
+      "mean_context_chars": 84,
+      "p50_ms": 0.6735,
+      "p95_ms": 0.737,
+      "model_calls": 0,
+      "network_calls": 0
+    },
+    "B2_exact_fts": {
+      "passed": 24,
+      "total": 24,
+      "reserved_passed": 8,
+      "reserved_total": 8,
+      "mean_context_chars": 133.04,
+      "p50_ms": 1.5379999999999998,
+      "p95_ms": 1.736,
+      "model_calls": 0,
+      "network_calls": 0
+    }
+  },
+  "results": [
+    {
+      "case_id": "recipe_c4",
+      "group": "recipes",
+      "split": "development",
+      "strategy": "B0_coarse",
+      "passed": false,
+      "checks": {
+        "status": true,
+        "required_evidence": false,
+        "eligible_evidence": true,
+        "context_budget": true,
+        "no_external_calls": true
+      },
+      "missing": [
+        "recipe:explosive.timed"
+      ],
+      "ineligible": [],
+      "status": "supported_snapshot",
+      "selected": [
+        "recipe:spear.stone",
+        "recipe:pickaxe",
+        "recipe:ammo.rocket.basic",
+        "recipe:chainsaw",
+        "recipe:catapult"
+      ],
+      "context_chars": 252,
+      "elapsed_ms": 1.168,
+      "excluded": [],
+      "model_calls": 0,
+      "network_calls": 0
+    },
+    {
+      "case_id": "recipe_c4",
+      "group": "recipes",
+      "split": "development",
+      "strategy": "B1_eligible_coarse",
+      "passed": false,
+      "checks": {
+        "status": true,
+        "required_evidence": false,
+        "eligible_evidence": true,
+        "context_budget": true,
+        "no_external_calls": true
+      },
+      "missing": [
+        "recipe:explosive.timed"
+      ],
+      "ineligible": [],
+      "status": "supported_snapshot",
+      "selected": [
+        "recipe:spear.stone",
+        "recipe:pickaxe",
+        "recipe:ammo.rocket.basic",
+        "recipe:chainsaw",
+        "recipe:catapult"
+      ],
+      "context_chars": 252,
+      "elapsed_ms": 0.676,
+      "excluded": [],
+      "model_calls": 0,
+      "network_calls": 0
+    },
+    {
+      "case_id": "recipe_c4",
+      "group": "recipes",
+      "split": "development",
+      "strategy": "B2_exact_fts",
+      "passed": true,
+      "checks": {
+        "status": true,
+        "required_evidence": true,
+        "eligible_evidence": true,
+        "context_budget": true,
+        "no_external_calls": true
+      },
+      "missing": [],
+      "ineligible": [],
+      "status": "supported_snapshot",
+      "selected": [
+        "recipe:explosive.timed"
+      ],
+      "context_chars": 51,
+      "elapsed_ms": 1.577,
+      "excluded": [],
+      "model_calls": 0,
+      "network_calls": 0
+    },
+    {
+      "case_id": "recipe_powder",
+      "group": "recipes",
+      "split": "development",
+      "strategy": "B0_coarse",
+      "passed": false,
+      "checks": {
+        "status": true,
+        "required_evidence": false,
+        "eligible_evidence": true,
+        "context_budget": true,
+        "no_external_calls": true
+      },
+      "missing": [
+        "recipe:gunpowder"
+      ],
+      "ineligible": [],
+      "status": "supported_snapshot",
+      "selected": [
+        "recipe:spear.stone",
+        "recipe:pickaxe",
+        "recipe:ammo.rocket.basic",
+        "recipe:chainsaw",
+        "recipe:catapult"
+      ],
+      "context_chars": 252,
+      "elapsed_ms": 0.868,
+      "excluded": [],
+      "model_calls": 0,
+      "network_calls": 0
+    },
+    {
+      "case_id": "recipe_powder",
+      "group": "recipes",
+      "split": "development",
+      "strategy": "B1_eligible_coarse",
+      "passed": false,
+      "checks": {
+        "status": true,
+        "required_evidence": false,
+        "eligible_evidence": true,
+        "context_budget": true,
+        "no_external_calls": true
+      },
+      "missing": [
+        "recipe:gunpowder"
+      ],
+      "ineligible": [],
+      "status": "supported_snapshot",
+      "selected": [
+        "recipe:spear.stone",
+        "recipe:pickaxe",
+        "recipe:ammo.rocket.basic",
+        "recipe:chainsaw",
+        "recipe:catapult"
+      ],
+      "context_chars": 252,
+      "elapsed_ms": 0.665,
+      "excluded": [],
+      "model_calls": 0,
+      "network_calls": 0
+    },
+    {
+      "case_id": "recipe_powder",
+      "group": "recipes",
+      "split": "development",
+      "strategy": "B2_exact_fts",
+      "passed": true,
+      "checks": {
+        "status": true,
+        "required_evidence": true,
+        "eligible_evidence": true,
+        "context_budget": true,
+        "no_external_calls": true
+      },
+      "missing": [],
+      "ineligible": [],
+      "status": "supported_snapshot",
+      "selected": [
+        "recipe:gunpowder"
+      ],
+      "context_chars": 45,
+      "elapsed_ms": 1.381,
+      "excluded": [],
+      "model_calls": 0,
+      "network_calls": 0
+    },
+    {
+      "case_id": "recipe_explosives",
+      "group": "recipes",
+      "split": "development",
+      "strategy": "B0_coarse",
+      "passed": false,
+      "checks": {
+        "status": true,
+        "required_evidence": false,
+        "eligible_evidence": true,
+        "context_budget": true,
+        "no_external_calls": true
+      },
+      "missing": [
+        "recipe:explosives"
+      ],
+      "ineligible": [],
+      "status": "supported_snapshot",
+      "selected": [
+        "recipe:spear.stone",
+        "recipe:pickaxe",
+        "recipe:ammo.rocket.basic",
+        "recipe:chainsaw",
+        "recipe:catapult"
+      ],
+      "context_chars": 252,
+      "elapsed_ms": 0.624,
+      "excluded": [],
+      "model_calls": 0,
+      "network_calls": 0
+    },
+    {
+      "case_id": "recipe_explosives",
+      "group": "recipes",
+      "split": "development",
+      "strategy": "B1_eligible_coarse",
+      "passed": false,
+      "checks": {
+        "status": true,
+        "required_evidence": false,
+        "eligible_evidence": true,
+        "context_budget": true,
+        "no_external_calls": true
+      },
+      "missing": [
+        "recipe:explosives"
+      ],
+      "ineligible": [],
+      "status": "supported_snapshot",
+      "selected": [
+        "recipe:spear.stone",
+        "recipe:pickaxe",
+        "recipe:ammo.rocket.basic",
+        "recipe:chainsaw",
+        "recipe:catapult"
+      ],
+      "context_chars": 252,
+      "elapsed_ms": 0.708,
+      "excluded": [],
+      "model_calls": 0,
+      "network_calls": 0
+    },
+    {
+      "case_id": "recipe_explosives",
+      "group": "recipes",
+      "split": "development",
+      "strategy": "B2_exact_fts",
+      "passed": true,
+      "checks": {
+        "status": true,
+        "required_evidence": true,
+        "eligible_evidence": true,
+        "context_budget": true,
+        "no_external_calls": true
+      },
+      "missing": [],
+      "ineligible": [],
+      "status": "supported_snapshot",
+      "selected": [
+        "recipe:explosives"
+      ],
+      "context_chars": 60,
+      "elapsed_ms": 1.328,
+      "excluded": [],
+      "model_calls": 0,
+      "network_calls": 0
+    },
+    {
+      "case_id": "technology",
+      "group": "recipes",
+      "split": "development",
+      "strategy": "B0_coarse",
+      "passed": false,
+      "checks": {
+        "status": false,
+        "required_evidence": false,
+        "eligible_evidence": true,
+        "context_budget": true,
+        "no_external_calls": true
+      },
+      "missing": [
+        "explain:technology",
+        "recipe:explosive.timed"
+      ],
+      "ineligible": [],
+      "status": "missing_evidence",
+      "selected": [],
+      "context_chars": 0,
+      "elapsed_ms": 0.763,
+      "excluded": [],
+      "model_calls": 0,
+      "network_calls": 0
+    },
+    {
+      "case_id": "technology",
+      "group": "recipes",
+      "split": "development",
+      "strategy": "B1_eligible_coarse",
+      "passed": false,
+      "checks": {
+        "status": false,
+        "required_evidence": false,
+        "eligible_evidence": true,
+        "context_budget": true,
+        "no_external_calls": true
+      },
+      "missing": [
+        "explain:technology",
+        "recipe:explosive.timed"
+      ],
+      "ineligible": [],
+      "status": "missing_evidence",
+      "selected": [],
+      "context_chars": 0,
+      "elapsed_ms": 0.648,
+      "excluded": [],
+      "model_calls": 0,
+      "network_calls": 0
+    },
+    {
+      "case_id": "technology",
+      "group": "recipes",
+      "split": "development",
+      "strategy": "B2_exact_fts",
+      "passed": true,
+      "checks": {
+        "status": true,
+        "required_evidence": true,
+        "eligible_evidence": true,
+        "context_budget": true,
+        "no_external_calls": true
+      },
+      "missing": [],
+      "ineligible": [],
+      "status": "supported_snapshot",
+      "selected": [
+        "recipe:explosive.timed",
+        "explain:conditions",
+        "explain:technology"
+      ],
+      "context_chars": 186,
+      "elapsed_ms": 1.683,
+      "excluded": [],
+      "model_calls": 0,
+      "network_calls": 0
+    },
+    {
+      "case_id": "rounding",
+      "group": "raid",
+      "split": "development",
+      "strategy": "B0_coarse",
+      "passed": false,
+      "checks": {
+        "status": false,
+        "required_evidence": false,
+        "eligible_evidence": true,
+        "context_budget": true,
+        "no_external_calls": true
+      },
+      "missing": [
+        "explain:rounding",
+        "raid:building:base-wall:stone",
+        "recipe:explosive.timed"
+      ],
+      "ineligible": [],
+      "status": "missing_evidence",
+      "selected": [],
+      "context_chars": 0,
+      "elapsed_ms": 0.794,
+      "excluded": [],
+      "model_calls": 0,
+      "network_calls": 0
+    },
+    {
+      "case_id": "rounding",
+      "group": "raid",
+      "split": "development",
+      "strategy": "B1_eligible_coarse",
+      "passed": false,
+      "checks": {
+        "status": false,
+        "required_evidence": false,
+        "eligible_evidence": true,
+        "context_budget": true,
+        "no_external_calls": true
+      },
+      "missing": [
+        "explain:rounding",
+        "raid:building:base-wall:stone",
+        "recipe:explosive.timed"
+      ],
+      "ineligible": [],
+      "status": "missing_evidence",
+      "selected": [],
+      "context_chars": 0,
+      "elapsed_ms": 0.673,
+      "excluded": [],
+      "model_calls": 0,
+      "network_calls": 0
+    },
+    {
+      "case_id": "rounding",
+      "group": "raid",
+      "split": "development",
+      "strategy": "B2_exact_fts",
+      "passed": true,
+      "checks": {
+        "status": true,
+        "required_evidence": true,
+        "eligible_evidence": true,
+        "context_budget": true,
+        "no_external_calls": true
+      },
+      "missing": [],
+      "ineligible": [],
+      "status": "supported_snapshot",
+      "selected": [
+        "recipe:explosive.timed",
+        "raid:building:base-wall:stone",
+        "explain:rounding"
+      ],
+      "context_chars": 474,
+      "elapsed_ms": 1.588,
+      "excluded": [],
+      "model_calls": 0,
+      "network_calls": 0
+    },
+    {
+      "case_id": "targets",
+      "group": "raid",
+      "split": "development",
+      "strategy": "B0_coarse",
+      "passed": false,
+      "checks": {
+        "status": false,
+        "required_evidence": false,
+        "eligible_evidence": true,
+        "context_budget": true,
+        "no_external_calls": true
+      },
+      "missing": [
+        "explain:targets",
+        "raid:building:base-wall:stone"
+      ],
+      "ineligible": [],
+      "status": "missing_evidence",
+      "selected": [],
+      "context_chars": 0,
+      "elapsed_ms": 0.638,
+      "excluded": [],
+      "model_calls": 0,
+      "network_calls": 0
+    },
+    {
+      "case_id": "targets",
+      "group": "raid",
+      "split": "development",
+      "strategy": "B1_eligible_coarse",
+      "passed": false,
+      "checks": {
+        "status": false,
+        "required_evidence": false,
+        "eligible_evidence": true,
+        "context_budget": true,
+        "no_external_calls": true
+      },
+      "missing": [
+        "explain:targets",
+        "raid:building:base-wall:stone"
+      ],
+      "ineligible": [],
+      "status": "missing_evidence",
+      "selected": [],
+      "context_chars": 0,
+      "elapsed_ms": 0.703,
+      "excluded": [],
+      "model_calls": 0,
+      "network_calls": 0
+    },
+    {
+      "case_id": "targets",
+      "group": "raid",
+      "split": "development",
+      "strategy": "B2_exact_fts",
+      "passed": true,
+      "checks": {
+        "status": true,
+        "required_evidence": true,
+        "eligible_evidence": true,
+        "context_budget": true,
+        "no_external_calls": true
+      },
+      "missing": [],
+      "ineligible": [],
+      "status": "supported_snapshot",
+      "selected": [
+        "raid:building:base-wall:stone",
+        "explain:targets"
+      ],
+      "context_chars": 396,
+      "elapsed_ms": 1.561,
+      "excluded": [],
+      "model_calls": 0,
+      "network_calls": 0
+    },
+    {
+      "case_id": "optimization",
+      "group": "raid",
+      "split": "development",
+      "strategy": "B0_coarse",
+      "passed": false,
+      "checks": {
+        "status": false,
+        "required_evidence": false,
+        "eligible_evidence": true,
+        "context_budget": true,
+        "no_external_calls": true
+      },
+      "missing": [
+        "explain:optimization",
+        "raid:building:base-wall:stone"
+      ],
+      "ineligible": [],
+      "status": "missing_evidence",
+      "selected": [],
+      "context_chars": 0,
+      "elapsed_ms": 0.671,
+      "excluded": [],
+      "model_calls": 0,
+      "network_calls": 0
+    },
+    {
+      "case_id": "optimization",
+      "group": "raid",
+      "split": "development",
+      "strategy": "B1_eligible_coarse",
+      "passed": false,
+      "checks": {
+        "status": false,
+        "required_evidence": false,
+        "eligible_evidence": true,
+        "context_budget": true,
+        "no_external_calls": true
+      },
+      "missing": [
+        "explain:optimization",
+        "raid:building:base-wall:stone"
+      ],
+      "ineligible": [],
+      "status": "missing_evidence",
+      "selected": [],
+      "context_chars": 0,
+      "elapsed_ms": 0.642,
+      "excluded": [],
+      "model_calls": 0,
+      "network_calls": 0
+    },
+    {
+      "case_id": "optimization",
+      "group": "raid",
+      "split": "development",
+      "strategy": "B2_exact_fts",
+      "passed": true,
+      "checks": {
+        "status": true,
+        "required_evidence": true,
+        "eligible_evidence": true,
+        "context_budget": true,
+        "no_external_calls": true
+      },
+      "missing": [],
+      "ineligible": [],
+      "status": "supported_snapshot",
+      "selected": [
+        "raid:building:base-wall:stone",
+        "explain:optimization"
+      ],
+      "context_chars": 418,
+      "elapsed_ms": 1.66,
+      "excluded": [],
+      "model_calls": 0,
+      "network_calls": 0
+    },
+    {
+      "case_id": "conditions",
+      "group": "raid",
+      "split": "development",
+      "strategy": "B0_coarse",
+      "passed": false,
+      "checks": {
+        "status": false,
+        "required_evidence": false,
+        "eligible_evidence": true,
+        "context_budget": true,
+        "no_external_calls": true
+      },
+      "missing": [
+        "explain:conditions",
+        "raid:building:base-wall:stone"
+      ],
+      "ineligible": [],
+      "status": "missing_evidence",
+      "selected": [],
+      "context_chars": 0,
+      "elapsed_ms": 0.663,
+      "excluded": [],
+      "model_calls": 0,
+      "network_calls": 0
+    },
+    {
+      "case_id": "conditions",
+      "group": "raid",
+      "split": "development",
+      "strategy": "B1_eligible_coarse",
+      "passed": false,
+      "checks": {
+        "status": false,
+        "required_evidence": false,
+        "eligible_evidence": true,
+        "context_budget": true,
+        "no_external_calls": true
+      },
+      "missing": [
+        "explain:conditions",
+        "raid:building:base-wall:stone"
+      ],
+      "ineligible": [],
+      "status": "missing_evidence",
+      "selected": [],
+      "context_chars": 0,
+      "elapsed_ms": 0.737,
+      "excluded": [],
+      "model_calls": 0,
+      "network_calls": 0
+    },
+    {
+      "case_id": "conditions",
+      "group": "raid",
+      "split": "development",
+      "strategy": "B2_exact_fts",
+      "passed": true,
+      "checks": {
+        "status": true,
+        "required_evidence": true,
+        "eligible_evidence": true,
+        "context_budget": true,
+        "no_external_calls": true
+      },
+      "missing": [],
+      "ineligible": [],
+      "status": "supported_snapshot",
+      "selected": [
+        "raid:building:base-wall:stone",
+        "explain:conditions"
+      ],
+      "context_chars": 401,
+      "elapsed_ms": 1.595,
+      "excluded": [],
+      "model_calls": 0,
+      "network_calls": 0
+    },
+    {
+      "case_id": "source",
+      "group": "version",
+      "split": "development",
+      "strategy": "B0_coarse",
+      "passed": false,
+      "checks": {
+        "status": false,
+        "required_evidence": false,
+        "eligible_evidence": true,
+        "context_budget": true,
+        "no_external_calls": true
+      },
+      "missing": [
+        "excerpt:c4",
+        "explain:version",
+        "recipe:explosive.timed"
+      ],
+      "ineligible": [],
+      "status": "missing_evidence",
+      "selected": [],
+      "context_chars": 0,
+      "elapsed_ms": 0.63,
+      "excluded": [],
+      "model_calls": 0,
+      "network_calls": 0
+    },
+    {
+      "case_id": "source",
+      "group": "version",
+      "split": "development",
+      "strategy": "B1_eligible_coarse",
+      "passed": false,
+      "checks": {
+        "status": false,
+        "required_evidence": false,
+        "eligible_evidence": true,
+        "context_budget": true,
+        "no_external_calls": true
+      },
+      "missing": [
+        "excerpt:c4",
+        "explain:version",
+        "recipe:explosive.timed"
+      ],
+      "ineligible": [],
+      "status": "missing_evidence",
+      "selected": [],
+      "context_chars": 0,
+      "elapsed_ms": 0.648,
+      "excluded": [],
+      "model_calls": 0,
+      "network_calls": 0
+    },
+    {
+      "case_id": "source",
+      "group": "version",
+      "split": "development",
+      "strategy": "B2_exact_fts",
+      "passed": true,
+      "checks": {
+        "status": true,
+        "required_evidence": true,
+        "eligible_evidence": true,
+        "context_budget": true,
+        "no_external_calls": true
+      },
+      "missing": [],
+      "ineligible": [],
+      "status": "supported_snapshot",
+      "selected": [
+        "recipe:explosive.timed",
+        "explain:version",
+        "excerpt:c4"
+      ],
+      "context_chars": 346,
+      "elapsed_ms": 1.551,
+      "excluded": [],
+      "model_calls": 0,
+      "network_calls": 0
+    },
+    {
+      "case_id": "latest",
+      "group": "version",
+      "split": "development",
+      "strategy": "B0_coarse",
+      "passed": false,
+      "checks": {
+        "status": false,
+        "required_evidence": true,
+        "eligible_evidence": true,
+        "context_budget": true,
+        "no_external_calls": true
+      },
+      "missing": [],
+      "ineligible": [],
+      "status": "missing_evidence",
+      "selected": [],
+      "context_chars": 0,
+      "elapsed_ms": 0.723,
+      "excluded": [],
+      "model_calls": 0,
+      "network_calls": 0
+    },
+    {
+      "case_id": "latest",
+      "group": "version",
+      "split": "development",
+      "strategy": "B1_eligible_coarse",
+      "passed": true,
+      "checks": {
+        "status": true,
+        "required_evidence": true,
+        "eligible_evidence": true,
+        "context_budget": true,
+        "no_external_calls": true
+      },
+      "missing": [],
+      "ineligible": [],
+      "status": "latest_unverified",
+      "selected": [],
+      "context_chars": 0,
+      "elapsed_ms": 0.608,
+      "excluded": [],
+      "model_calls": 0,
+      "network_calls": 0
+    },
+    {
+      "case_id": "latest",
+      "group": "version",
+      "split": "development",
+      "strategy": "B2_exact_fts",
+      "passed": true,
+      "checks": {
+        "status": true,
+        "required_evidence": true,
+        "eligible_evidence": true,
+        "context_budget": true,
+        "no_external_calls": true
+      },
+      "missing": [],
+      "ineligible": [],
+      "status": "latest_unverified",
+      "selected": [],
+      "context_chars": 0,
+      "elapsed_ms": 1.095,
+      "excluded": [],
+      "model_calls": 0,
+      "network_calls": 0
+    },
+    {
+      "case_id": "console",
+      "group": "version",
+      "split": "development",
+      "strategy": "B0_coarse",
+      "passed": false,
+      "checks": {
+        "status": false,
+        "required_evidence": true,
+        "eligible_evidence": true,
+        "context_budget": true,
+        "no_external_calls": true
+      },
+      "missing": [],
+      "ineligible": [],
+      "status": "supported_snapshot",
+      "selected": [
+        "recipe:spear.stone",
+        "recipe:pickaxe",
+        "recipe:ammo.rocket.basic",
+        "recipe:chainsaw",
+        "recipe:catapult"
+      ],
+      "context_chars": 252,
+      "elapsed_ms": 0.696,
+      "excluded": [],
+      "model_calls": 0,
+      "network_calls": 0
+    },
+    {
+      "case_id": "console",
+      "group": "version",
+      "split": "development",
+      "strategy": "B1_eligible_coarse",
+      "passed": true,
+      "checks": {
+        "status": true,
+        "required_evidence": true,
+        "eligible_evidence": true,
+        "context_budget": true,
+        "no_external_calls": true
+      },
+      "missing": [],
+      "ineligible": [],
+      "status": "scope_mismatch",
+      "selected": [],
+      "context_chars": 0,
+      "elapsed_ms": 0.524,
+      "excluded": [],
+      "model_calls": 0,
+      "network_calls": 0
+    },
+    {
+      "case_id": "console",
+      "group": "version",
+      "split": "development",
+      "strategy": "B2_exact_fts",
+      "passed": true,
+      "checks": {
+        "status": true,
+        "required_evidence": true,
+        "eligible_evidence": true,
+        "context_budget": true,
+        "no_external_calls": true
+      },
+      "missing": [],
+      "ineligible": [],
+      "status": "scope_mismatch",
+      "selected": [],
+      "context_chars": 0,
+      "elapsed_ms": 1.103,
+      "excluded": [],
+      "model_calls": 0,
+      "network_calls": 0
+    },
+    {
+      "case_id": "old_date",
+      "group": "version",
+      "split": "development",
+      "strategy": "B0_coarse",
+      "passed": false,
+      "checks": {
+        "status": false,
+        "required_evidence": true,
+        "eligible_evidence": true,
+        "context_budget": true,
+        "no_external_calls": true
+      },
+      "missing": [],
+      "ineligible": [],
+      "status": "supported_snapshot",
+      "selected": [
+        "recipe:spear.stone",
+        "recipe:pickaxe",
+        "recipe:ammo.rocket.basic",
+        "recipe:chainsaw",
+        "recipe:catapult"
+      ],
+      "context_chars": 252,
+      "elapsed_ms": 0.654,
+      "excluded": [],
+      "model_calls": 0,
+      "network_calls": 0
+    },
+    {
+      "case_id": "old_date",
+      "group": "version",
+      "split": "development",
+      "strategy": "B1_eligible_coarse",
+      "passed": true,
+      "checks": {
+        "status": true,
+        "required_evidence": true,
+        "eligible_evidence": true,
+        "context_budget": true,
+        "no_external_calls": true
+      },
+      "missing": [],
+      "ineligible": [],
+      "status": "scope_mismatch",
+      "selected": [],
+      "context_chars": 0,
+      "elapsed_ms": 0.499,
+      "excluded": [],
+      "model_calls": 0,
+      "network_calls": 0
+    },
+    {
+      "case_id": "old_date",
+      "group": "version",
+      "split": "development",
+      "strategy": "B2_exact_fts",
+      "passed": true,
+      "checks": {
+        "status": true,
+        "required_evidence": true,
+        "eligible_evidence": true,
+        "context_budget": true,
+        "no_external_calls": true
+      },
+      "missing": [],
+      "ineligible": [],
+      "status": "scope_mismatch",
+      "selected": [],
+      "context_chars": 0,
+      "elapsed_ms": 1.135,
+      "excluded": [],
+      "model_calls": 0,
+      "network_calls": 0
+    },
+    {
+      "case_id": "unknown_mechanism",
+      "group": "failures",
+      "split": "development",
+      "strategy": "B0_coarse",
+      "passed": false,
+      "checks": {
+        "status": false,
+        "required_evidence": true,
+        "eligible_evidence": true,
+        "context_budget": true,
+        "no_external_calls": true
+      },
+      "missing": [],
+      "ineligible": [],
+      "status": "supported_snapshot",
+      "selected": [
+        "recipe:spear.stone",
+        "recipe:pickaxe",
+        "recipe:ammo.rocket.basic",
+        "recipe:chainsaw",
+        "recipe:catapult"
+      ],
+      "context_chars": 252,
+      "elapsed_ms": 0.685,
+      "excluded": [],
+      "model_calls": 0,
+      "network_calls": 0
+    },
+    {
+      "case_id": "unknown_mechanism",
+      "group": "failures",
+      "split": "development",
+      "strategy": "B1_eligible_coarse",
+      "passed": false,
+      "checks": {
+        "status": false,
+        "required_evidence": true,
+        "eligible_evidence": true,
+        "context_budget": true,
+        "no_external_calls": true
+      },
+      "missing": [],
+      "ineligible": [],
+      "status": "supported_snapshot",
+      "selected": [
+        "recipe:spear.stone",
+        "recipe:pickaxe",
+        "recipe:ammo.rocket.basic",
+        "recipe:chainsaw",
+        "recipe:catapult"
+      ],
+      "context_chars": 252,
+      "elapsed_ms": 0.685,
+      "excluded": [],
+      "model_calls": 0,
+      "network_calls": 0
+    },
+    {
+      "case_id": "unknown_mechanism",
+      "group": "failures",
+      "split": "development",
+      "strategy": "B2_exact_fts",
+      "passed": true,
+      "checks": {
+        "status": true,
+        "required_evidence": true,
+        "eligible_evidence": true,
+        "context_budget": true,
+        "no_external_calls": true
+      },
+      "missing": [],
+      "ineligible": [],
+      "status": "missing_evidence",
+      "selected": [],
+      "context_chars": 0,
+      "elapsed_ms": 0,
+      "excluded": [],
+      "model_calls": 0,
+      "network_calls": 0
+    },
+    {
+      "case_id": "unsupported_guarantee",
+      "group": "failures",
+      "split": "development",
+      "strategy": "B0_coarse",
+      "passed": true,
+      "checks": {
+        "status": true,
+        "required_evidence": true,
+        "eligible_evidence": true,
+        "context_budget": true,
+        "no_external_calls": true
+      },
+      "missing": [],
+      "ineligible": [],
+      "status": "missing_evidence",
+      "selected": [],
+      "context_chars": 0,
+      "elapsed_ms": 0.645,
+      "excluded": [],
+      "model_calls": 0,
+      "network_calls": 0
+    },
+    {
+      "case_id": "unsupported_guarantee",
+      "group": "failures",
+      "split": "development",
+      "strategy": "B1_eligible_coarse",
+      "passed": true,
+      "checks": {
+        "status": true,
+        "required_evidence": true,
+        "eligible_evidence": true,
+        "context_budget": true,
+        "no_external_calls": true
+      },
+      "missing": [],
+      "ineligible": [],
+      "status": "missing_evidence",
+      "selected": [],
+      "context_chars": 0,
+      "elapsed_ms": 0.748,
+      "excluded": [],
+      "model_calls": 0,
+      "network_calls": 0
+    },
+    {
+      "case_id": "unsupported_guarantee",
+      "group": "failures",
+      "split": "development",
+      "strategy": "B2_exact_fts",
+      "passed": true,
+      "checks": {
+        "status": true,
+        "required_evidence": true,
+        "eligible_evidence": true,
+        "context_budget": true,
+        "no_external_calls": true
+      },
+      "missing": [],
+      "ineligible": [],
+      "status": "missing_evidence",
+      "selected": [],
+      "context_chars": 0,
+      "elapsed_ms": 0,
+      "excluded": [],
+      "model_calls": 0,
+      "network_calls": 0
+    },
+    {
+      "case_id": "context_limit",
+      "group": "failures",
+      "split": "development",
+      "strategy": "B0_coarse",
+      "passed": true,
+      "checks": {
+        "status": true,
+        "required_evidence": true,
+        "eligible_evidence": true,
+        "context_budget": true,
+        "no_external_calls": true
+      },
+      "missing": [],
+      "ineligible": [],
+      "status": "missing_evidence",
+      "selected": [],
+      "context_chars": 0,
+      "elapsed_ms": 0.64,
+      "excluded": [],
+      "model_calls": 0,
+      "network_calls": 0
+    },
+    {
+      "case_id": "context_limit",
+      "group": "failures",
+      "split": "development",
+      "strategy": "B1_eligible_coarse",
+      "passed": true,
+      "checks": {
+        "status": true,
+        "required_evidence": true,
+        "eligible_evidence": true,
+        "context_budget": true,
+        "no_external_calls": true
+      },
+      "missing": [],
+      "ineligible": [],
+      "status": "missing_evidence",
+      "selected": [],
+      "context_chars": 0,
+      "elapsed_ms": 0.674,
+      "excluded": [],
+      "model_calls": 0,
+      "network_calls": 0
+    },
+    {
+      "case_id": "context_limit",
+      "group": "failures",
+      "split": "development",
+      "strategy": "B2_exact_fts",
+      "passed": true,
+      "checks": {
+        "status": true,
+        "required_evidence": true,
+        "eligible_evidence": true,
+        "context_budget": true,
+        "no_external_calls": true
+      },
+      "missing": [],
+      "ineligible": [],
+      "status": "missing_evidence",
+      "selected": [],
+      "context_chars": 0,
+      "elapsed_ms": 1.489,
+      "excluded": [],
+      "model_calls": 0,
+      "network_calls": 0
+    },
+    {
+      "case_id": "index_failure",
+      "group": "failures",
+      "split": "development",
+      "strategy": "B0_coarse",
+      "passed": false,
+      "checks": {
+        "status": false,
+        "required_evidence": true,
+        "eligible_evidence": true,
+        "context_budget": true,
+        "no_external_calls": true
+      },
+      "missing": [],
+      "ineligible": [],
+      "status": "missing_evidence",
+      "selected": [],
+      "context_chars": 0,
+      "elapsed_ms": 0.655,
+      "excluded": [],
+      "model_calls": 0,
+      "network_calls": 0
+    },
+    {
+      "case_id": "index_failure",
+      "group": "failures",
+      "split": "development",
+      "strategy": "B1_eligible_coarse",
+      "passed": false,
+      "checks": {
+        "status": false,
+        "required_evidence": true,
+        "eligible_evidence": true,
+        "context_budget": true,
+        "no_external_calls": true
+      },
+      "missing": [],
+      "ineligible": [],
+      "status": "missing_evidence",
+      "selected": [],
+      "context_chars": 0,
+      "elapsed_ms": 0.681,
+      "excluded": [],
+      "model_calls": 0,
+      "network_calls": 0
+    },
+    {
+      "case_id": "index_failure",
+      "group": "failures",
+      "split": "development",
+      "strategy": "B2_exact_fts",
+      "passed": true,
+      "checks": {
+        "status": true,
+        "required_evidence": true,
+        "eligible_evidence": true,
+        "context_budget": true,
+        "no_external_calls": true
+      },
+      "missing": [],
+      "ineligible": [],
+      "status": "index_unavailable",
+      "selected": [],
+      "context_chars": 0,
+      "elapsed_ms": 1.082,
+      "excluded": [],
+      "model_calls": 0,
+      "network_calls": 0
+    },
+    {
+      "case_id": "mixing",
+      "group": "secondary",
+      "split": "reserved",
+      "strategy": "B0_coarse",
+      "passed": false,
+      "checks": {
+        "status": true,
+        "required_evidence": false,
+        "eligible_evidence": true,
+        "context_budget": true,
+        "no_external_calls": true
+      },
+      "missing": [
+        "explain:mixing",
+        "recipe:gunpowder",
+        "recipe:mix"
+      ],
+      "ineligible": [],
+      "status": "supported_snapshot",
+      "selected": [
+        "recipe:spear.stone",
+        "recipe:pickaxe",
+        "recipe:ammo.rocket.basic",
+        "recipe:chainsaw",
+        "recipe:catapult"
+      ],
+      "context_chars": 252,
+      "elapsed_ms": 0.696,
+      "excluded": [],
+      "model_calls": 0,
+      "network_calls": 0
+    },
+    {
+      "case_id": "mixing",
+      "group": "secondary",
+      "split": "reserved",
+      "strategy": "B1_eligible_coarse",
+      "passed": false,
+      "checks": {
+        "status": true,
+        "required_evidence": false,
+        "eligible_evidence": true,
+        "context_budget": true,
+        "no_external_calls": true
+      },
+      "missing": [
+        "explain:mixing",
+        "recipe:gunpowder",
+        "recipe:mix"
+      ],
+      "ineligible": [],
+      "status": "supported_snapshot",
+      "selected": [
+        "recipe:spear.stone",
+        "recipe:pickaxe",
+        "recipe:ammo.rocket.basic",
+        "recipe:chainsaw",
+        "recipe:catapult"
+      ],
+      "context_chars": 252,
+      "elapsed_ms": 0.695,
+      "excluded": [],
+      "model_calls": 0,
+      "network_calls": 0
+    },
+    {
+      "case_id": "mixing",
+      "group": "secondary",
+      "split": "reserved",
+      "strategy": "B2_exact_fts",
+      "passed": true,
+      "checks": {
+        "status": true,
+        "required_evidence": true,
+        "eligible_evidence": true,
+        "context_budget": true,
+        "no_external_calls": true
+      },
+      "missing": [],
+      "ineligible": [],
+      "status": "supported_snapshot",
+      "selected": [
+        "recipe:gunpowder",
+        "recipe:mix",
+        "explain:mixing"
+      ],
+      "context_chars": 171,
+      "elapsed_ms": 1.558,
+      "excluded": [],
+      "model_calls": 0,
+      "network_calls": 0
+    },
+    {
+      "case_id": "fuel",
+      "group": "secondary",
+      "split": "reserved",
+      "strategy": "B0_coarse",
+      "passed": false,
+      "checks": {
+        "status": true,
+        "required_evidence": false,
+        "eligible_evidence": true,
+        "context_budget": true,
+        "no_external_calls": true
+      },
+      "missing": [
+        "explain:fuel",
+        "recipe:explosive.timed"
+      ],
+      "ineligible": [],
+      "status": "supported_snapshot",
+      "selected": [
+        "recipe:spear.stone",
+        "recipe:pickaxe",
+        "recipe:ammo.rocket.basic",
+        "recipe:chainsaw",
+        "recipe:catapult"
+      ],
+      "context_chars": 252,
+      "elapsed_ms": 0.65,
+      "excluded": [],
+      "model_calls": 0,
+      "network_calls": 0
+    },
+    {
+      "case_id": "fuel",
+      "group": "secondary",
+      "split": "reserved",
+      "strategy": "B1_eligible_coarse",
+      "passed": false,
+      "checks": {
+        "status": true,
+        "required_evidence": false,
+        "eligible_evidence": true,
+        "context_budget": true,
+        "no_external_calls": true
+      },
+      "missing": [
+        "explain:fuel",
+        "recipe:explosive.timed"
+      ],
+      "ineligible": [],
+      "status": "supported_snapshot",
+      "selected": [
+        "recipe:spear.stone",
+        "recipe:pickaxe",
+        "recipe:ammo.rocket.basic",
+        "recipe:chainsaw",
+        "recipe:catapult"
+      ],
+      "context_chars": 252,
+      "elapsed_ms": 0.676,
+      "excluded": [],
+      "model_calls": 0,
+      "network_calls": 0
+    },
+    {
+      "case_id": "fuel",
+      "group": "secondary",
+      "split": "reserved",
+      "strategy": "B2_exact_fts",
+      "passed": true,
+      "checks": {
+        "status": true,
+        "required_evidence": true,
+        "eligible_evidence": true,
+        "context_budget": true,
+        "no_external_calls": true
+      },
+      "missing": [],
+      "ineligible": [],
+      "status": "supported_snapshot",
+      "selected": [
+        "recipe:explosive.timed",
+        "explain:fuel"
+      ],
+      "context_chars": 122,
+      "elapsed_ms": 1.631,
+      "excluded": [],
+      "model_calls": 0,
+      "network_calls": 0
+    },
+    {
+      "case_id": "unknown_hp",
+      "group": "secondary",
+      "split": "reserved",
+      "strategy": "B0_coarse",
+      "passed": false,
+      "checks": {
+        "status": false,
+        "required_evidence": false,
+        "eligible_evidence": true,
+        "context_budget": true,
+        "no_external_calls": true
+      },
+      "missing": [
+        "explain:unknown_hp",
+        "raid:building:base-wall:stone"
+      ],
+      "ineligible": [],
+      "status": "missing_evidence",
+      "selected": [],
+      "context_chars": 0,
+      "elapsed_ms": 0.638,
+      "excluded": [],
+      "model_calls": 0,
+      "network_calls": 0
+    },
+    {
+      "case_id": "unknown_hp",
+      "group": "secondary",
+      "split": "reserved",
+      "strategy": "B1_eligible_coarse",
+      "passed": false,
+      "checks": {
+        "status": false,
+        "required_evidence": false,
+        "eligible_evidence": true,
+        "context_budget": true,
+        "no_external_calls": true
+      },
+      "missing": [
+        "explain:unknown_hp",
+        "raid:building:base-wall:stone"
+      ],
+      "ineligible": [],
+      "status": "missing_evidence",
+      "selected": [],
+      "context_chars": 0,
+      "elapsed_ms": 0.687,
+      "excluded": [],
+      "model_calls": 0,
+      "network_calls": 0
+    },
+    {
+      "case_id": "unknown_hp",
+      "group": "secondary",
+      "split": "reserved",
+      "strategy": "B2_exact_fts",
+      "passed": true,
+      "checks": {
+        "status": true,
+        "required_evidence": true,
+        "eligible_evidence": true,
+        "context_budget": true,
+        "no_external_calls": true
+      },
+      "missing": [],
+      "ineligible": [],
+      "status": "supported_snapshot",
+      "selected": [
+        "raid:building:base-wall:stone",
+        "explain:unknown_hp"
+      ],
+      "context_chars": 394,
+      "elapsed_ms": 1.511,
+      "excluded": [],
+      "model_calls": 0,
+      "network_calls": 0
+    },
+    {
+      "case_id": "feedback",
+      "group": "secondary",
+      "split": "reserved",
+      "strategy": "B0_coarse",
+      "passed": false,
+      "checks": {
+        "status": false,
+        "required_evidence": false,
+        "eligible_evidence": true,
+        "context_budget": true,
+        "no_external_calls": true
+      },
+      "missing": [
+        "explain:feedback",
+        "recipe:explosive.timed"
+      ],
+      "ineligible": [],
+      "status": "missing_evidence",
+      "selected": [],
+      "context_chars": 0,
+      "elapsed_ms": 0.702,
+      "excluded": [],
+      "model_calls": 0,
+      "network_calls": 0
+    },
+    {
+      "case_id": "feedback",
+      "group": "secondary",
+      "split": "reserved",
+      "strategy": "B1_eligible_coarse",
+      "passed": false,
+      "checks": {
+        "status": false,
+        "required_evidence": false,
+        "eligible_evidence": true,
+        "context_budget": true,
+        "no_external_calls": true
+      },
+      "missing": [
+        "explain:feedback",
+        "recipe:explosive.timed"
+      ],
+      "ineligible": [],
+      "status": "missing_evidence",
+      "selected": [],
+      "context_chars": 0,
+      "elapsed_ms": 0.66,
+      "excluded": [],
+      "model_calls": 0,
+      "network_calls": 0
+    },
+    {
+      "case_id": "feedback",
+      "group": "secondary",
+      "split": "reserved",
+      "strategy": "B2_exact_fts",
+      "passed": true,
+      "checks": {
+        "status": true,
+        "required_evidence": true,
+        "eligible_evidence": true,
+        "context_budget": true,
+        "no_external_calls": true
+      },
+      "missing": [],
+      "ineligible": [],
+      "status": "supported_snapshot",
+      "selected": [
+        "recipe:explosive.timed",
+        "explain:feedback"
+      ],
+      "context_chars": 129,
+      "elapsed_ms": 1.642,
+      "excluded": [],
+      "model_calls": 0,
+      "network_calls": 0
+    },
+    {
+      "case_id": "pending",
+      "group": "lifecycle",
+      "split": "reserved",
+      "strategy": "B0_coarse",
+      "passed": true,
+      "checks": {
+        "status": true,
+        "required_evidence": true,
+        "eligible_evidence": true,
+        "context_budget": true,
+        "no_external_calls": true
+      },
+      "missing": [],
+      "ineligible": [],
+      "status": "missing_evidence",
+      "selected": [],
+      "context_chars": 0,
+      "elapsed_ms": 0.632,
+      "excluded": [],
+      "model_calls": 0,
+      "network_calls": 0
+    },
+    {
+      "case_id": "pending",
+      "group": "lifecycle",
+      "split": "reserved",
+      "strategy": "B1_eligible_coarse",
+      "passed": true,
+      "checks": {
+        "status": true,
+        "required_evidence": true,
+        "eligible_evidence": true,
+        "context_budget": true,
+        "no_external_calls": true
+      },
+      "missing": [],
+      "ineligible": [],
+      "status": "missing_evidence",
+      "selected": [],
+      "context_chars": 0,
+      "elapsed_ms": 0.681,
+      "excluded": [
+        {
+          "id": "explain:inventory",
+          "reason": "pending"
+        }
+      ],
+      "model_calls": 0,
+      "network_calls": 0
+    },
+    {
+      "case_id": "pending",
+      "group": "lifecycle",
+      "split": "reserved",
+      "strategy": "B2_exact_fts",
+      "passed": true,
+      "checks": {
+        "status": true,
+        "required_evidence": true,
+        "eligible_evidence": true,
+        "context_budget": true,
+        "no_external_calls": true
+      },
+      "missing": [],
+      "ineligible": [],
+      "status": "missing_evidence",
+      "selected": [],
+      "context_chars": 0,
+      "elapsed_ms": 1.525,
+      "excluded": [
+        {
+          "id": "explain:inventory",
+          "reason": "pending"
+        }
+      ],
+      "model_calls": 0,
+      "network_calls": 0
+    },
+    {
+      "case_id": "conflicted",
+      "group": "lifecycle",
+      "split": "reserved",
+      "strategy": "B0_coarse",
+      "passed": true,
+      "checks": {
+        "status": true,
+        "required_evidence": true,
+        "eligible_evidence": true,
+        "context_budget": true,
+        "no_external_calls": true
+      },
+      "missing": [],
+      "ineligible": [],
+      "status": "missing_evidence",
+      "selected": [],
+      "context_chars": 0,
+      "elapsed_ms": 0.619,
+      "excluded": [],
+      "model_calls": 0,
+      "network_calls": 0
+    },
+    {
+      "case_id": "conflicted",
+      "group": "lifecycle",
+      "split": "reserved",
+      "strategy": "B1_eligible_coarse",
+      "passed": true,
+      "checks": {
+        "status": true,
+        "required_evidence": true,
+        "eligible_evidence": true,
+        "context_budget": true,
+        "no_external_calls": true
+      },
+      "missing": [],
+      "ineligible": [],
+      "status": "missing_evidence",
+      "selected": [],
+      "context_chars": 0,
+      "elapsed_ms": 0.644,
+      "excluded": [
+        {
+          "id": "explain:inventory",
+          "reason": "conflicted"
+        }
+      ],
+      "model_calls": 0,
+      "network_calls": 0
+    },
+    {
+      "case_id": "conflicted",
+      "group": "lifecycle",
+      "split": "reserved",
+      "strategy": "B2_exact_fts",
+      "passed": true,
+      "checks": {
+        "status": true,
+        "required_evidence": true,
+        "eligible_evidence": true,
+        "context_budget": true,
+        "no_external_calls": true
+      },
+      "missing": [],
+      "ineligible": [],
+      "status": "missing_evidence",
+      "selected": [],
+      "context_chars": 0,
+      "elapsed_ms": 1.492,
+      "excluded": [
+        {
+          "id": "explain:inventory",
+          "reason": "conflicted"
+        }
+      ],
+      "model_calls": 0,
+      "network_calls": 0
+    },
+    {
+      "case_id": "old_evidence",
+      "group": "lifecycle",
+      "split": "reserved",
+      "strategy": "B0_coarse",
+      "passed": false,
+      "checks": {
+        "status": false,
+        "required_evidence": true,
+        "eligible_evidence": true,
+        "context_budget": true,
+        "no_external_calls": true
+      },
+      "missing": [],
+      "ineligible": [],
+      "status": "supported_snapshot",
+      "selected": [
+        "recipe:spear.stone",
+        "recipe:pickaxe",
+        "recipe:ammo.rocket.basic",
+        "recipe:chainsaw",
+        "recipe:catapult"
+      ],
+      "context_chars": 252,
+      "elapsed_ms": 0.622,
+      "excluded": [],
+      "model_calls": 0,
+      "network_calls": 0
+    },
+    {
+      "case_id": "old_evidence",
+      "group": "lifecycle",
+      "split": "reserved",
+      "strategy": "B1_eligible_coarse",
+      "passed": false,
+      "checks": {
+        "status": false,
+        "required_evidence": true,
+        "eligible_evidence": true,
+        "context_budget": true,
+        "no_external_calls": true
+      },
+      "missing": [],
+      "ineligible": [],
+      "status": "supported_snapshot",
+      "selected": [
+        "recipe:spear.stone",
+        "recipe:pickaxe",
+        "recipe:ammo.rocket.basic",
+        "recipe:chainsaw",
+        "recipe:catapult"
+      ],
+      "context_chars": 252,
+      "elapsed_ms": 0.657,
+      "excluded": [
+        {
+          "id": "explain:batch",
+          "reason": "scope_mismatch"
+        }
+      ],
+      "model_calls": 0,
+      "network_calls": 0
+    },
+    {
+      "case_id": "old_evidence",
+      "group": "lifecycle",
+      "split": "reserved",
+      "strategy": "B2_exact_fts",
+      "passed": true,
+      "checks": {
+        "status": true,
+        "required_evidence": true,
+        "eligible_evidence": true,
+        "context_budget": true,
+        "no_external_calls": true
+      },
+      "missing": [],
+      "ineligible": [],
+      "status": "missing_evidence",
+      "selected": [],
+      "context_chars": 0,
+      "elapsed_ms": 1.864,
+      "excluded": [
+        {
+          "id": "explain:batch",
+          "reason": "scope_mismatch"
+        }
+      ],
+      "model_calls": 0,
+      "network_calls": 0
+    },
+    {
+      "case_id": "revoked",
+      "group": "lifecycle",
+      "split": "reserved",
+      "strategy": "B0_coarse",
+      "passed": false,
+      "checks": {
+        "status": false,
+        "required_evidence": true,
+        "eligible_evidence": true,
+        "context_budget": true,
+        "no_external_calls": true
+      },
+      "missing": [],
+      "ineligible": [],
+      "status": "supported_snapshot",
+      "selected": [
+        "recipe:spear.stone",
+        "recipe:pickaxe",
+        "recipe:ammo.rocket.basic",
+        "recipe:chainsaw",
+        "recipe:catapult"
+      ],
+      "context_chars": 252,
+      "elapsed_ms": 0.682,
+      "excluded": [],
+      "model_calls": 0,
+      "network_calls": 0
+    },
+    {
+      "case_id": "revoked",
+      "group": "lifecycle",
+      "split": "reserved",
+      "strategy": "B1_eligible_coarse",
+      "passed": false,
+      "checks": {
+        "status": false,
+        "required_evidence": true,
+        "eligible_evidence": true,
+        "context_budget": true,
+        "no_external_calls": true
+      },
+      "missing": [],
+      "ineligible": [],
+      "status": "supported_snapshot",
+      "selected": [
+        "recipe:spear.stone",
+        "recipe:pickaxe",
+        "recipe:ammo.rocket.basic",
+        "recipe:chainsaw",
+        "recipe:catapult"
+      ],
+      "context_chars": 252,
+      "elapsed_ms": 0.669,
+      "excluded": [
+        {
+          "id": "explain:batch",
+          "reason": "revoked"
+        }
+      ],
+      "model_calls": 0,
+      "network_calls": 0
+    },
+    {
+      "case_id": "revoked",
+      "group": "lifecycle",
+      "split": "reserved",
+      "strategy": "B2_exact_fts",
+      "passed": true,
+      "checks": {
+        "status": true,
+        "required_evidence": true,
+        "eligible_evidence": true,
+        "context_budget": true,
+        "no_external_calls": true
+      },
+      "missing": [],
+      "ineligible": [],
+      "status": "missing_evidence",
+      "selected": [],
+      "context_chars": 0,
+      "elapsed_ms": 1.736,
+      "excluded": [
+        {
+          "id": "explain:batch",
+          "reason": "revoked"
+        }
+      ],
+      "model_calls": 0,
+      "network_calls": 0
+    }
+  ],
+  "limitations": [
+    "Authored deterministic retrieval and failure fixtures, not independent Rust truth or live model accuracy",
+    "16 development queries and 8 reserved queries, frozen before first evaluation. Reserved mechanism families are mixing, fuel, unknown_hp, feedback, batch and inventory. The rule corpus is shared; this is not a source-independent or human-blind holdout.",
+    "B0/B1 reuse the existing relevant() coarse topic predicate on the same local retrieval view, same 5-document/6000-character budget. They are controlled adapters, not a replay of live web/model behavior at the baseline commit.",
+    "Eligibility and status checks are software-contract fixtures; they do not establish semantic correctness of every curated claim or game build applicability.",
+    "Latency measures one cold query, excludes package installation and model/network latency; no general production speedup is claimed."
+  ]
+}

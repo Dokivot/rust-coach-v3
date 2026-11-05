@@ -1,0 +1,271 @@
+{
+  "source": "../../G02-知识与推理/assets/representative-io.json",
+  "captured_at": "2026-11-05T07:56:44.349824+08:00",
+  "mode": "actual_application_HTTP_SSE_with_structured_requests_and_model_forbidden",
+  "scope": "材料整理的本地应用记录；合成任务和临时数据库，无图像、真人玩家数据、浏览器或游戏内验证",
+  "model_calls": 0,
+  "samples": [
+    {
+      "id": "latest",
+      "message": "/knowledge 最新版本C4配方是什么",
+      "transport": "HTTP JSON",
+      "http_status": 200,
+      "assistant": "当前采用固定演示快照，无法认证最新补丁是否相同。可以继续按该快照计算，但不会把旧数值说成当前正式服规则。\n\n依据固定演示快照 rustdata-pc-vanilla-2026-11-01；游戏 build 未认证，也没有独立人工复核，不能保证适用于最新补丁或修改服。",
+      "error": null,
+      "calculation_status": null,
+      "error_code": null,
+      "calculation_input": null,
+      "knowledge_status": "latest_unverified",
+      "release_id": "demo-knowledge-2026-11-01-v1",
+      "registry_revision": 1,
+      "need": {
+        "entities": [
+          "explosive.timed"
+        ],
+        "claims": [
+          "version",
+          "recipe"
+        ],
+        "scope": "latest_unverified",
+        "query_terms": "explosive.timed version snapshot provenance"
+      },
+      "selected": [],
+      "missing": [],
+      "excluded": [],
+      "rule_dependencies": [],
+      "derived_input": null,
+      "derived_formulas": [],
+      "raid_options": []
+    },
+    {
+      "id": "other_scope",
+      "message": "/knowledge 主机版C4配方是什么",
+      "transport": "HTTP JSON",
+      "http_status": 200,
+      "assistant": "该问题指定的版本、平台或服务器规则不属于当前演示包，未采用其中的数值。请改为询问本演示快照，或另行核对目标版本。\n\n依据固定演示快照 rustdata-pc-vanilla-2026-11-01；游戏 build 未认证，也没有独立人工复核，不能保证适用于最新补丁或修改服。",
+      "error": null,
+      "calculation_status": null,
+      "error_code": null,
+      "calculation_input": null,
+      "knowledge_status": "scope_mismatch",
+      "release_id": "demo-knowledge-2026-11-01-v1",
+      "registry_revision": 1,
+      "need": {
+        "entities": [
+          "explosive.timed"
+        ],
+        "claims": [
+          "recipe"
+        ],
+        "scope": "scope_mismatch",
+        "query_terms": "explosive.timed"
+      },
+      "selected": [],
+      "missing": [],
+      "excluded": [],
+      "rule_dependencies": [],
+      "derived_input": null,
+      "derived_formulas": [],
+      "raid_options": []
+    },
+    {
+      "id": "feedback",
+      "http_status": 200,
+      "status": "pending_review",
+      "verification": "user_report_not_fact",
+      "knowledge_reference_unchanged": true
+    },
+    {
+      "id": "after_revocation",
+      "message": "为什么250血还需要一颗C4",
+      "transport": "HTTP JSON",
+      "http_status": 200,
+      "assistant": "当前演示包没有足够的有效证据支持完整结论，暂不补猜。缺少：raid:building:base-wall:stone。\n\n依据固定演示快照 rustdata-pc-vanilla-2026-11-01；游戏 build 未认证，也没有独立人工复核，不能保证适用于最新补丁或修改服。",
+      "error": null,
+      "calculation_status": null,
+      "error_code": null,
+      "calculation_input": null,
+      "knowledge_status": "missing_evidence",
+      "release_id": "demo-knowledge-2026-11-01-v1",
+      "registry_revision": 2,
+      "need": {
+        "entities": [
+          "explosive.timed",
+          "building:base-wall:stone"
+        ],
+        "claims": [
+          "rounding"
+        ],
+        "scope": "snapshot",
+        "query_terms": "explosive.timed building:base-wall:stone rounding ceil health damage"
+      },
+      "selected": [
+        "recipe:explosive.timed",
+        "explain:rounding"
+      ],
+      "missing": [
+        "raid:building:base-wall:stone"
+      ],
+      "excluded": [
+        {
+          "id": "raid:building:base-wall:stone",
+          "reason": "revoked"
+        }
+      ],
+      "rule_dependencies": [],
+      "derived_input": null,
+      "derived_formulas": [],
+      "raid_options": []
+    },
+    {
+      "id": "calculation_blocked",
+      "message": "/calc {\"operation\":\"raid\",\"target\":\"building:base-wall:stone\",\"hp\":250,\"methods\":[\"explosive.timed\"]}",
+      "transport": "HTTP JSON",
+      "http_status": 200,
+      "assistant": "本次计算依赖的知识已撤回、冲突或缺失：raid:building:base-wall:stone 可在本地计算器查看已收录项目。",
+      "error": null,
+      "calculation_status": "needs_input",
+      "error_code": "knowledge_evidence_unavailable",
+      "calculation_input": {
+        "operation": "raid",
+        "ruleset": "pc_vanilla",
+        "goals": {},
+        "inventory": null,
+        "inventory_complete": true,
+        "reserve": {},
+        "target": "building:base-wall:stone",
+        "hp": 250,
+        "count": 1,
+        "side": "hard",
+        "methods": [
+          "explosive.timed"
+        ],
+        "workbench": null,
+        "blueprints": null,
+        "gunpowder_recipe": "workbench",
+        "expand_fuel": false
+      },
+      "knowledge_status": null,
+      "release_id": null,
+      "registry_revision": null,
+      "need": null,
+      "selected": [],
+      "missing": null,
+      "excluded": null,
+      "rule_dependencies": null,
+      "derived_input": null,
+      "derived_formulas": [],
+      "raid_options": []
+    },
+    {
+      "id": "replay_blocked",
+      "message": "/calc {\"operation\":\"raid\",\"target\":\"building:base-wall:stone\",\"hp\":250,\"methods\":[\"explosive.timed\"]}",
+      "transport": "HTTP JSON",
+      "http_status": 409,
+      "assistant": null,
+      "error": {
+        "code": "knowledge_changed",
+        "message": "回答期间知识包或撤回记录已变化，旧结果未发布，请重试。"
+      },
+      "calculation_status": null,
+      "error_code": null,
+      "calculation_input": null,
+      "knowledge_status": null,
+      "release_id": null,
+      "registry_revision": null,
+      "need": null,
+      "selected": [],
+      "missing": null,
+      "excluded": null,
+      "rule_dependencies": null,
+      "derived_input": null,
+      "derived_formulas": [],
+      "raid_options": []
+    },
+    {
+      "id": "candidate_missing_target",
+      "message": "为什么250血还需要一颗C4",
+      "transport": "HTTP JSON",
+      "http_status": 200,
+      "assistant": "当前演示包没有足够的有效证据支持完整结论，暂不补猜。缺少：raid:building:base-wall:stone。\n\n依据固定演示快照 rustdata-pc-vanilla-2026-11-01；游戏 build 未认证，也没有独立人工复核，不能保证适用于最新补丁或修改服。",
+      "error": null,
+      "calculation_status": null,
+      "error_code": null,
+      "calculation_input": null,
+      "knowledge_status": "missing_evidence",
+      "release_id": "material-demo-v2",
+      "registry_revision": 3,
+      "need": {
+        "entities": [
+          "explosive.timed",
+          "building:base-wall:stone"
+        ],
+        "claims": [
+          "rounding"
+        ],
+        "scope": "snapshot",
+        "query_terms": "explosive.timed building:base-wall:stone rounding ceil health damage"
+      },
+      "selected": [
+        "recipe:explosive.timed",
+        "explain:rounding"
+      ],
+      "missing": [
+        "raid:building:base-wall:stone"
+      ],
+      "excluded": [],
+      "rule_dependencies": [],
+      "derived_input": null,
+      "derived_formulas": [],
+      "raid_options": []
+    },
+    {
+      "id": "rollback_still_revoked",
+      "message": "为什么250血还需要一颗C4",
+      "transport": "HTTP JSON",
+      "http_status": 200,
+      "assistant": "当前演示包没有足够的有效证据支持完整结论，暂不补猜。缺少：raid:building:base-wall:stone。\n\n依据固定演示快照 rustdata-pc-vanilla-2026-11-01；游戏 build 未认证，也没有独立人工复核，不能保证适用于最新补丁或修改服。",
+      "error": null,
+      "calculation_status": null,
+      "error_code": null,
+      "calculation_input": null,
+      "knowledge_status": "missing_evidence",
+      "release_id": "demo-knowledge-2026-11-01-v1",
+      "registry_revision": 4,
+      "need": {
+        "entities": [
+          "explosive.timed",
+          "building:base-wall:stone"
+        ],
+        "claims": [
+          "rounding"
+        ],
+        "scope": "snapshot",
+        "query_terms": "explosive.timed building:base-wall:stone rounding ceil health damage"
+      },
+      "selected": [
+        "recipe:explosive.timed",
+        "explain:rounding"
+      ],
+      "missing": [
+        "raid:building:base-wall:stone"
+      ],
+      "excluded": [
+        {
+          "id": "raid:building:base-wall:stone",
+          "reason": "revoked"
+        }
+      ],
+      "rule_dependencies": [],
+      "derived_input": null,
+      "derived_formulas": [],
+      "raid_options": []
+    },
+    {
+      "id": "publication",
+      "candidate_did_not_activate": true,
+      "final_release_id": "demo-knowledge-2026-11-01-v1",
+      "rollback_preserves_original_revocation": true
+    }
+  ]
+}

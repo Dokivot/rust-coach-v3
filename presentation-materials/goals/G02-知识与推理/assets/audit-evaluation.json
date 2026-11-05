@@ -1,0 +1,2512 @@
+{
+  "version": "knowledge-audit-v1",
+  "baseline_commit": "c402737",
+  "dataset_sha256": "b91d919d4bcf3ddecdd49cf3d69d8f18fc1b6af5d9714c2c457977ac9ae31941",
+  "default_release_sha256": "768bde461cabd576d6dfcf15640c08a69c991822b112b9dd6dc8325cb2032dc3",
+  "source_hashes": {
+    "src/rust_coach/__init__.py": "f80d73e2fded27ecd3c5ffa7181ad51170f1284e54bdc57865197abe1f52e748",
+    "src/rust_coach/advice/__init__.py": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
+    "src/rust_coach/advice/baseline.py": "89c11275704a0e6e60725aaced3d46a649c97f45fc9a85a9e77763bffa0ab60c",
+    "src/rust_coach/advice/intent.py": "77ca2552c73ba9a0ed2f7eda2acf3b02474837c7bf711961923a8031050e8ccb",
+    "src/rust_coach/advice/onboarding.py": "e5f51c8e88fc19633e1e9727e9a8f269381a8dc9e343eea13360c7b9a22ea6da",
+    "src/rust_coach/advice/schemas.py": "60152a1bf25cc02e4b59c1b35d2f5623795a8d7027751c3a161e754a30a48a5c",
+    "src/rust_coach/advice/service.py": "273e88bce94c31d1423e3f6aab9175ca300d1cf116944b1def01201c1677d981",
+    "src/rust_coach/app.py": "e95815ecd2d5282782f619bd7014c1e5b2a9b793e7866f4b5a41954a3b0b6951",
+    "src/rust_coach/architecture/__init__.py": "3fecb8614fa479cdf19825b47b7338d2dd13addf07daf43cd3b9cdcf703376dd",
+    "src/rust_coach/architecture/contracts.py": "27e4cf2beb8b320e4cddd17a30fc627a3d4958ce79908832863f45021a5d554d",
+    "src/rust_coach/architecture/decision.py": "271321b7ecfa911cedf97c108db62386e47b466f2512493b6372d4c9bb2915c4",
+    "src/rust_coach/architecture/evaluation.py": "f67f435725f3fec6803f7f9a63c4add55dafd2156a08a5bde1d7a79a5ae1ed97",
+    "src/rust_coach/architecture/generation.py": "a81b015d16371a4cc4d639cdb3e8ee4b61831ab8c601e510f03b141e0d145fa3",
+    "src/rust_coach/architecture/input.py": "02595d128a115d046fec05e0290c3dd159bbe8893101f379ec51374568b73e46",
+    "src/rust_coach/architecture/observability.py": "e47781d7d3dcb393fcf59bc46c345c9c2498a8008183c1aea8912d422682a855",
+    "src/rust_coach/architecture/task_context.py": "2104019b3c9aa87a9c5711142e7c7266164501be38204cead3bb5eaf3d0ab99a",
+    "src/rust_coach/architecture/understanding.py": "1b22c148eeb1ede8536bed8e7d54c840648c2b0d8053ab5162da3537565ac57b",
+    "src/rust_coach/attachments/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "src/rust_coach/attachments/api.py": "5f885b63aad6b1563908286f4a631229edeeb4f5c095445087ac4d37b4974c78",
+    "src/rust_coach/attachments/store.py": "be50aff922b8bb075328d30bf1df9995be1205e3766e8ea48f42f4cb7d8803fb",
+    "src/rust_coach/calculations/__init__.py": "2753919789d339532f01318a156a403895c02685e1f24c436fef26ec1f3fdaaf",
+    "src/rust_coach/calculations/catalog.py": "285268fcad6d52670706e12cc276d6caf5b5d66ed4e64437c7856fe68101efef",
+    "src/rust_coach/calculations/engine.py": "027174ca57eb164faf1cb870437e6cf492c467196e61d285dba237bcfcd2a205",
+    "src/rust_coach/calculations/presentation.py": "cd5477e040efec19be570d826d3d3b9cc8299610caa17b960a76d9ca1e5f0bf9",
+    "src/rust_coach/calculations/requests.py": "eb30dfa4072c4b61632c548f124d3490d2b51089ae019bbac39d9fd6b2263a35",
+    "src/rust_coach/calculations/schemas.py": "aba5f799fed633f9d397a1cf2e22e349d1a217ebb4ae577cd3f87ce2271fa9bf",
+    "src/rust_coach/calculations/service.py": "929142d57be949c38e9f5a6d9e229e9b9ff18cad100af832973617d4f7cf953c",
+    "src/rust_coach/config.py": "ceb5e2b7de2a1a4d1bbdea7e8f39f399fbdd4e9f0e798dbe0c073d0f7963f0b9",
+    "src/rust_coach/contracts.py": "776db0f9f018d0551a0eb79ffa17eaba5d96acf681d5d4740fb255c7faf65309",
+    "src/rust_coach/extensions.py": "7c64386fcbc5637dab603d1df077e77333710d6b861f515d3ef5dfb51e6e3c69",
+    "src/rust_coach/knowledge/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "src/rust_coach/knowledge/bundle.py": "8e647874bd8ba6e9f0bdb3c2a454dd8e0093dc509e8b34e23f98f2669bd4307b",
+    "src/rust_coach/knowledge/manage.py": "7445fe4ab9270ddf6b3017d8bbbccd0e73234818b85d50902470a399b895c965",
+    "src/rust_coach/knowledge/registry.py": "a56ee7e172019fb0b7adfab8fe5d7392174c83a66f7c117a201021b8c2689398",
+    "src/rust_coach/knowledge/schemas.py": "b7d0a893423311df24e2ffac85ec5ecf26e4fbe86ea3bd4e00221552e367d931",
+    "src/rust_coach/knowledge/service.py": "f216d5ec293ecd5d2602995ac1dbcb70e396600468100ae342add6f47c007c14",
+    "src/rust_coach/knowledge/store.py": "8ac914d9e4f5eee1fa727415ca6faeb8b186635a5ad07f4c8de2a9dc58806e0a",
+    "src/rust_coach/knowledge/web.py": "ad1d6b94fa52d1d13da6fcd62a2919179e9909e6e9459bb9fed88616f22736e6",
+    "src/rust_coach/llm.py": "78b36c232f8e71e4b7b4398d5307c2314f5aaf4be9ad6e5a634c0e7d318aa7a8",
+    "src/rust_coach/memory/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "src/rust_coach/memory/api.py": "bdb1a877a2400ad49118223a0bf3b3a08191ccb5a5c1395ddcc17b924f179628",
+    "src/rust_coach/memory/policy.py": "28edfc8ba378f55913ae71c776dd657f7105d863dbe15458410c5ed1508f365b",
+    "src/rust_coach/memory/schemas.py": "aad4f09c47b51fd6aa83c5ec7be5a60fc03deb40d8a367483b07c3bdde6207b3",
+    "src/rust_coach/memory/service.py": "68655ac87ec0856d9b0c0486f15e8a935beb16ec1ef2d24ca861dddeb7ef4fd1",
+    "src/rust_coach/memory/store.py": "541a0817919a3bfa39942baef5869c42c18ba7182235230dd0a2b49390453bdf",
+    "src/rust_coach/persistence.py": "2fdcc078097bd9933a168f4073e9b80ce32433ce19e2321e265b445eb79fab16",
+    "src/rust_coach/player_state/__init__.py": "b981c3c0bce284036869bdd51f34435ed8d243f4feba767994e7556e2c366a7a",
+    "src/rust_coach/player_state/api.py": "2c377cd454abd449ef5ceaca4601fe8c2a087e477a829ce319a6be05f8ebb344",
+    "src/rust_coach/player_state/domain.py": "93fe8f77c8c07c5c20b37a2f697778523c6c2dc580abb1522e9ff4ff9df4dd8e",
+    "src/rust_coach/player_state/inputs.py": "465673e093195ef7ac3a23e9319099099607d5a99ea85a105b02eebae991e6bf",
+    "src/rust_coach/player_state/schemas.py": "02970f0bd5de656cc17079ff63b0547790a4064628deaa56f0e09d6f7cd6790f",
+    "src/rust_coach/player_state/service.py": "b72f7f96943203d85e91cd3ca80017e0af7b02bd80a8252e84ca6c047afaf3ef",
+    "src/rust_coach/player_state/store.py": "24729e411e5c99200bcbdd09f3d33c3faddfbdad01762cc097c5d803ca7a17db",
+    "src/rust_coach/player_state/working.py": "88ab973e4fc31fc5280d71e259c5f1cf96d735f4a06775b0368734a7b6c0ea15",
+    "src/rust_coach/presentation/__init__.py": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
+    "src/rust_coach/presentation/contracts.py": "b027a0271e5a2b1a3ca88a4267a9c520779f613fe0545d5df750cdb471d819db",
+    "src/rust_coach/presentation/evaluate.py": "8f3e02b0e10418b8f9c2edbef89f1f2d5ecfb7f213db53056180409396b3fd98",
+    "src/rust_coach/presentation/policy.py": "ac0f41ad760f77b03988bb43d6bac6df01f898359197086537c1fee7e7c910bf",
+    "src/rust_coach/presentation/rendering.py": "8182e33bb4a38f66e7eb4459354c5876768cb28aab5f8b1c754b471523f6fd96",
+    "src/rust_coach/presentation/service.py": "24befcbf6df80eee66f447b54e011d5ddc88f0127256a8d2cc5e28a9212113bd",
+    "src/rust_coach/presentation/validation.py": "54655750dc40a9bade7ff92a98f2751c960264e4075e232eae93ce67f3f2a6e1",
+    "src/rust_coach/progress.py": "5aa2d36c62321c23a6857d32611d6e63896e2ea3decde9d6c5598902a929dc9a",
+    "src/rust_coach/runtime.py": "9ceab8d6295a61a375ed847d57b59562c9deabf5a1c36bbf33a48575f3fffb10",
+    "src/rust_coach/vision/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "src/rust_coach/vision/context.py": "0a23a63a5bbeb03cdf8ee30de4211a8d9ff7940a6443219551070ad8359519fa",
+    "src/rust_coach/vision/corrections.py": "3c85d5decd139182bf04b29ffae4f3c46086917634ab0ad603723e1a465d3afc",
+    "src/rust_coach/vision/drafts.py": "58bc5adce565b87dab49422da4d976bc64e320ec910caa65d7b693953a7bdcfa",
+    "src/rust_coach/vision/presentation.py": "5d1dd2f4b04df60056cfb69b1ffaff992f9b433db50ba42b2a4385b3267b82dc",
+    "src/rust_coach/vision/probe.py": "63385f51b9c2c7d0f8c0c90d47351c2f6a43111af09898ed49475a11d1dfcc51",
+    "src/rust_coach/vision/schemas.py": "f3447d22dc39ad1570e5d04ef1746fdbe66c69d3b0b78643aad2fbff8b8932d0",
+    "src/rust_coach/vision/service.py": "89f1ebee5a27c600ddac7559ca6741acb4388e232bc25eb3970eb0e64f9a37b7",
+    "src/rust_coach/workflows.py": "823a1ccb0fa7843ae40b6b1829542f6e52e45fa7dc828b49c22b9c700fefdf5c",
+    "src/rust_coach/knowledge/curated.json": "44620b7061949dffd53fbb10d1c37ef76651f3be60219cc7e9371281a2b3a38c",
+    "src/rust_coach/calculations/rules.json": "11033e0ec886eb101a301c7e3e4ecc8fc9c30a23afeacc67679fecd710bbb3d5",
+    "evals/knowledge.py": "1c15f40fbaeac86d36bba1ab793520ea74644a3081d08181177f3897dd0baf75"
+  },
+  "case_count": 18,
+  "summary": {
+    "B0_coarse": {
+      "passed": 1,
+      "total": 18,
+      "supported_passed": 0,
+      "reserved_passed": 0,
+      "reserved_total": 0,
+      "mean_context_chars": 182,
+      "p50_ms": 1.057,
+      "p95_ms": 1.994,
+      "model_calls": 0,
+      "network_calls": 0
+    },
+    "B1_eligible_coarse": {
+      "passed": 5,
+      "total": 18,
+      "supported_passed": 0,
+      "reserved_passed": 0,
+      "reserved_total": 0,
+      "mean_context_chars": 126,
+      "p50_ms": 1.0514999999999999,
+      "p95_ms": 1.55,
+      "model_calls": 0,
+      "network_calls": 0
+    },
+    "B2_exact_fts": {
+      "passed": 18,
+      "total": 18,
+      "supported_passed": 10,
+      "reserved_passed": 0,
+      "reserved_total": 0,
+      "mean_context_chars": 142.06,
+      "p50_ms": 1.2175,
+      "p95_ms": 4.064,
+      "model_calls": 0,
+      "network_calls": 0
+    }
+  },
+  "results": [
+    {
+      "case_id": "rocket_recipe",
+      "group": "retrieval",
+      "split": "audit",
+      "strategy": "B0_coarse",
+      "passed": false,
+      "checks": {
+        "status": true,
+        "required_evidence": true,
+        "eligible_evidence": true,
+        "relevant_evidence": false,
+        "context_budget": true,
+        "reported_budget": true,
+        "no_external_calls": true,
+        "canonical_content": true
+      },
+      "missing": [],
+      "ineligible": [],
+      "unexpected": [
+        "recipe:catapult",
+        "recipe:chainsaw",
+        "recipe:pickaxe",
+        "recipe:spear.stone"
+      ],
+      "status": "supported_snapshot",
+      "selected": [
+        "recipe:spear.stone",
+        "recipe:pickaxe",
+        "recipe:ammo.rocket.basic",
+        "recipe:chainsaw",
+        "recipe:catapult"
+      ],
+      "context_chars": 252,
+      "elapsed_ms": 1.994,
+      "derivation": null,
+      "excluded": [],
+      "model_calls": 0,
+      "network_calls": 0
+    },
+    {
+      "case_id": "rocket_recipe",
+      "group": "retrieval",
+      "split": "audit",
+      "strategy": "B1_eligible_coarse",
+      "passed": false,
+      "checks": {
+        "status": true,
+        "required_evidence": true,
+        "eligible_evidence": true,
+        "relevant_evidence": false,
+        "context_budget": true,
+        "reported_budget": true,
+        "no_external_calls": true,
+        "canonical_content": true
+      },
+      "missing": [],
+      "ineligible": [],
+      "unexpected": [
+        "recipe:catapult",
+        "recipe:chainsaw",
+        "recipe:pickaxe",
+        "recipe:spear.stone"
+      ],
+      "status": "supported_snapshot",
+      "selected": [
+        "recipe:spear.stone",
+        "recipe:pickaxe",
+        "recipe:ammo.rocket.basic",
+        "recipe:chainsaw",
+        "recipe:catapult"
+      ],
+      "context_chars": 252,
+      "elapsed_ms": 1.529,
+      "derivation": null,
+      "excluded": [],
+      "model_calls": 0,
+      "network_calls": 0
+    },
+    {
+      "case_id": "rocket_recipe",
+      "group": "retrieval",
+      "split": "audit",
+      "strategy": "B2_exact_fts",
+      "passed": true,
+      "checks": {
+        "status": true,
+        "required_evidence": true,
+        "eligible_evidence": true,
+        "relevant_evidence": true,
+        "context_budget": true,
+        "reported_budget": true,
+        "no_external_calls": true,
+        "canonical_content": true
+      },
+      "missing": [],
+      "ineligible": [],
+      "unexpected": [],
+      "status": "supported_snapshot",
+      "selected": [
+        "recipe:ammo.rocket.basic"
+      ],
+      "context_chars": 52,
+      "elapsed_ms": 1.22,
+      "derivation": null,
+      "excluded": [],
+      "model_calls": 0,
+      "network_calls": 0
+    },
+    {
+      "case_id": "hv_rocket",
+      "group": "retrieval",
+      "split": "audit",
+      "strategy": "B0_coarse",
+      "passed": false,
+      "checks": {
+        "status": true,
+        "required_evidence": false,
+        "eligible_evidence": true,
+        "relevant_evidence": false,
+        "context_budget": true,
+        "reported_budget": true,
+        "no_external_calls": true,
+        "canonical_content": true
+      },
+      "missing": [
+        "recipe:ammo.rocket.hv"
+      ],
+      "ineligible": [],
+      "unexpected": [
+        "recipe:ammo.rocket.basic",
+        "recipe:catapult",
+        "recipe:chainsaw",
+        "recipe:pickaxe",
+        "recipe:spear.stone"
+      ],
+      "status": "supported_snapshot",
+      "selected": [
+        "recipe:spear.stone",
+        "recipe:pickaxe",
+        "recipe:ammo.rocket.basic",
+        "recipe:chainsaw",
+        "recipe:catapult"
+      ],
+      "context_chars": 252,
+      "elapsed_ms": 1.007,
+      "derivation": null,
+      "excluded": [],
+      "model_calls": 0,
+      "network_calls": 0
+    },
+    {
+      "case_id": "hv_rocket",
+      "group": "retrieval",
+      "split": "audit",
+      "strategy": "B1_eligible_coarse",
+      "passed": false,
+      "checks": {
+        "status": true,
+        "required_evidence": false,
+        "eligible_evidence": true,
+        "relevant_evidence": false,
+        "context_budget": true,
+        "reported_budget": true,
+        "no_external_calls": true,
+        "canonical_content": true
+      },
+      "missing": [
+        "recipe:ammo.rocket.hv"
+      ],
+      "ineligible": [],
+      "unexpected": [
+        "recipe:ammo.rocket.basic",
+        "recipe:catapult",
+        "recipe:chainsaw",
+        "recipe:pickaxe",
+        "recipe:spear.stone"
+      ],
+      "status": "supported_snapshot",
+      "selected": [
+        "recipe:spear.stone",
+        "recipe:pickaxe",
+        "recipe:ammo.rocket.basic",
+        "recipe:chainsaw",
+        "recipe:catapult"
+      ],
+      "context_chars": 252,
+      "elapsed_ms": 0.997,
+      "derivation": null,
+      "excluded": [],
+      "model_calls": 0,
+      "network_calls": 0
+    },
+    {
+      "case_id": "hv_rocket",
+      "group": "retrieval",
+      "split": "audit",
+      "strategy": "B2_exact_fts",
+      "passed": true,
+      "checks": {
+        "status": true,
+        "required_evidence": true,
+        "eligible_evidence": true,
+        "relevant_evidence": true,
+        "context_budget": true,
+        "reported_budget": true,
+        "no_external_calls": true,
+        "canonical_content": true
+      },
+      "missing": [],
+      "ineligible": [],
+      "unexpected": [],
+      "status": "supported_snapshot",
+      "selected": [
+        "recipe:ammo.rocket.hv"
+      ],
+      "context_chars": 48,
+      "elapsed_ms": 1.272,
+      "derivation": null,
+      "excluded": [],
+      "model_calls": 0,
+      "network_calls": 0
+    },
+    {
+      "case_id": "satchel",
+      "group": "retrieval",
+      "split": "audit",
+      "strategy": "B0_coarse",
+      "passed": false,
+      "checks": {
+        "status": true,
+        "required_evidence": false,
+        "eligible_evidence": true,
+        "relevant_evidence": false,
+        "context_budget": true,
+        "reported_budget": true,
+        "no_external_calls": true,
+        "canonical_content": true
+      },
+      "missing": [
+        "recipe:explosive.satchel"
+      ],
+      "ineligible": [],
+      "unexpected": [
+        "recipe:ammo.rocket.basic",
+        "recipe:catapult",
+        "recipe:chainsaw",
+        "recipe:pickaxe",
+        "recipe:spear.stone"
+      ],
+      "status": "supported_snapshot",
+      "selected": [
+        "recipe:spear.stone",
+        "recipe:pickaxe",
+        "recipe:ammo.rocket.basic",
+        "recipe:chainsaw",
+        "recipe:catapult"
+      ],
+      "context_chars": 252,
+      "elapsed_ms": 1.029,
+      "derivation": null,
+      "excluded": [],
+      "model_calls": 0,
+      "network_calls": 0
+    },
+    {
+      "case_id": "satchel",
+      "group": "retrieval",
+      "split": "audit",
+      "strategy": "B1_eligible_coarse",
+      "passed": false,
+      "checks": {
+        "status": true,
+        "required_evidence": false,
+        "eligible_evidence": true,
+        "relevant_evidence": false,
+        "context_budget": true,
+        "reported_budget": true,
+        "no_external_calls": true,
+        "canonical_content": true
+      },
+      "missing": [
+        "recipe:explosive.satchel"
+      ],
+      "ineligible": [],
+      "unexpected": [
+        "recipe:ammo.rocket.basic",
+        "recipe:catapult",
+        "recipe:chainsaw",
+        "recipe:pickaxe",
+        "recipe:spear.stone"
+      ],
+      "status": "supported_snapshot",
+      "selected": [
+        "recipe:spear.stone",
+        "recipe:pickaxe",
+        "recipe:ammo.rocket.basic",
+        "recipe:chainsaw",
+        "recipe:catapult"
+      ],
+      "context_chars": 252,
+      "elapsed_ms": 1.01,
+      "derivation": null,
+      "excluded": [],
+      "model_calls": 0,
+      "network_calls": 0
+    },
+    {
+      "case_id": "satchel",
+      "group": "retrieval",
+      "split": "audit",
+      "strategy": "B2_exact_fts",
+      "passed": true,
+      "checks": {
+        "status": true,
+        "required_evidence": true,
+        "eligible_evidence": true,
+        "relevant_evidence": true,
+        "context_budget": true,
+        "reported_budget": true,
+        "no_external_calls": true,
+        "canonical_content": true
+      },
+      "missing": [],
+      "ineligible": [],
+      "unexpected": [],
+      "status": "supported_snapshot",
+      "selected": [
+        "recipe:explosive.satchel"
+      ],
+      "context_chars": 52,
+      "elapsed_ms": 1.189,
+      "derivation": null,
+      "excluded": [],
+      "model_calls": 0,
+      "network_calls": 0
+    },
+    {
+      "case_id": "fuel_recipe",
+      "group": "retrieval",
+      "split": "audit",
+      "strategy": "B0_coarse",
+      "passed": false,
+      "checks": {
+        "status": true,
+        "required_evidence": false,
+        "eligible_evidence": true,
+        "relevant_evidence": false,
+        "context_budget": true,
+        "reported_budget": true,
+        "no_external_calls": true,
+        "canonical_content": true
+      },
+      "missing": [
+        "recipe:lowgradefuel"
+      ],
+      "ineligible": [],
+      "unexpected": [
+        "recipe:ammo.rocket.basic",
+        "recipe:catapult",
+        "recipe:chainsaw",
+        "recipe:pickaxe",
+        "recipe:spear.stone"
+      ],
+      "status": "supported_snapshot",
+      "selected": [
+        "recipe:spear.stone",
+        "recipe:pickaxe",
+        "recipe:ammo.rocket.basic",
+        "recipe:chainsaw",
+        "recipe:catapult"
+      ],
+      "context_chars": 252,
+      "elapsed_ms": 1.042,
+      "derivation": null,
+      "excluded": [],
+      "model_calls": 0,
+      "network_calls": 0
+    },
+    {
+      "case_id": "fuel_recipe",
+      "group": "retrieval",
+      "split": "audit",
+      "strategy": "B1_eligible_coarse",
+      "passed": false,
+      "checks": {
+        "status": true,
+        "required_evidence": false,
+        "eligible_evidence": true,
+        "relevant_evidence": false,
+        "context_budget": true,
+        "reported_budget": true,
+        "no_external_calls": true,
+        "canonical_content": true
+      },
+      "missing": [
+        "recipe:lowgradefuel"
+      ],
+      "ineligible": [],
+      "unexpected": [
+        "recipe:ammo.rocket.basic",
+        "recipe:catapult",
+        "recipe:chainsaw",
+        "recipe:pickaxe",
+        "recipe:spear.stone"
+      ],
+      "status": "supported_snapshot",
+      "selected": [
+        "recipe:spear.stone",
+        "recipe:pickaxe",
+        "recipe:ammo.rocket.basic",
+        "recipe:chainsaw",
+        "recipe:catapult"
+      ],
+      "context_chars": 252,
+      "elapsed_ms": 1.135,
+      "derivation": null,
+      "excluded": [],
+      "model_calls": 0,
+      "network_calls": 0
+    },
+    {
+      "case_id": "fuel_recipe",
+      "group": "retrieval",
+      "split": "audit",
+      "strategy": "B2_exact_fts",
+      "passed": true,
+      "checks": {
+        "status": true,
+        "required_evidence": true,
+        "eligible_evidence": true,
+        "relevant_evidence": true,
+        "context_budget": true,
+        "reported_budget": true,
+        "no_external_calls": true,
+        "canonical_content": true
+      },
+      "missing": [],
+      "ineligible": [],
+      "unexpected": [],
+      "status": "supported_snapshot",
+      "selected": [
+        "recipe:lowgradefuel"
+      ],
+      "context_chars": 46,
+      "elapsed_ms": 1.236,
+      "derivation": null,
+      "excluded": [],
+      "model_calls": 0,
+      "network_calls": 0
+    },
+    {
+      "case_id": "wall_hp",
+      "group": "retrieval",
+      "split": "audit",
+      "strategy": "B0_coarse",
+      "passed": false,
+      "checks": {
+        "status": true,
+        "required_evidence": false,
+        "eligible_evidence": true,
+        "relevant_evidence": false,
+        "context_budget": true,
+        "reported_budget": true,
+        "no_external_calls": true,
+        "canonical_content": true
+      },
+      "missing": [
+        "raid:building:base-wall:stone"
+      ],
+      "ineligible": [],
+      "unexpected": [
+        "recipe:ammo.rocket.basic",
+        "recipe:catapult",
+        "recipe:chainsaw",
+        "recipe:pickaxe",
+        "recipe:spear.stone"
+      ],
+      "status": "supported_snapshot",
+      "selected": [
+        "recipe:spear.stone",
+        "recipe:pickaxe",
+        "recipe:ammo.rocket.basic",
+        "recipe:chainsaw",
+        "recipe:catapult"
+      ],
+      "context_chars": 252,
+      "elapsed_ms": 1.022,
+      "derivation": null,
+      "excluded": [],
+      "model_calls": 0,
+      "network_calls": 0
+    },
+    {
+      "case_id": "wall_hp",
+      "group": "retrieval",
+      "split": "audit",
+      "strategy": "B1_eligible_coarse",
+      "passed": false,
+      "checks": {
+        "status": true,
+        "required_evidence": false,
+        "eligible_evidence": true,
+        "relevant_evidence": false,
+        "context_budget": true,
+        "reported_budget": true,
+        "no_external_calls": true,
+        "canonical_content": true
+      },
+      "missing": [
+        "raid:building:base-wall:stone"
+      ],
+      "ineligible": [],
+      "unexpected": [
+        "recipe:ammo.rocket.basic",
+        "recipe:catapult",
+        "recipe:chainsaw",
+        "recipe:pickaxe",
+        "recipe:spear.stone"
+      ],
+      "status": "supported_snapshot",
+      "selected": [
+        "recipe:spear.stone",
+        "recipe:pickaxe",
+        "recipe:ammo.rocket.basic",
+        "recipe:chainsaw",
+        "recipe:catapult"
+      ],
+      "context_chars": 252,
+      "elapsed_ms": 1.016,
+      "derivation": null,
+      "excluded": [],
+      "model_calls": 0,
+      "network_calls": 0
+    },
+    {
+      "case_id": "wall_hp",
+      "group": "retrieval",
+      "split": "audit",
+      "strategy": "B2_exact_fts",
+      "passed": true,
+      "checks": {
+        "status": true,
+        "required_evidence": true,
+        "eligible_evidence": true,
+        "relevant_evidence": true,
+        "context_budget": true,
+        "reported_budget": true,
+        "no_external_calls": true,
+        "canonical_content": true
+      },
+      "missing": [],
+      "ineligible": [],
+      "unexpected": [],
+      "status": "supported_snapshot",
+      "selected": [
+        "raid:building:base-wall:stone"
+      ],
+      "context_chars": 331,
+      "elapsed_ms": 1.215,
+      "derivation": null,
+      "excluded": [],
+      "model_calls": 0,
+      "network_calls": 0
+    },
+    {
+      "case_id": "armored_door",
+      "group": "retrieval",
+      "split": "audit",
+      "strategy": "B0_coarse",
+      "passed": false,
+      "checks": {
+        "status": true,
+        "required_evidence": false,
+        "eligible_evidence": true,
+        "relevant_evidence": false,
+        "context_budget": true,
+        "reported_budget": true,
+        "no_external_calls": true,
+        "canonical_content": true
+      },
+      "missing": [
+        "raid:item:door.hinged.toptier"
+      ],
+      "ineligible": [],
+      "unexpected": [
+        "recipe:ammo.rocket.basic",
+        "recipe:catapult",
+        "recipe:chainsaw",
+        "recipe:pickaxe",
+        "recipe:spear.stone"
+      ],
+      "status": "supported_snapshot",
+      "selected": [
+        "recipe:spear.stone",
+        "recipe:pickaxe",
+        "recipe:ammo.rocket.basic",
+        "recipe:chainsaw",
+        "recipe:catapult"
+      ],
+      "context_chars": 252,
+      "elapsed_ms": 1.041,
+      "derivation": null,
+      "excluded": [],
+      "model_calls": 0,
+      "network_calls": 0
+    },
+    {
+      "case_id": "armored_door",
+      "group": "retrieval",
+      "split": "audit",
+      "strategy": "B1_eligible_coarse",
+      "passed": false,
+      "checks": {
+        "status": true,
+        "required_evidence": false,
+        "eligible_evidence": true,
+        "relevant_evidence": false,
+        "context_budget": true,
+        "reported_budget": true,
+        "no_external_calls": true,
+        "canonical_content": true
+      },
+      "missing": [
+        "raid:item:door.hinged.toptier"
+      ],
+      "ineligible": [],
+      "unexpected": [
+        "recipe:ammo.rocket.basic",
+        "recipe:catapult",
+        "recipe:chainsaw",
+        "recipe:pickaxe",
+        "recipe:spear.stone"
+      ],
+      "status": "supported_snapshot",
+      "selected": [
+        "recipe:spear.stone",
+        "recipe:pickaxe",
+        "recipe:ammo.rocket.basic",
+        "recipe:chainsaw",
+        "recipe:catapult"
+      ],
+      "context_chars": 252,
+      "elapsed_ms": 1.384,
+      "derivation": null,
+      "excluded": [],
+      "model_calls": 0,
+      "network_calls": 0
+    },
+    {
+      "case_id": "armored_door",
+      "group": "retrieval",
+      "split": "audit",
+      "strategy": "B2_exact_fts",
+      "passed": true,
+      "checks": {
+        "status": true,
+        "required_evidence": true,
+        "eligible_evidence": true,
+        "relevant_evidence": true,
+        "context_budget": true,
+        "reported_budget": true,
+        "no_external_calls": true,
+        "canonical_content": true
+      },
+      "missing": [],
+      "ineligible": [],
+      "unexpected": [],
+      "status": "supported_snapshot",
+      "selected": [
+        "raid:item:door.hinged.toptier"
+      ],
+      "context_chars": 326,
+      "elapsed_ms": 1.191,
+      "derivation": null,
+      "excluded": [],
+      "model_calls": 0,
+      "network_calls": 0
+    },
+    {
+      "case_id": "unknown_damage_target",
+      "group": "retrieval",
+      "split": "audit",
+      "strategy": "B0_coarse",
+      "passed": false,
+      "checks": {
+        "status": false,
+        "required_evidence": true,
+        "eligible_evidence": true,
+        "relevant_evidence": false,
+        "context_budget": true,
+        "reported_budget": true,
+        "no_external_calls": true,
+        "canonical_content": true
+      },
+      "missing": [],
+      "ineligible": [],
+      "unexpected": [
+        "recipe:ammo.rocket.basic",
+        "recipe:catapult",
+        "recipe:chainsaw",
+        "recipe:pickaxe",
+        "recipe:spear.stone"
+      ],
+      "status": "supported_snapshot",
+      "selected": [
+        "recipe:spear.stone",
+        "recipe:pickaxe",
+        "recipe:ammo.rocket.basic",
+        "recipe:chainsaw",
+        "recipe:catapult"
+      ],
+      "context_chars": 252,
+      "elapsed_ms": 1.056,
+      "derivation": null,
+      "excluded": [],
+      "model_calls": 0,
+      "network_calls": 0
+    },
+    {
+      "case_id": "unknown_damage_target",
+      "group": "retrieval",
+      "split": "audit",
+      "strategy": "B1_eligible_coarse",
+      "passed": false,
+      "checks": {
+        "status": false,
+        "required_evidence": true,
+        "eligible_evidence": true,
+        "relevant_evidence": false,
+        "context_budget": true,
+        "reported_budget": true,
+        "no_external_calls": true,
+        "canonical_content": true
+      },
+      "missing": [],
+      "ineligible": [],
+      "unexpected": [
+        "recipe:ammo.rocket.basic",
+        "recipe:catapult",
+        "recipe:chainsaw",
+        "recipe:pickaxe",
+        "recipe:spear.stone"
+      ],
+      "status": "supported_snapshot",
+      "selected": [
+        "recipe:spear.stone",
+        "recipe:pickaxe",
+        "recipe:ammo.rocket.basic",
+        "recipe:chainsaw",
+        "recipe:catapult"
+      ],
+      "context_chars": 252,
+      "elapsed_ms": 1.362,
+      "derivation": null,
+      "excluded": [],
+      "model_calls": 0,
+      "network_calls": 0
+    },
+    {
+      "case_id": "unknown_damage_target",
+      "group": "retrieval",
+      "split": "audit",
+      "strategy": "B2_exact_fts",
+      "passed": true,
+      "checks": {
+        "status": true,
+        "required_evidence": true,
+        "eligible_evidence": true,
+        "relevant_evidence": true,
+        "context_budget": true,
+        "reported_budget": true,
+        "no_external_calls": true,
+        "canonical_content": true
+      },
+      "missing": [],
+      "ineligible": [],
+      "unexpected": [],
+      "status": "missing_evidence",
+      "selected": [],
+      "context_chars": 0,
+      "elapsed_ms": 0,
+      "derivation": null,
+      "excluded": [],
+      "model_calls": 0,
+      "network_calls": 0
+    },
+    {
+      "case_id": "chinese_date",
+      "group": "freshness",
+      "split": "audit",
+      "strategy": "B0_coarse",
+      "passed": false,
+      "checks": {
+        "status": false,
+        "required_evidence": true,
+        "eligible_evidence": true,
+        "relevant_evidence": false,
+        "context_budget": true,
+        "reported_budget": true,
+        "no_external_calls": true,
+        "canonical_content": true
+      },
+      "missing": [],
+      "ineligible": [],
+      "unexpected": [
+        "recipe:ammo.rocket.basic",
+        "recipe:catapult",
+        "recipe:chainsaw",
+        "recipe:pickaxe",
+        "recipe:spear.stone"
+      ],
+      "status": "supported_snapshot",
+      "selected": [
+        "recipe:spear.stone",
+        "recipe:pickaxe",
+        "recipe:ammo.rocket.basic",
+        "recipe:chainsaw",
+        "recipe:catapult"
+      ],
+      "context_chars": 252,
+      "elapsed_ms": 1.058,
+      "derivation": null,
+      "excluded": [],
+      "model_calls": 0,
+      "network_calls": 0
+    },
+    {
+      "case_id": "chinese_date",
+      "group": "freshness",
+      "split": "audit",
+      "strategy": "B1_eligible_coarse",
+      "passed": true,
+      "checks": {
+        "status": true,
+        "required_evidence": true,
+        "eligible_evidence": true,
+        "relevant_evidence": true,
+        "context_budget": true,
+        "reported_budget": true,
+        "no_external_calls": true,
+        "canonical_content": true
+      },
+      "missing": [],
+      "ineligible": [],
+      "unexpected": [],
+      "status": "scope_mismatch",
+      "selected": [],
+      "context_chars": 0,
+      "elapsed_ms": 0.906,
+      "derivation": null,
+      "excluded": [],
+      "model_calls": 0,
+      "network_calls": 0
+    },
+    {
+      "case_id": "chinese_date",
+      "group": "freshness",
+      "split": "audit",
+      "strategy": "B2_exact_fts",
+      "passed": true,
+      "checks": {
+        "status": true,
+        "required_evidence": true,
+        "eligible_evidence": true,
+        "relevant_evidence": true,
+        "context_budget": true,
+        "reported_budget": true,
+        "no_external_calls": true,
+        "canonical_content": true
+      },
+      "missing": [],
+      "ineligible": [],
+      "unexpected": [],
+      "status": "scope_mismatch",
+      "selected": [],
+      "context_chars": 0,
+      "elapsed_ms": 0.877,
+      "derivation": null,
+      "excluded": [],
+      "model_calls": 0,
+      "network_calls": 0
+    },
+    {
+      "case_id": "slash_date",
+      "group": "freshness",
+      "split": "audit",
+      "strategy": "B0_coarse",
+      "passed": false,
+      "checks": {
+        "status": false,
+        "required_evidence": true,
+        "eligible_evidence": true,
+        "relevant_evidence": false,
+        "context_budget": true,
+        "reported_budget": true,
+        "no_external_calls": true,
+        "canonical_content": true
+      },
+      "missing": [],
+      "ineligible": [],
+      "unexpected": [
+        "recipe:ammo.rocket.basic",
+        "recipe:catapult",
+        "recipe:chainsaw",
+        "recipe:pickaxe",
+        "recipe:spear.stone"
+      ],
+      "status": "supported_snapshot",
+      "selected": [
+        "recipe:spear.stone",
+        "recipe:pickaxe",
+        "recipe:ammo.rocket.basic",
+        "recipe:chainsaw",
+        "recipe:catapult"
+      ],
+      "context_chars": 252,
+      "elapsed_ms": 1.119,
+      "derivation": null,
+      "excluded": [],
+      "model_calls": 0,
+      "network_calls": 0
+    },
+    {
+      "case_id": "slash_date",
+      "group": "freshness",
+      "split": "audit",
+      "strategy": "B1_eligible_coarse",
+      "passed": true,
+      "checks": {
+        "status": true,
+        "required_evidence": true,
+        "eligible_evidence": true,
+        "relevant_evidence": true,
+        "context_budget": true,
+        "reported_budget": true,
+        "no_external_calls": true,
+        "canonical_content": true
+      },
+      "missing": [],
+      "ineligible": [],
+      "unexpected": [],
+      "status": "scope_mismatch",
+      "selected": [],
+      "context_chars": 0,
+      "elapsed_ms": 0.891,
+      "derivation": null,
+      "excluded": [],
+      "model_calls": 0,
+      "network_calls": 0
+    },
+    {
+      "case_id": "slash_date",
+      "group": "freshness",
+      "split": "audit",
+      "strategy": "B2_exact_fts",
+      "passed": true,
+      "checks": {
+        "status": true,
+        "required_evidence": true,
+        "eligible_evidence": true,
+        "relevant_evidence": true,
+        "context_budget": true,
+        "reported_budget": true,
+        "no_external_calls": true,
+        "canonical_content": true
+      },
+      "missing": [],
+      "ineligible": [],
+      "unexpected": [],
+      "status": "scope_mismatch",
+      "selected": [],
+      "context_chars": 0,
+      "elapsed_ms": 0.914,
+      "derivation": null,
+      "excluded": [],
+      "model_calls": 0,
+      "network_calls": 0
+    },
+    {
+      "case_id": "unknown_build",
+      "group": "freshness",
+      "split": "audit",
+      "strategy": "B0_coarse",
+      "passed": false,
+      "checks": {
+        "status": false,
+        "required_evidence": true,
+        "eligible_evidence": true,
+        "relevant_evidence": false,
+        "context_budget": true,
+        "reported_budget": true,
+        "no_external_calls": true,
+        "canonical_content": true
+      },
+      "missing": [],
+      "ineligible": [],
+      "unexpected": [
+        "recipe:ammo.rocket.basic",
+        "recipe:catapult",
+        "recipe:chainsaw",
+        "recipe:pickaxe",
+        "recipe:spear.stone"
+      ],
+      "status": "supported_snapshot",
+      "selected": [
+        "recipe:spear.stone",
+        "recipe:pickaxe",
+        "recipe:ammo.rocket.basic",
+        "recipe:chainsaw",
+        "recipe:catapult"
+      ],
+      "context_chars": 252,
+      "elapsed_ms": 1.124,
+      "derivation": null,
+      "excluded": [],
+      "model_calls": 0,
+      "network_calls": 0
+    },
+    {
+      "case_id": "unknown_build",
+      "group": "freshness",
+      "split": "audit",
+      "strategy": "B1_eligible_coarse",
+      "passed": true,
+      "checks": {
+        "status": true,
+        "required_evidence": true,
+        "eligible_evidence": true,
+        "relevant_evidence": true,
+        "context_budget": true,
+        "reported_budget": true,
+        "no_external_calls": true,
+        "canonical_content": true
+      },
+      "missing": [],
+      "ineligible": [],
+      "unexpected": [],
+      "status": "scope_mismatch",
+      "selected": [],
+      "context_chars": 0,
+      "elapsed_ms": 0.898,
+      "derivation": null,
+      "excluded": [],
+      "model_calls": 0,
+      "network_calls": 0
+    },
+    {
+      "case_id": "unknown_build",
+      "group": "freshness",
+      "split": "audit",
+      "strategy": "B2_exact_fts",
+      "passed": true,
+      "checks": {
+        "status": true,
+        "required_evidence": true,
+        "eligible_evidence": true,
+        "relevant_evidence": true,
+        "context_budget": true,
+        "reported_budget": true,
+        "no_external_calls": true,
+        "canonical_content": true
+      },
+      "missing": [],
+      "ineligible": [],
+      "unexpected": [],
+      "status": "scope_mismatch",
+      "selected": [],
+      "context_chars": 0,
+      "elapsed_ms": 0.897,
+      "derivation": null,
+      "excluded": [],
+      "model_calls": 0,
+      "network_calls": 0
+    },
+    {
+      "case_id": "partial_date",
+      "group": "freshness",
+      "split": "audit",
+      "strategy": "B0_coarse",
+      "passed": false,
+      "checks": {
+        "status": false,
+        "required_evidence": true,
+        "eligible_evidence": true,
+        "relevant_evidence": false,
+        "context_budget": true,
+        "reported_budget": true,
+        "no_external_calls": true,
+        "canonical_content": true
+      },
+      "missing": [],
+      "ineligible": [],
+      "unexpected": [
+        "recipe:ammo.rocket.basic",
+        "recipe:catapult",
+        "recipe:chainsaw",
+        "recipe:pickaxe",
+        "recipe:spear.stone"
+      ],
+      "status": "supported_snapshot",
+      "selected": [
+        "recipe:spear.stone",
+        "recipe:pickaxe",
+        "recipe:ammo.rocket.basic",
+        "recipe:chainsaw",
+        "recipe:catapult"
+      ],
+      "context_chars": 252,
+      "elapsed_ms": 1.122,
+      "derivation": null,
+      "excluded": [],
+      "model_calls": 0,
+      "network_calls": 0
+    },
+    {
+      "case_id": "partial_date",
+      "group": "freshness",
+      "split": "audit",
+      "strategy": "B1_eligible_coarse",
+      "passed": true,
+      "checks": {
+        "status": true,
+        "required_evidence": true,
+        "eligible_evidence": true,
+        "relevant_evidence": true,
+        "context_budget": true,
+        "reported_budget": true,
+        "no_external_calls": true,
+        "canonical_content": true
+      },
+      "missing": [],
+      "ineligible": [],
+      "unexpected": [],
+      "status": "scope_mismatch",
+      "selected": [],
+      "context_chars": 0,
+      "elapsed_ms": 0.938,
+      "derivation": null,
+      "excluded": [],
+      "model_calls": 0,
+      "network_calls": 0
+    },
+    {
+      "case_id": "partial_date",
+      "group": "freshness",
+      "split": "audit",
+      "strategy": "B2_exact_fts",
+      "passed": true,
+      "checks": {
+        "status": true,
+        "required_evidence": true,
+        "eligible_evidence": true,
+        "relevant_evidence": true,
+        "context_budget": true,
+        "reported_budget": true,
+        "no_external_calls": true,
+        "canonical_content": true
+      },
+      "missing": [],
+      "ineligible": [],
+      "unexpected": [],
+      "status": "scope_mismatch",
+      "selected": [],
+      "context_chars": 0,
+      "elapsed_ms": 0.955,
+      "derivation": null,
+      "excluded": [],
+      "model_calls": 0,
+      "network_calls": 0
+    },
+    {
+      "case_id": "snapshot_date",
+      "group": "freshness",
+      "split": "audit",
+      "strategy": "B0_coarse",
+      "passed": false,
+      "checks": {
+        "status": true,
+        "required_evidence": false,
+        "eligible_evidence": true,
+        "relevant_evidence": false,
+        "context_budget": true,
+        "reported_budget": true,
+        "no_external_calls": true,
+        "canonical_content": true
+      },
+      "missing": [
+        "recipe:explosive.timed"
+      ],
+      "ineligible": [],
+      "unexpected": [
+        "recipe:ammo.rocket.basic",
+        "recipe:catapult",
+        "recipe:chainsaw",
+        "recipe:pickaxe",
+        "recipe:spear.stone"
+      ],
+      "status": "supported_snapshot",
+      "selected": [
+        "recipe:spear.stone",
+        "recipe:pickaxe",
+        "recipe:ammo.rocket.basic",
+        "recipe:chainsaw",
+        "recipe:catapult"
+      ],
+      "context_chars": 252,
+      "elapsed_ms": 1.048,
+      "derivation": null,
+      "excluded": [],
+      "model_calls": 0,
+      "network_calls": 0
+    },
+    {
+      "case_id": "snapshot_date",
+      "group": "freshness",
+      "split": "audit",
+      "strategy": "B1_eligible_coarse",
+      "passed": false,
+      "checks": {
+        "status": true,
+        "required_evidence": false,
+        "eligible_evidence": true,
+        "relevant_evidence": false,
+        "context_budget": true,
+        "reported_budget": true,
+        "no_external_calls": true,
+        "canonical_content": true
+      },
+      "missing": [
+        "recipe:explosive.timed"
+      ],
+      "ineligible": [],
+      "unexpected": [
+        "recipe:ammo.rocket.basic",
+        "recipe:catapult",
+        "recipe:chainsaw",
+        "recipe:pickaxe",
+        "recipe:spear.stone"
+      ],
+      "status": "supported_snapshot",
+      "selected": [
+        "recipe:spear.stone",
+        "recipe:pickaxe",
+        "recipe:ammo.rocket.basic",
+        "recipe:chainsaw",
+        "recipe:catapult"
+      ],
+      "context_chars": 252,
+      "elapsed_ms": 1.07,
+      "derivation": null,
+      "excluded": [],
+      "model_calls": 0,
+      "network_calls": 0
+    },
+    {
+      "case_id": "snapshot_date",
+      "group": "freshness",
+      "split": "audit",
+      "strategy": "B2_exact_fts",
+      "passed": true,
+      "checks": {
+        "status": true,
+        "required_evidence": true,
+        "eligible_evidence": true,
+        "relevant_evidence": true,
+        "context_budget": true,
+        "reported_budget": true,
+        "no_external_calls": true,
+        "canonical_content": true
+      },
+      "missing": [],
+      "ineligible": [],
+      "unexpected": [],
+      "status": "supported_snapshot",
+      "selected": [
+        "recipe:explosive.timed"
+      ],
+      "context_chars": 51,
+      "elapsed_ms": 1.341,
+      "derivation": null,
+      "excluded": [],
+      "model_calls": 0,
+      "network_calls": 0
+    },
+    {
+      "case_id": "copied_rule",
+      "group": "revocation",
+      "split": "audit",
+      "strategy": "B0_coarse",
+      "passed": false,
+      "checks": {
+        "status": false,
+        "required_evidence": true,
+        "eligible_evidence": true,
+        "relevant_evidence": false,
+        "context_budget": true,
+        "reported_budget": true,
+        "no_external_calls": true,
+        "canonical_content": true
+      },
+      "missing": [],
+      "ineligible": [],
+      "unexpected": [
+        "recipe:ammo.rocket.basic",
+        "recipe:catapult",
+        "recipe:chainsaw",
+        "recipe:pickaxe",
+        "recipe:spear.stone"
+      ],
+      "status": "supported_snapshot",
+      "selected": [
+        "recipe:spear.stone",
+        "recipe:pickaxe",
+        "recipe:ammo.rocket.basic",
+        "recipe:chainsaw",
+        "recipe:catapult"
+      ],
+      "context_chars": 252,
+      "elapsed_ms": 1.428,
+      "derivation": null,
+      "excluded": [],
+      "model_calls": 0,
+      "network_calls": 0
+    },
+    {
+      "case_id": "copied_rule",
+      "group": "revocation",
+      "split": "audit",
+      "strategy": "B1_eligible_coarse",
+      "passed": false,
+      "checks": {
+        "status": false,
+        "required_evidence": true,
+        "eligible_evidence": true,
+        "relevant_evidence": false,
+        "context_budget": true,
+        "reported_budget": true,
+        "no_external_calls": true,
+        "canonical_content": true
+      },
+      "missing": [],
+      "ineligible": [],
+      "unexpected": [
+        "recipe:ammo.rocket.basic",
+        "recipe:catapult",
+        "recipe:chainsaw",
+        "recipe:pickaxe",
+        "recipe:spear.stone"
+      ],
+      "status": "supported_snapshot",
+      "selected": [
+        "recipe:spear.stone",
+        "recipe:pickaxe",
+        "recipe:ammo.rocket.basic",
+        "recipe:chainsaw",
+        "recipe:catapult"
+      ],
+      "context_chars": 252,
+      "elapsed_ms": 1.445,
+      "derivation": null,
+      "excluded": [
+        {
+          "id": "recipe:explosive.timed",
+          "reason": "revoked"
+        }
+      ],
+      "model_calls": 0,
+      "network_calls": 0
+    },
+    {
+      "case_id": "copied_rule",
+      "group": "revocation",
+      "split": "audit",
+      "strategy": "B2_exact_fts",
+      "passed": true,
+      "checks": {
+        "status": true,
+        "required_evidence": true,
+        "eligible_evidence": true,
+        "relevant_evidence": true,
+        "context_budget": true,
+        "reported_budget": true,
+        "no_external_calls": true,
+        "canonical_content": true
+      },
+      "missing": [],
+      "ineligible": [],
+      "unexpected": [],
+      "status": "missing_evidence",
+      "selected": [],
+      "context_chars": 0,
+      "elapsed_ms": 1.759,
+      "derivation": null,
+      "excluded": [
+        {
+          "id": "recipe:explosive.timed",
+          "reason": "revoked"
+        }
+      ],
+      "model_calls": 0,
+      "network_calls": 0
+    },
+    {
+      "case_id": "renamed_explanation",
+      "group": "revocation",
+      "split": "audit",
+      "strategy": "B0_coarse",
+      "passed": true,
+      "checks": {
+        "status": true,
+        "required_evidence": true,
+        "eligible_evidence": true,
+        "relevant_evidence": true,
+        "context_budget": true,
+        "reported_budget": true,
+        "no_external_calls": true,
+        "canonical_content": true
+      },
+      "missing": [],
+      "ineligible": [],
+      "unexpected": [],
+      "status": "missing_evidence",
+      "selected": [],
+      "context_chars": 0,
+      "elapsed_ms": 1.475,
+      "derivation": null,
+      "excluded": [],
+      "model_calls": 0,
+      "network_calls": 0
+    },
+    {
+      "case_id": "renamed_explanation",
+      "group": "revocation",
+      "split": "audit",
+      "strategy": "B1_eligible_coarse",
+      "passed": true,
+      "checks": {
+        "status": true,
+        "required_evidence": true,
+        "eligible_evidence": true,
+        "relevant_evidence": true,
+        "context_budget": true,
+        "reported_budget": true,
+        "no_external_calls": true,
+        "canonical_content": true
+      },
+      "missing": [],
+      "ineligible": [],
+      "unexpected": [],
+      "status": "missing_evidence",
+      "selected": [],
+      "context_chars": 0,
+      "elapsed_ms": 1.55,
+      "derivation": null,
+      "excluded": [
+        {
+          "id": "explain:renamed",
+          "reason": "revoked"
+        }
+      ],
+      "model_calls": 0,
+      "network_calls": 0
+    },
+    {
+      "case_id": "renamed_explanation",
+      "group": "revocation",
+      "split": "audit",
+      "strategy": "B2_exact_fts",
+      "passed": true,
+      "checks": {
+        "status": true,
+        "required_evidence": true,
+        "eligible_evidence": true,
+        "relevant_evidence": true,
+        "context_budget": true,
+        "reported_budget": true,
+        "no_external_calls": true,
+        "canonical_content": true
+      },
+      "missing": [],
+      "ineligible": [],
+      "unexpected": [],
+      "status": "missing_evidence",
+      "selected": [
+        "raid:building:base-wall:stone"
+      ],
+      "context_chars": 331,
+      "elapsed_ms": 2.011,
+      "derivation": null,
+      "excluded": [
+        {
+          "id": "explain:renamed",
+          "reason": "revoked"
+        }
+      ],
+      "model_calls": 0,
+      "network_calls": 0
+    },
+    {
+      "case_id": "malformed_cache",
+      "group": "recovery",
+      "split": "audit",
+      "strategy": "B0_coarse",
+      "passed": false,
+      "checks": {
+        "status": false,
+        "required_evidence": false,
+        "eligible_evidence": true,
+        "relevant_evidence": true,
+        "context_budget": true,
+        "reported_budget": true,
+        "no_external_calls": true,
+        "canonical_content": true
+      },
+      "missing": [
+        "explain:rounding",
+        "raid:building:base-wall:stone"
+      ],
+      "ineligible": [],
+      "unexpected": [],
+      "status": "missing_evidence",
+      "selected": [],
+      "context_chars": 0,
+      "elapsed_ms": 1.045,
+      "derivation": null,
+      "excluded": [],
+      "model_calls": 0,
+      "network_calls": 0
+    },
+    {
+      "case_id": "malformed_cache",
+      "group": "recovery",
+      "split": "audit",
+      "strategy": "B1_eligible_coarse",
+      "passed": false,
+      "checks": {
+        "status": false,
+        "required_evidence": false,
+        "eligible_evidence": true,
+        "relevant_evidence": true,
+        "context_budget": true,
+        "reported_budget": true,
+        "no_external_calls": true,
+        "canonical_content": true
+      },
+      "missing": [
+        "explain:rounding",
+        "raid:building:base-wall:stone"
+      ],
+      "ineligible": [],
+      "unexpected": [],
+      "status": "missing_evidence",
+      "selected": [],
+      "context_chars": 0,
+      "elapsed_ms": 1.147,
+      "derivation": null,
+      "excluded": [],
+      "model_calls": 0,
+      "network_calls": 0
+    },
+    {
+      "case_id": "malformed_cache",
+      "group": "recovery",
+      "split": "audit",
+      "strategy": "B2_exact_fts",
+      "passed": true,
+      "checks": {
+        "status": true,
+        "required_evidence": true,
+        "eligible_evidence": true,
+        "relevant_evidence": true,
+        "context_budget": true,
+        "reported_budget": true,
+        "no_external_calls": true,
+        "canonical_content": true
+      },
+      "missing": [],
+      "ineligible": [],
+      "unexpected": [],
+      "status": "supported_snapshot",
+      "selected": [
+        "raid:building:base-wall:stone",
+        "explain:rounding"
+      ],
+      "context_chars": 423,
+      "elapsed_ms": 1.469,
+      "derivation": null,
+      "excluded": [],
+      "model_calls": 0,
+      "network_calls": 0
+    },
+    {
+      "case_id": "partial_cache",
+      "group": "recovery",
+      "split": "audit",
+      "strategy": "B0_coarse",
+      "passed": false,
+      "checks": {
+        "status": false,
+        "required_evidence": false,
+        "eligible_evidence": true,
+        "relevant_evidence": true,
+        "context_budget": true,
+        "reported_budget": true,
+        "no_external_calls": true,
+        "canonical_content": true
+      },
+      "missing": [
+        "explain:rounding",
+        "raid:building:base-wall:stone"
+      ],
+      "ineligible": [],
+      "unexpected": [],
+      "status": "missing_evidence",
+      "selected": [],
+      "context_chars": 0,
+      "elapsed_ms": 1.008,
+      "derivation": null,
+      "excluded": [],
+      "model_calls": 0,
+      "network_calls": 0
+    },
+    {
+      "case_id": "partial_cache",
+      "group": "recovery",
+      "split": "audit",
+      "strategy": "B1_eligible_coarse",
+      "passed": false,
+      "checks": {
+        "status": false,
+        "required_evidence": false,
+        "eligible_evidence": true,
+        "relevant_evidence": true,
+        "context_budget": true,
+        "reported_budget": true,
+        "no_external_calls": true,
+        "canonical_content": true
+      },
+      "missing": [
+        "explain:rounding",
+        "raid:building:base-wall:stone"
+      ],
+      "ineligible": [],
+      "unexpected": [],
+      "status": "missing_evidence",
+      "selected": [],
+      "context_chars": 0,
+      "elapsed_ms": 1.032,
+      "derivation": null,
+      "excluded": [],
+      "model_calls": 0,
+      "network_calls": 0
+    },
+    {
+      "case_id": "partial_cache",
+      "group": "recovery",
+      "split": "audit",
+      "strategy": "B2_exact_fts",
+      "passed": true,
+      "checks": {
+        "status": true,
+        "required_evidence": true,
+        "eligible_evidence": true,
+        "relevant_evidence": true,
+        "context_budget": true,
+        "reported_budget": true,
+        "no_external_calls": true,
+        "canonical_content": true
+      },
+      "missing": [],
+      "ineligible": [],
+      "unexpected": [],
+      "status": "supported_snapshot",
+      "selected": [
+        "raid:building:base-wall:stone",
+        "explain:rounding"
+      ],
+      "context_chars": 423,
+      "elapsed_ms": 1.515,
+      "derivation": null,
+      "excluded": [],
+      "model_calls": 0,
+      "network_calls": 0
+    },
+    {
+      "case_id": "empty_index",
+      "group": "recovery",
+      "split": "audit",
+      "strategy": "B0_coarse",
+      "passed": false,
+      "checks": {
+        "status": false,
+        "required_evidence": true,
+        "eligible_evidence": true,
+        "relevant_evidence": true,
+        "context_budget": true,
+        "reported_budget": true,
+        "no_external_calls": true,
+        "canonical_content": true
+      },
+      "missing": [],
+      "ineligible": [],
+      "unexpected": [],
+      "status": "missing_evidence",
+      "selected": [],
+      "context_chars": 0,
+      "elapsed_ms": 1.068,
+      "derivation": null,
+      "excluded": [],
+      "model_calls": 0,
+      "network_calls": 0
+    },
+    {
+      "case_id": "empty_index",
+      "group": "recovery",
+      "split": "audit",
+      "strategy": "B1_eligible_coarse",
+      "passed": false,
+      "checks": {
+        "status": false,
+        "required_evidence": true,
+        "eligible_evidence": true,
+        "relevant_evidence": true,
+        "context_budget": true,
+        "reported_budget": true,
+        "no_external_calls": true,
+        "canonical_content": true
+      },
+      "missing": [],
+      "ineligible": [],
+      "unexpected": [],
+      "status": "missing_evidence",
+      "selected": [],
+      "context_chars": 0,
+      "elapsed_ms": 1.033,
+      "derivation": null,
+      "excluded": [],
+      "model_calls": 0,
+      "network_calls": 0
+    },
+    {
+      "case_id": "empty_index",
+      "group": "recovery",
+      "split": "audit",
+      "strategy": "B2_exact_fts",
+      "passed": true,
+      "checks": {
+        "status": true,
+        "required_evidence": true,
+        "eligible_evidence": true,
+        "relevant_evidence": true,
+        "context_budget": true,
+        "reported_budget": true,
+        "no_external_calls": true,
+        "canonical_content": true
+      },
+      "missing": [],
+      "ineligible": [],
+      "unexpected": [],
+      "status": "index_unavailable",
+      "selected": [],
+      "context_chars": 0,
+      "elapsed_ms": 1.117,
+      "derivation": null,
+      "excluded": [],
+      "model_calls": 0,
+      "network_calls": 0
+    },
+    {
+      "case_id": "false_premise",
+      "group": "reasoning",
+      "split": "audit",
+      "strategy": "B0_coarse",
+      "passed": false,
+      "checks": {
+        "status": false,
+        "required_evidence": false,
+        "eligible_evidence": true,
+        "relevant_evidence": true,
+        "context_budget": true,
+        "reported_budget": true,
+        "no_external_calls": true,
+        "canonical_content": true,
+        "derived_answer": false
+      },
+      "missing": [
+        "explain:rounding",
+        "raid:building:base-wall:stone",
+        "recipe:explosive.timed"
+      ],
+      "ineligible": [],
+      "unexpected": [],
+      "status": "missing_evidence",
+      "selected": [],
+      "context_chars": 0,
+      "elapsed_ms": 1.179,
+      "derivation": null,
+      "excluded": [],
+      "model_calls": 0,
+      "network_calls": 0
+    },
+    {
+      "case_id": "false_premise",
+      "group": "reasoning",
+      "split": "audit",
+      "strategy": "B1_eligible_coarse",
+      "passed": false,
+      "checks": {
+        "status": false,
+        "required_evidence": false,
+        "eligible_evidence": true,
+        "relevant_evidence": true,
+        "context_budget": true,
+        "reported_budget": true,
+        "no_external_calls": true,
+        "canonical_content": true,
+        "derived_answer": false
+      },
+      "missing": [
+        "explain:rounding",
+        "raid:building:base-wall:stone",
+        "recipe:explosive.timed"
+      ],
+      "ineligible": [],
+      "unexpected": [],
+      "status": "missing_evidence",
+      "selected": [],
+      "context_chars": 0,
+      "elapsed_ms": 1.132,
+      "derivation": null,
+      "excluded": [],
+      "model_calls": 0,
+      "network_calls": 0
+    },
+    {
+      "case_id": "false_premise",
+      "group": "reasoning",
+      "split": "audit",
+      "strategy": "B2_exact_fts",
+      "passed": true,
+      "checks": {
+        "status": true,
+        "required_evidence": true,
+        "eligible_evidence": true,
+        "relevant_evidence": true,
+        "context_budget": true,
+        "reported_budget": true,
+        "no_external_calls": true,
+        "canonical_content": true,
+        "derived_answer": true
+      },
+      "missing": [],
+      "ineligible": [],
+      "unexpected": [],
+      "status": "supported_snapshot",
+      "selected": [
+        "recipe:explosive.timed",
+        "raid:building:base-wall:stone",
+        "explain:rounding"
+      ],
+      "context_chars": 474,
+      "elapsed_ms": 4.064,
+      "derivation": {
+        "input": {
+          "operation": "raid",
+          "ruleset": "pc_vanilla",
+          "goals": {},
+          "inventory": null,
+          "inventory_complete": true,
+          "reserve": {},
+          "target": "building:base-wall:stone",
+          "hp": 250,
+          "count": 1,
+          "side": "hard",
+          "methods": [
+            "explosive.timed"
+          ],
+          "workbench": null,
+          "blueprints": null,
+          "gunpowder_recipe": "workbench",
+          "expand_fuel": false
+        },
+        "result": {
+          "target": "building:base-wall:stone",
+          "target_name": "墙壁 · 石质",
+          "hp_each": 250,
+          "target_count": 1,
+          "side": "hard",
+          "options": [
+            {
+              "item": "explosive.timed",
+              "damage": "275",
+              "per_target": 1,
+              "count": 1,
+              "formula": "ceil(250 / 275) × 1 = 1",
+              "new_sulfur": 2200,
+              "craft": {
+                "goals": {
+                  "explosive.timed": 1
+                },
+                "acquisition": {
+                  "techparts": 2,
+                  "metal.fragments": 200,
+                  "lowgradefuel": 60,
+                  "sulfur": 2200,
+                  "charcoal": 3000,
+                  "cloth": 5
+                },
+                "inventory_known": false,
+                "inventory_complete": false,
+                "inventory_used": {},
+                "inventory_remaining": {},
+                "reserved": {},
+                "batch_leftovers": {},
+                "steps": [
+                  {
+                    "item": "gunpowder",
+                    "required": 1000,
+                    "owned_used": 0,
+                    "missing": 1000,
+                    "batch_size": 10,
+                    "batches": 100,
+                    "produced": 1000,
+                    "ingredients": {
+                      "charcoal": 3000,
+                      "sulfur": 2000
+                    },
+                    "workbench": 1,
+                    "source": "https://rust-data.com/zh/items/gunpowder",
+                    "source_record": null
+                  },
+                  {
+                    "item": "explosives",
+                    "required": 20,
+                    "owned_used": 0,
+                    "missing": 20,
+                    "batch_size": 1,
+                    "batches": 20,
+                    "produced": 20,
+                    "ingredients": {
+                      "gunpowder": 1000,
+                      "lowgradefuel": 60,
+                      "sulfur": 200,
+                      "metal.fragments": 200
+                    },
+                    "workbench": 3,
+                    "source": "https://rust-data.com/zh/items/explosives",
+                    "source_record": null
+                  },
+                  {
+                    "item": "explosive.timed",
+                    "required": 1,
+                    "owned_used": 0,
+                    "missing": 1,
+                    "batch_size": 1,
+                    "batches": 1,
+                    "produced": 1,
+                    "ingredients": {
+                      "explosives": 20,
+                      "cloth": 5,
+                      "techparts": 2
+                    },
+                    "workbench": 3,
+                    "source": "https://rust-data.com/zh/items/explosive-timed",
+                    "source_record": null
+                  }
+                ],
+                "requirements": {
+                  "workbench": 3,
+                  "workbench_status": "unknown",
+                  "blueprints_status": "not_checked",
+                  "blueprints_to_check": [
+                    "gunpowder",
+                    "explosives",
+                    "explosive.timed"
+                  ],
+                  "mixing_table_to_check": false
+                }
+              },
+              "launcher_required": null
+            }
+          ],
+          "comparison": "minimum_additional_sulfur_among_single_method_options",
+          "source": "https://rust-data.com/zh/construction/building-core/wall/wood?grade=stone",
+          "source_hash": "5565c7146da7530861d28cfe40d6a8957ace99c52d6e1786301d5e84ad452064",
+          "assumptions": [
+            "PC 原版；按每个目标单独命中，无维修、衰减变化或溅射共享。",
+            "粘附爆炸物按成功贴附并爆炸；火箭按直接命中；不计哑火等待。",
+            "仅比较所列单一爆炸物方案的新增硫磺，不代表混搭或所有资源的全局最优。",
+            "发射器、学习蓝图、建造工作台的成本不包含在消耗品成本中。"
+          ]
+        },
+        "calculation_id": "86f605dc9e3341c7a1100b6e576d8ec2ff238a7aefef500555216761477d4b05"
+      },
+      "excluded": [],
+      "model_calls": 0,
+      "network_calls": 0
+    }
+  ],
+  "cache_benchmark": {
+    "query": "C4需要几级工作台，解释蓝图条件",
+    "repetitions_per_mode": 20,
+    "samples": {
+      "cold": [
+        {
+          "elapsed_ms": 2.467,
+          "cache_hit": false,
+          "status": "supported_snapshot",
+          "selected": [
+            "recipe:explosive.timed",
+            "explain:technology"
+          ]
+        },
+        {
+          "elapsed_ms": 2.317,
+          "cache_hit": false,
+          "status": "supported_snapshot",
+          "selected": [
+            "recipe:explosive.timed",
+            "explain:technology"
+          ]
+        },
+        {
+          "elapsed_ms": 3.046,
+          "cache_hit": false,
+          "status": "supported_snapshot",
+          "selected": [
+            "recipe:explosive.timed",
+            "explain:technology"
+          ]
+        },
+        {
+          "elapsed_ms": 2.442,
+          "cache_hit": false,
+          "status": "supported_snapshot",
+          "selected": [
+            "recipe:explosive.timed",
+            "explain:technology"
+          ]
+        },
+        {
+          "elapsed_ms": 2.504,
+          "cache_hit": false,
+          "status": "supported_snapshot",
+          "selected": [
+            "recipe:explosive.timed",
+            "explain:technology"
+          ]
+        },
+        {
+          "elapsed_ms": 3.247,
+          "cache_hit": false,
+          "status": "supported_snapshot",
+          "selected": [
+            "recipe:explosive.timed",
+            "explain:technology"
+          ]
+        },
+        {
+          "elapsed_ms": 2.403,
+          "cache_hit": false,
+          "status": "supported_snapshot",
+          "selected": [
+            "recipe:explosive.timed",
+            "explain:technology"
+          ]
+        },
+        {
+          "elapsed_ms": 2.317,
+          "cache_hit": false,
+          "status": "supported_snapshot",
+          "selected": [
+            "recipe:explosive.timed",
+            "explain:technology"
+          ]
+        },
+        {
+          "elapsed_ms": 2.281,
+          "cache_hit": false,
+          "status": "supported_snapshot",
+          "selected": [
+            "recipe:explosive.timed",
+            "explain:technology"
+          ]
+        },
+        {
+          "elapsed_ms": 2.423,
+          "cache_hit": false,
+          "status": "supported_snapshot",
+          "selected": [
+            "recipe:explosive.timed",
+            "explain:technology"
+          ]
+        },
+        {
+          "elapsed_ms": 2.273,
+          "cache_hit": false,
+          "status": "supported_snapshot",
+          "selected": [
+            "recipe:explosive.timed",
+            "explain:technology"
+          ]
+        },
+        {
+          "elapsed_ms": 2.252,
+          "cache_hit": false,
+          "status": "supported_snapshot",
+          "selected": [
+            "recipe:explosive.timed",
+            "explain:technology"
+          ]
+        },
+        {
+          "elapsed_ms": 2.732,
+          "cache_hit": false,
+          "status": "supported_snapshot",
+          "selected": [
+            "recipe:explosive.timed",
+            "explain:technology"
+          ]
+        },
+        {
+          "elapsed_ms": 2.475,
+          "cache_hit": false,
+          "status": "supported_snapshot",
+          "selected": [
+            "recipe:explosive.timed",
+            "explain:technology"
+          ]
+        },
+        {
+          "elapsed_ms": 2.267,
+          "cache_hit": false,
+          "status": "supported_snapshot",
+          "selected": [
+            "recipe:explosive.timed",
+            "explain:technology"
+          ]
+        },
+        {
+          "elapsed_ms": 2.508,
+          "cache_hit": false,
+          "status": "supported_snapshot",
+          "selected": [
+            "recipe:explosive.timed",
+            "explain:technology"
+          ]
+        },
+        {
+          "elapsed_ms": 2.465,
+          "cache_hit": false,
+          "status": "supported_snapshot",
+          "selected": [
+            "recipe:explosive.timed",
+            "explain:technology"
+          ]
+        },
+        {
+          "elapsed_ms": 2.257,
+          "cache_hit": false,
+          "status": "supported_snapshot",
+          "selected": [
+            "recipe:explosive.timed",
+            "explain:technology"
+          ]
+        },
+        {
+          "elapsed_ms": 2.259,
+          "cache_hit": false,
+          "status": "supported_snapshot",
+          "selected": [
+            "recipe:explosive.timed",
+            "explain:technology"
+          ]
+        },
+        {
+          "elapsed_ms": 2.624,
+          "cache_hit": false,
+          "status": "supported_snapshot",
+          "selected": [
+            "recipe:explosive.timed",
+            "explain:technology"
+          ]
+        }
+      ],
+      "warm": [
+        {
+          "elapsed_ms": 1.971,
+          "cache_hit": true,
+          "status": "supported_snapshot",
+          "selected": [
+            "recipe:explosive.timed",
+            "explain:technology"
+          ]
+        },
+        {
+          "elapsed_ms": 2.067,
+          "cache_hit": true,
+          "status": "supported_snapshot",
+          "selected": [
+            "recipe:explosive.timed",
+            "explain:technology"
+          ]
+        },
+        {
+          "elapsed_ms": 2.04,
+          "cache_hit": true,
+          "status": "supported_snapshot",
+          "selected": [
+            "recipe:explosive.timed",
+            "explain:technology"
+          ]
+        },
+        {
+          "elapsed_ms": 2.004,
+          "cache_hit": true,
+          "status": "supported_snapshot",
+          "selected": [
+            "recipe:explosive.timed",
+            "explain:technology"
+          ]
+        },
+        {
+          "elapsed_ms": 1.942,
+          "cache_hit": true,
+          "status": "supported_snapshot",
+          "selected": [
+            "recipe:explosive.timed",
+            "explain:technology"
+          ]
+        },
+        {
+          "elapsed_ms": 2.256,
+          "cache_hit": true,
+          "status": "supported_snapshot",
+          "selected": [
+            "recipe:explosive.timed",
+            "explain:technology"
+          ]
+        },
+        {
+          "elapsed_ms": 1.902,
+          "cache_hit": true,
+          "status": "supported_snapshot",
+          "selected": [
+            "recipe:explosive.timed",
+            "explain:technology"
+          ]
+        },
+        {
+          "elapsed_ms": 1.95,
+          "cache_hit": true,
+          "status": "supported_snapshot",
+          "selected": [
+            "recipe:explosive.timed",
+            "explain:technology"
+          ]
+        },
+        {
+          "elapsed_ms": 2.312,
+          "cache_hit": true,
+          "status": "supported_snapshot",
+          "selected": [
+            "recipe:explosive.timed",
+            "explain:technology"
+          ]
+        },
+        {
+          "elapsed_ms": 1.938,
+          "cache_hit": true,
+          "status": "supported_snapshot",
+          "selected": [
+            "recipe:explosive.timed",
+            "explain:technology"
+          ]
+        },
+        {
+          "elapsed_ms": 1.886,
+          "cache_hit": true,
+          "status": "supported_snapshot",
+          "selected": [
+            "recipe:explosive.timed",
+            "explain:technology"
+          ]
+        },
+        {
+          "elapsed_ms": 1.878,
+          "cache_hit": true,
+          "status": "supported_snapshot",
+          "selected": [
+            "recipe:explosive.timed",
+            "explain:technology"
+          ]
+        },
+        {
+          "elapsed_ms": 1.927,
+          "cache_hit": true,
+          "status": "supported_snapshot",
+          "selected": [
+            "recipe:explosive.timed",
+            "explain:technology"
+          ]
+        },
+        {
+          "elapsed_ms": 1.927,
+          "cache_hit": true,
+          "status": "supported_snapshot",
+          "selected": [
+            "recipe:explosive.timed",
+            "explain:technology"
+          ]
+        },
+        {
+          "elapsed_ms": 1.882,
+          "cache_hit": true,
+          "status": "supported_snapshot",
+          "selected": [
+            "recipe:explosive.timed",
+            "explain:technology"
+          ]
+        },
+        {
+          "elapsed_ms": 1.953,
+          "cache_hit": true,
+          "status": "supported_snapshot",
+          "selected": [
+            "recipe:explosive.timed",
+            "explain:technology"
+          ]
+        },
+        {
+          "elapsed_ms": 1.914,
+          "cache_hit": true,
+          "status": "supported_snapshot",
+          "selected": [
+            "recipe:explosive.timed",
+            "explain:technology"
+          ]
+        },
+        {
+          "elapsed_ms": 1.886,
+          "cache_hit": true,
+          "status": "supported_snapshot",
+          "selected": [
+            "recipe:explosive.timed",
+            "explain:technology"
+          ]
+        },
+        {
+          "elapsed_ms": 2.262,
+          "cache_hit": true,
+          "status": "supported_snapshot",
+          "selected": [
+            "recipe:explosive.timed",
+            "explain:technology"
+          ]
+        },
+        {
+          "elapsed_ms": 2.109,
+          "cache_hit": true,
+          "status": "supported_snapshot",
+          "selected": [
+            "recipe:explosive.timed",
+            "explain:technology"
+          ]
+        }
+      ]
+    },
+    "summary": {
+      "cold": {
+        "p50_ms": 2.4325,
+        "p95_ms": 3.046,
+        "cache_hits": 0
+      },
+      "warm": {
+        "p50_ms": 1.946,
+        "p95_ms": 2.262,
+        "cache_hits": 20
+      }
+    },
+    "limitations": "Single-process paired queries on a tiny local corpus, excludes installation and HTTP. Cache hits still validate package, revocations and index; no production speedup guarantee."
+  },
+  "limitations": [
+    "Adversarial engineering regression cases authored during audit; not model accuracy or independent game truth.",
+    "All cases are audit regression cases. No unseen holdout or independence claim.",
+    "B0/B1 reuse the existing relevant() coarse topic predicate on the same local retrieval view, same 5-document/6000-character budget. They are controlled adapters, not a replay of live web/model behavior at the baseline commit.",
+    "Eligibility and status checks are software-contract fixtures; they do not establish semantic correctness of every curated claim or game build applicability.",
+    "Case latency measures one query after fault preparation; cache corruption cases intentionally prewarm. It excludes installation and model/network latency; no general production speedup is claimed."
+  ]
+}

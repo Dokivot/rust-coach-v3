@@ -1,0 +1,4 @@
+strategy,passed_cases,total_cases,supported_passed,supported_total,reserved_passed,reserved_total,mean_body_characters,p50_query_ms,p95_query_ms,model_calls,network_calls
+B0_coarse,4,24,0,13,2,8,115.5,1.0585,1.388,0,0
+B1_eligible_coarse,7,24,0,13,2,8,94.5,1.0525,1.762,0,0
+B2_exact_fts,24,24,13,13,8,8,130.12,1.5225,2.665,0,0

@@ -1,0 +1,32 @@
+{
+  "version": "knowledge-fixed-v1",
+  "baseline_commit": "f120a366c286c60f3a7a6506521036886c77a93c",
+  "scope": "Authored deterministic retrieval and failure fixtures, not independent Rust truth or live model accuracy",
+  "split_policy": "16 development queries and 8 reserved queries, frozen before first evaluation. Reserved mechanism families are mixing, fuel, unknown_hp, feedback, batch and inventory. The rule corpus is shared; this is not a source-independent or human-blind holdout.",
+  "cases": [
+    {"id":"recipe_c4","group":"recipes","split":"development","message":"C4配方是什么","expected_status":"supported_snapshot","required_ids":["recipe:explosive.timed"]},
+    {"id":"recipe_powder","group":"recipes","split":"development","message":"火药配方是什么","expected_status":"supported_snapshot","required_ids":["recipe:gunpowder"]},
+    {"id":"recipe_explosives","group":"recipes","split":"development","message":"炸药配方是什么","expected_status":"supported_snapshot","required_ids":["recipe:explosives"]},
+    {"id":"technology","group":"recipes","split":"development","message":"C4需要几级工作台，解释蓝图条件","expected_status":"supported_snapshot","required_ids":["recipe:explosive.timed","explain:technology"]},
+    {"id":"rounding","group":"raid","split":"development","message":"为什么250血还需要一颗C4","previous":{"operation":"raid","target":"building:base-wall:stone","hp":250},"expected_status":"supported_snapshot","required_ids":["raid:building:base-wall:stone","recipe:explosive.timed","explain:rounding"]},
+    {"id":"targets","group":"raid","split":"development","message":"为什么两面石墙不能合并血量","expected_status":"supported_snapshot","required_ids":["raid:building:base-wall:stone","explain:targets"]},
+    {"id":"optimization","group":"raid","split":"development","message":"解释石墙最省资源的比较范围","expected_status":"supported_snapshot","required_ids":["raid:building:base-wall:stone","explain:optimization"]},
+    {"id":"conditions","group":"raid","split":"development","message":"解释石墙硬面命中条件","expected_status":"supported_snapshot","required_ids":["raid:building:base-wall:stone","explain:conditions"]},
+    {"id":"source","group":"version","split":"development","message":"C4的来源依据是什么","expected_status":"supported_snapshot","required_ids":["recipe:explosive.timed","explain:version","excerpt:c4"]},
+    {"id":"latest","group":"version","split":"development","message":"最新版本C4配方是什么","expected_status":"latest_unverified","required_ids":[]},
+    {"id":"console","group":"version","split":"development","message":"主机版C4配方是什么","expected_status":"scope_mismatch","required_ids":[]},
+    {"id":"old_date","group":"version","split":"development","message":"2025-11-01的C4配方是什么","expected_status":"scope_mismatch","required_ids":[]},
+    {"id":"unknown_mechanism","group":"failures","split":"development","message":"/knowledge 为什么C4会吸引巡逻直升机","expected_status":"missing_evidence","required_ids":[]},
+    {"id":"unsupported_guarantee","group":"failures","split":"development","message":"/knowledge C4伤害翻倍的原理","expected_status":"missing_evidence","required_ids":[]},
+    {"id":"context_limit","group":"failures","split":"development","message":"C4配方是什么","max_chars":1,"expected_status":"missing_evidence","required_ids":[]},
+    {"id":"index_failure","group":"failures","split":"development","message":"为什么石墙要向上取整","fault":{"index_unavailable":true},"expected_status":"index_unavailable","required_ids":[]},
+    {"id":"mixing","group":"secondary","split":"reserved","message":"/knowledge 解释混合台火药配方路径","expected_status":"supported_snapshot","required_ids":["recipe:gunpowder","recipe:mix","explain:mixing"]},
+    {"id":"fuel","group":"secondary","split":"reserved","message":"/knowledge C4燃油为何没有展开原料","expected_status":"supported_snapshot","required_ids":["recipe:explosive.timed","explain:fuel"]},
+    {"id":"unknown_hp","group":"secondary","split":"reserved","message":"/knowledge 石墙受损但不知道血量应如何处理","expected_status":"supported_snapshot","required_ids":["raid:building:base-wall:stone","explain:unknown_hp"]},
+    {"id":"feedback","group":"secondary","split":"reserved","message":"/knowledge C4资料冲突应如何处理","expected_status":"supported_snapshot","required_ids":["recipe:explosive.timed","explain:feedback"]},
+    {"id":"pending","group":"lifecycle","split":"reserved","message":"/knowledge 解释截图库存抵扣","fault":{"document_id":"explain:inventory","field":"admission","value":"pending"},"expected_status":"missing_evidence","required_ids":[]},
+    {"id":"conflicted","group":"lifecycle","split":"reserved","message":"/knowledge 解释截图库存抵扣","fault":{"document_id":"explain:inventory","field":"admission","value":"conflicted"},"expected_status":"missing_evidence","required_ids":[]},
+    {"id":"old_evidence","group":"lifecycle","split":"reserved","message":"/knowledge 解释每批产出与批次","fault":{"document_id":"explain:batch","field":"snapshot","value":"legacy-2025"},"expected_status":"missing_evidence","required_ids":[]},
+    {"id":"revoked","group":"lifecycle","split":"reserved","message":"/knowledge 解释每批产出与批次","fault":{"document_id":"explain:batch","revoke":true},"expected_status":"missing_evidence","required_ids":[]}
+  ]
+}

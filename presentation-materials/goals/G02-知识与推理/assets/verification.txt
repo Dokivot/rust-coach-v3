@@ -1,0 +1,56 @@
+G02 / G06 提交前核验记录
+日期：2026-11-05T08:09:25.928588+08:00
+业务版本：9ad757a292fb90cdbafc9170c17f3d23d67bd3e6
+范围：展示材料及其本地证据；没有付费模型调用、浏览器录像或游戏内验证。
+
+本轮最终重跑（重叠的早期运行不累计）：
+$ .venv/bin/python -m pytest -q tests/test_knowledge.py tests/test_knowledge_audit.py tests/test_vision.py::test_screenshot_craft_raid_explanation_and_revocation_use_one_release tests/test_advice.py::test_advice_calculations_cannot_use_revoked_dependencies
+........................................................................ [ 98%]
+.                                                                        [100%]
+73 passed in 3.32s
+
+$ node --test tests/test_chat_ui.cjs
+✔ details expose reports and sources as inert text after the short answer (5.383667ms)
+✔ legacy and detailed answers avoid empty or duplicate disclosures (0.513ms)
+✔ English answers use an English disclosure label (0.354083ms)
+✔ knowledge feedback stays attached to its original conversation and cited evidence (1.2965ms)
+✔ knowledge command can be sent without model credentials (7.25ms)
+✔ sending moves images immediately and replaces previews with saved images: image only (2.877958ms)
+✔ sending moves images immediately and replaces previews with saved images: 看看这张图 (4.224917ms)
+✔ server failure restores the exact draft and retries with the same request and uploads (2.436625ms)
+✔ network failure restores the exact draft and retries with the same request and uploads (1.533917ms)
+✔ partial upload failure restores all files and retries only the missing upload (2.670792ms)
+✔ editing restored attachments creates a new request and releases only discarded previews (1.222625ms)
+✔ editing restored text creates a new request without reuploading images (0.761625ms)
+✔ starting a new conversation releases a restored draft without carrying its attachments (0.880125ms)
+✔ real stage frames update the UI before the answer and preserve the screenshot draft (13.027ms)
+✔ stream error restores the draft and keeps retries idempotent (1.041208ms)
+✔ stream disconnect restores the draft and keeps retries idempotent (0.872625ms)
+✔ stream wrong-request restores the draft and keeps retries idempotent (0.858083ms)
+✔ stream wrong-result restores the draft and keeps retries idempotent (0.75975ms)
+ℹ tests 18
+ℹ suites 0
+ℹ pass 18
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 147.675417
+
+
+已保存报告核对（本轮复用报告，不声称重新运行评测）：
+current-evaluation.json 与 evals/results/knowledge-fixed-audit-v4-2026-11-05.json 字节一致，报告列出的源码hash匹配当前业务版本。
+24案例：B0 4/24，B1 7/24，B2 24/24；B2包含13应答例与11边界例；B0/B1通过例全为边界例。
+audit-evaluation.json 与 evals/results/knowledge-audit-v4-2026-11-05.json 字节一致，报告列出的源码hash匹配当前业务版本。
+18审查回归：B2 18/18；没有独立保留集，不与24例或自动测试相加。
+fixed-evaluation.json 保留原历史报告字节，其源码失配清单见 source-manifest.json；历史618项全量测试未在此重跑。
+representative-io.json 采集前后源码hash一致，记录的源码hash与最终检查点一致，模型调用0。
+lifecycle-examples.json 为同一采集的子集，不是独立运行。
+
+可复现命令与夹具边界见 demo.md；源文件hash、报告来源与提交前状态见 source-manifest.json。
+
+提交前材料检查：
+140处相对链接的文件及锚点存在；两份brief均含8节，talk-track均含4节和3个追问。
+两张Mermaid源码与各自brief一致；历史与当前汇总CSV对应报告，历史明细为72条策略×案例记录。
+生命周期摘录属于同一次采集；当前源码及报告hash匹配；历史报告hash保持不变。
+git diff --check -- presentation-materials：通过。
