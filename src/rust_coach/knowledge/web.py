@@ -8,7 +8,7 @@ from urllib.parse import urljoin, urlsplit, urlunsplit
 
 import httpx
 from bs4 import BeautifulSoup
-from rust_coach.performance import observe, span
+from rust_coach.performance import observe, span, transport_status
 
 
 logger = logging.getLogger("rust_coach")
@@ -112,6 +112,7 @@ class WebResearch:
     async def _request(self, url, headers=None, *, method="GET", payload=None):
         async with self.client.stream(method, url, headers=headers, json=payload,
                                       timeout=10, follow_redirects=False) as response:
+            transport_status(response.status_code)
             if response.is_redirect:
                 return response.status_code, response.headers, b""
             if response.status_code != 200:

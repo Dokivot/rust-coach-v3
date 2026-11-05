@@ -11,7 +11,7 @@ from rust_coach.contracts import AppError, ModelMessage
 from rust_coach.memory.policy import TRIGGER, UNTRUSTED, deterministic_candidates, select_teaching, validate_candidate
 from rust_coach.memory.schemas import CONCEPTS, MemoryCandidate, MemoryExtraction
 from rust_coach.memory.store import MemoryStore, now_iso
-from rust_coach.performance import current_operation
+from rust_coach.performance import current_operation, span
 
 
 logger = logging.getLogger("rust_coach")
@@ -169,8 +169,9 @@ class MemoryService:
                 with measurement:
                     async with asyncio.timeout(self.settings.memory_timeout_seconds):
                         candidates = await self.extract(row["user"], job["previous_teaching"])
-                job["elapsed_ms"] = round((monotonic() - started) * 1000)
-                self.finish_job(row["sequence"], metadata, candidates, "complete")
+                    job["elapsed_ms"] = round((monotonic() - started) * 1000)
+                    with span("memory.commit"):
+                        self.finish_job(row["sequence"], metadata, candidates, "complete")
             except asyncio.CancelledError:
                 raise
             except Exception as error:

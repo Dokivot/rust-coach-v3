@@ -68,6 +68,7 @@ def normalize_usage(raw):
 
 
 def summarize(spans, *, incomplete=False):
+    incomplete = incomplete or any(item["status"] == "running" for item in spans)
     calls = [item for item in spans if item["kind"] == "model"]
     web = [item for item in spans if item["kind"] == "web"]
     tokens = {}
@@ -117,24 +118,42 @@ class PerformanceStore:
         return self.write("INSERT INTO performance_spans VALUES (?,?,?) ON CONFLICT(id) DO UPDATE SET payload=excluded.payload",
                           (data["id"], run_id, json.dumps(data)))
 
+    @contextmanager
+    def connection(self):
+        with self.conversations.connection() as connection:
+            connection.execute("PRAGMA busy_timeout = 0")
+            yield connection
+
+    def recording_failed(self):
+        if not self.write_failed:
+            logger.error("performance_recording_failed; metrics incomplete")
+        self.write_failed = True
+
     def write(self, statement, parameters):
         try:
-            with self.conversations.connection() as connection:
+            with self.connection() as connection:
                 connection.execute(statement, parameters)
             return True
         except sqlite3.Error:
-            if not self.write_failed:
-                logger.error("performance_recording_failed; metrics incomplete")
-            self.write_failed = True
+            self.recording_failed()
             return False
 
     @contextmanager
     def run(self, kind, *, conversation_id=None, request_id=None, parent_run_id=None):
+        parent_operation = current_operation()
+        if parent_run_id is None and parent_operation:
+            parent_run_id = parent_operation.data["id"]
+        lookup_failed = False
         if conversation_id is not None:
-            with self.conversations.connection() as connection:
-                if not connection.execute("SELECT 1 FROM conversations WHERE id=?", (conversation_id,)).fetchone():
-                    conversation_id = None
+            try:
+                with self.connection() as connection:
+                    if not connection.execute("SELECT 1 FROM conversations WHERE id=?", (conversation_id,)).fetchone():
+                        conversation_id = None
+            except sqlite3.Error:
+                self.recording_failed()
+                lookup_failed = True
         operation = Operation(self, kind, conversation_id, request_id, parent_run_id)
+        operation.data["recording_incomplete"] |= lookup_failed
         token = _operation.set(operation)
         parent = _span.set(None)
         try:
@@ -161,13 +180,17 @@ class PerformanceStore:
         if clauses:
             query += " WHERE " + " AND ".join(clauses)
         runs = []
-        with self.conversations.connection() as connection:
+        with self.connection() as connection:
+            connection.execute("BEGIN")
             count = connection.execute("SELECT COUNT(*) FROM (" + query + ")", parameters).fetchone()[0]
             for row in connection.execute(query + " ORDER BY rowid DESC LIMIT ?", [*parameters, limit]):
                 run = json.loads(row["payload"])
                 run["spans"] = [json.loads(span["payload"]) for span in connection.execute(
                     "SELECT payload FROM performance_spans WHERE run_id=? ORDER BY rowid", (run["id"],))]
-                run["summary"] = summarize(run["spans"], incomplete=self.write_failed or run.get("recording_incomplete", False))
+                incomplete = (self.write_failed or run.get("recording_incomplete", False)
+                              or run["status"] == "running"
+                              or run.get("span_count", len(run["spans"])) != len(run["spans"]))
+                run["summary"] = summarize(run["spans"], incomplete=incomplete)
                 runs.append(run)
             background = None
             if conversation_id is not None and request_id is not None:
@@ -178,7 +201,7 @@ class PerformanceStore:
         return {"version": "performance-v1", "runs": list(reversed(runs)), "total_runs": count,
                 "truncated": count > limit, "background_memory_status": background,
                 "summary": summarize([span for run in runs for span in run["spans"]],
-                                     incomplete=self.write_failed or any(run.get("recording_incomplete") for run in runs)),
+                                     incomplete=self.write_failed or any(run["summary"]["recording_status"] == "incomplete" for run in runs)),
                 "scope": "返回的运行记录；前台、后台、探测分别统计；非浏览器端到端时间。",
                 "shared_request_budget": False}
 
@@ -191,8 +214,8 @@ class Operation:
         self.data = {"id": str(uuid4()), "kind": kind, "conversation_id": conversation_id,
                      "request_id": request_id, "parent_run_id": parent_run_id, "started_at": timestamp(),
                      "ended_at": None, "duration_ms": None, "status": "running", "error_code": None,
-                     "progress": [], "observations": [], "recording_incomplete": False,
-                     "source_sha256": store.source_sha256, "measurement_version": "performance-v1"}
+                     "progress": [], "observations": [], "recording_incomplete": False, "span_count": 0,
+                     "source_sha256": store.source_sha256, "measurement_version": "performance-v2"}
         self.save()
 
     def save(self):
@@ -224,6 +247,7 @@ def span(name, kind="stage", **metadata):
             "name": name, "kind": kind, "started_at": timestamp(), "ended_at": None,
             "start_offset_ms": round((started - operation.started) * 1000, 3),
             "duration_ms": None, "status": "running", **metadata}
+    operation.data["span_count"] += 1
     if not operation.store.write_span(operation.data["id"], item):
         operation.data["recording_incomplete"] = True
     token = _span.set(item)
@@ -280,8 +304,14 @@ def provider_dispatched():
 
 def provider_usage(raw):
     item = _span.get()
-    if item and item.get("kind") == "model":
+    if item and item.get("kind") == "model" and raw is not None:
         item["usage"] = normalize_usage(raw)
+
+
+def transport_status(status):
+    item = _span.get()
+    if item and item.get("kind") in {"model", "web"}:
+        item["http_status"] = status
 
 
 class MeteredModel:
@@ -309,7 +339,8 @@ class MeteredModel:
                   dispatched=False, input_text_chars=text_chars, image_count=images,
                   max_output_tokens=self.settings.max_output_tokens, usage=normalize_usage(None)) as item:
             reply = await self.wrapped.complete(messages)
-            item.update(usage=normalize_usage(reply.usage), output_chars=len(reply.content), truncated=reply.truncated)
+            provider_usage(reply.usage)
+            item.update(output_chars=len(reply.content), truncated=reply.truncated)
             return reply
 
 

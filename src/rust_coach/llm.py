@@ -5,7 +5,32 @@ import httpx
 
 from rust_coach.config import Settings
 from rust_coach.contracts import AppError, ImagePart, ModelMessage, ModelReply
-from rust_coach.performance import provider_dispatched, provider_usage
+from rust_coach.performance import provider_dispatched, provider_usage, transport_status
+
+
+class StreamUsage:
+    def __init__(self):
+        self.pending = bytearray()
+        self.lines = []
+
+    def feed(self, chunk):
+        self.pending.extend(chunk)
+        while b"\n" in self.pending:
+            line, _, remaining = self.pending.partition(b"\n")
+            self.pending = remaining
+            line = line.rstrip(b"\r")
+            if line.startswith(b"data:"):
+                self.lines.append(line[5:].lstrip(b" "))
+            elif not line and self.lines:
+                frame = b"\n".join(self.lines)
+                self.lines = []
+                try:
+                    event = json.loads(frame)
+                except (ValueError, UnicodeError):
+                    continue
+                response = event.get("response") if isinstance(event, dict) else None
+                if isinstance(response, dict) and response.get("usage") is not None:
+                    provider_usage(response["usage"])
 
 
 class ChatModel(Protocol):
@@ -50,6 +75,7 @@ class CompatibleChatModel:
             payload.update(messages=serialized_messages)
             payload[self.settings.output_token_parameter] = self.settings.max_output_tokens
         try:
+            stream_usage = StreamUsage() if self.settings.api_mode == "responses" and self.stream_responses else None
             provider_dispatched()
             async with self.client.stream(
                 "POST",
@@ -57,6 +83,7 @@ class CompatibleChatModel:
                 json=payload,
                 headers={"Authorization": f"Bearer {self.settings.api_key.get_secret_value()}"},
             ) as response:
+                transport_status(response.status_code)
                 if response.status_code in {401, 403}:
                     raise AppError("model_auth_failed", "模型服务拒绝了凭据，请检查 API Key 和模型权限。", 502)
                 if response.status_code == 429:
@@ -68,6 +95,8 @@ class CompatibleChatModel:
                     raw.extend(chunk)
                     if len(raw) > 2_000_000:
                         raise AppError("model_response_too_large", "模型返回内容过大，请缩短问题后重试。", 502)
+                    if stream_usage is not None:
+                        stream_usage.feed(chunk)
         except httpx.TimeoutException as error:
             raise AppError("model_timeout", "模型响应超时，请稍后重试。", 504) from error
         except httpx.RequestError as error:
