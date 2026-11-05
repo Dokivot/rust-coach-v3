@@ -1,5 +1,6 @@
 import hashlib
 import json
+import sqlite3
 from datetime import datetime, timezone
 
 from rust_coach.contracts import AppError
@@ -8,6 +9,24 @@ from rust_coach.knowledge.schemas import KnowledgeRelease
 
 def digest(value):
     return hashlib.sha256(json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
+
+
+def evidence_identity(document):
+    return digest({key: document[key] for key in ("kind", "text", "source", "source_hash", "snapshot", "platform", "ruleset", "branch")})
+
+
+def index_body(document):
+    return " ".join([document["title"], document["text"], document["terms"], *document["entities"], *document["claims"]])
+
+
+def checked_payload(row):
+    try:
+        payload = json.loads(row["payload"])
+    except (TypeError, ValueError) as error:
+        raise AppError("knowledge_integrity_error", "知识包无法读取，已停止采用该包。", 503) from error
+    if digest(payload) != row["sha256"]:
+        raise AppError("knowledge_integrity_error", "知识包完整性检查失败，已停止采用该包。", 503)
+    return payload
 
 
 class KnowledgeRegistry:
@@ -51,7 +70,7 @@ class KnowledgeRegistry:
                 for document in release.documents:
                     connection.execute("INSERT INTO knowledge_units VALUES (?,?,?)", (release.id, document.id, document.model_dump_json()))
                     connection.execute("INSERT INTO knowledge_fts VALUES (?,?,?)", (release.id, document.id,
-                        " ".join([document.title, document.text, document.terms, *document.entities, *document.claims])))
+                        index_body(document.model_dump())))
             active = connection.execute("SELECT * FROM knowledge_active WHERE singleton=1").fetchone()
             if active is None:
                 revision = active["revision"] + 1 if active else 1
@@ -79,17 +98,47 @@ class KnowledgeRegistry:
     def snapshot(self, connection=None):
         if connection is None:
             with self.store.connection() as transaction:
+                transaction.execute("BEGIN")
                 return self.snapshot(transaction)
         row = connection.execute("SELECT r.payload,r.sha256,a.revision FROM knowledge_active a JOIN knowledge_releases r ON r.id=a.release_id WHERE a.singleton=1").fetchone()
         if not row:
             raise AppError("knowledge_unavailable", "没有可用的演示知识包，请先完成本地发布。", 503)
-        release = json.loads(row["payload"])
-        if digest(release) != row["sha256"]:
-            raise AppError("knowledge_integrity_error", "知识包完整性检查失败，已停止采用该包。", 503)
+        release = checked_payload(row)
         revoked = {item["unit_id"]: item["reason"] for item in connection.execute(
             "SELECT unit_id,reason FROM knowledge_revocations WHERE release_id=?", (release["id"],))}
+        withdrawn = {}
+        packages = {release["id"]: {document["id"]: document for document in release["documents"]}}
+        for item in connection.execute("SELECT r.id,r.payload,r.sha256,v.unit_id,v.reason FROM knowledge_revocations v "
+                                       "JOIN knowledge_releases r ON r.id=v.release_id"):
+            if item["id"] not in packages:
+                packages[item["id"]] = {document["id"]: document for document in checked_payload(item)["documents"]}
+            document = packages[item["id"]].get(item["unit_id"])
+            if document is None:
+                raise AppError("knowledge_integrity_error", "撤回记录与知识包不一致，已停止采用。", 503)
+            withdrawn[evidence_identity(document)] = item["reason"]
+        for document in release["documents"]:
+            identity = evidence_identity(document)
+            if identity in withdrawn:
+                revoked[document["id"]] = withdrawn[identity]
         return {"release": release, "release_id": release["id"], "release_sha256": row["sha256"],
                 "registry_revision": row["revision"], "revoked": revoked}
+
+    def validate_index(self, snapshot, connection):
+        rows = connection.execute("SELECT unit_id,body FROM knowledge_fts WHERE release_id=?", (snapshot["release_id"],)).fetchall()
+        expected = {document["id"]: index_body(document) for document in snapshot["release"]["documents"]}
+        if len(rows) != len(expected) or {row["unit_id"]: row["body"] for row in rows} != expected:
+            raise sqlite3.DatabaseError("incomplete_knowledge_index")
+
+    def rebuild_index(self):
+        with self.store.connection() as connection:
+            connection.execute("BEGIN IMMEDIATE")
+            snapshot = self.snapshot(connection)
+            connection.execute("DELETE FROM knowledge_fts WHERE release_id=?", (snapshot["release_id"],))
+            for document in snapshot["release"]["documents"]:
+                connection.execute("INSERT INTO knowledge_fts VALUES (?,?,?)",
+                                   (snapshot["release_id"], document["id"], index_body(document)))
+            connection.execute("DELETE FROM knowledge_queries")
+        return {"release_id": snapshot["release_id"], "indexed_documents": len(snapshot["release"]["documents"])}
 
     def validate(self, reference, connection=None):
         current = self.snapshot(connection)

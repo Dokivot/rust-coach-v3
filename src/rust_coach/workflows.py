@@ -345,9 +345,14 @@ def build_chat_graph(model: ChatModel, instruction_role="system", calculation_mo
         report_stage("retrieve")
         evidence = knowledge_service.retrieve(state["messages"][-1].content, state.get("previous_calculation"))
         task = CoachTaskRepresentation.model_validate(state["task"])
+        claims = tuple({"id": document["id"], "text": document["text"], "source": document["source"]}
+                       for document in evidence["documents"]) if evidence["status"] == "supported_snapshot" else ()
+        if evidence.get("derivation") and evidence["status"] == "supported_snapshot":
+            claims += ({"calculation_id": evidence["derivation"]["calculation_id"],
+                        "input": evidence["derivation"]["input"], "result": evidence["derivation"]["result"]},)
         result = DecisionResult(task_id=task.task_id, status="conditional" if evidence["status"] == "supported_snapshot" else "blocked",
             result_kind="chat", solution={"knowledge_status": evidence["status"]},
-            supported_claims=tuple({"id": document["id"], "text": document["text"], "source": document["source"]} for document in evidence["documents"]),
+            supported_claims=claims,
             evidence_refs=tuple(document["id"] for document in evidence["documents"]), limitations=tuple(evidence["limitations"]))
         architecture = dict(state.get("architecture") or {})
         architecture["trace"] = emit_trace(architecture.get("trace"), layer="knowledge", component="local-retrieval",

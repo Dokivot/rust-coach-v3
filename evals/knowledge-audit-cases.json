@@ -1,0 +1,26 @@
+{
+  "version": "knowledge-audit-v1",
+  "baseline_commit": "c402737",
+  "scope": "Adversarial engineering regression cases authored during audit; not model accuracy or independent game truth.",
+  "split_policy": "All cases are audit regression cases. No unseen holdout or independence claim.",
+  "cases": [
+    {"id":"rocket_recipe","group":"retrieval","split":"audit","message":"火箭弹配方是什么","expected_status":"supported_snapshot","required_ids":["recipe:ammo.rocket.basic"]},
+    {"id":"hv_rocket","group":"retrieval","split":"audit","message":"高速火箭弹配方是什么","expected_status":"supported_snapshot","required_ids":["recipe:ammo.rocket.hv"]},
+    {"id":"satchel","group":"retrieval","split":"audit","message":"炸药包配方是什么","expected_status":"supported_snapshot","required_ids":["recipe:explosive.satchel"]},
+    {"id":"fuel_recipe","group":"retrieval","split":"audit","message":"低品质燃油配方是什么","expected_status":"supported_snapshot","required_ids":["recipe:lowgradefuel"]},
+    {"id":"wall_hp","group":"retrieval","split":"audit","message":"石墙满血多少","expected_status":"supported_snapshot","required_ids":["raid:building:base-wall:stone"]},
+    {"id":"armored_door","group":"retrieval","split":"audit","message":"钢铁门满血多少","expected_status":"supported_snapshot","required_ids":["raid:item:door.hinged.toptier"]},
+    {"id":"unknown_damage_target","group":"retrieval","split":"audit","message":"C4伤害是多少","expected_status":"missing_evidence","required_ids":[]},
+    {"id":"chinese_date","group":"freshness","split":"audit","message":"2026年11月5日C4配方是什么","expected_status":"scope_mismatch","required_ids":[]},
+    {"id":"slash_date","group":"freshness","split":"audit","message":"2026/11/05的C4配方是什么","expected_status":"scope_mismatch","required_ids":[]},
+    {"id":"unknown_build","group":"freshness","split":"audit","message":"build 12345的C4配方是什么","expected_status":"scope_mismatch","required_ids":[]},
+    {"id":"partial_date","group":"freshness","split":"audit","message":"2026年11月C4配方是什么","expected_status":"scope_mismatch","required_ids":[]},
+    {"id":"snapshot_date","group":"freshness","split":"audit","message":"2026年11月1日C4配方是什么","expected_status":"supported_snapshot","required_ids":["recipe:explosive.timed"]},
+    {"id":"copied_rule","group":"revocation","split":"audit","message":"C4配方是什么","fault":{"document_id":"recipe:explosive.timed","revoke":true,"copy_release":true},"expected_status":"missing_evidence","required_ids":[]},
+    {"id":"renamed_explanation","group":"revocation","split":"audit","message":"为什么石墙向上取整","fault":{"document_id":"explain:rounding","revoke":true,"copy_release":true,"rename":"explain:renamed"},"expected_status":"missing_evidence","required_ids":[],"allowed_ids":["raid:building:base-wall:stone"]},
+    {"id":"malformed_cache","group":"recovery","split":"audit","message":"为什么石墙向上取整","fault":{"cache_payload":"{"},"expected_status":"supported_snapshot","required_ids":["raid:building:base-wall:stone","explain:rounding"]},
+    {"id":"partial_cache","group":"recovery","split":"audit","message":"为什么石墙向上取整","fault":{"cache_payload":"[\"raid:building:base-wall:stone\"]"},"expected_status":"supported_snapshot","required_ids":["raid:building:base-wall:stone","explain:rounding"]},
+    {"id":"empty_index","group":"recovery","split":"audit","message":"为什么石墙向上取整","fault":{"empty_index":true},"expected_status":"index_unavailable","required_ids":[]},
+    {"id":"false_premise","group":"reasoning","split":"audit","message":"为什么250血还需要两颗C4","previous":{"operation":"raid","target":"building:base-wall:stone","hp":500},"expected_status":"supported_snapshot","required_ids":["raid:building:base-wall:stone","recipe:explosive.timed","explain:rounding"],"expected_derivation":{"hp":250,"count":1,"formula":"ceil(250 / 275) × 1 = 1"}}
+  ]
+}

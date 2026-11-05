@@ -1,5 +1,6 @@
 import argparse
 import json
+import sqlite3
 from pathlib import Path
 
 from pydantic import ValidationError
@@ -15,6 +16,7 @@ def main(argv=None):
     parser.add_argument("--database", type=Path, default=Settings().database_path)
     commands = parser.add_subparsers(dest="command", required=True)
     commands.add_parser("status")
+    commands.add_parser("rebuild-index")
     export = commands.add_parser("export")
     export.add_argument("output", type=Path)
     install = commands.add_parser("install")
@@ -37,7 +39,9 @@ def main(argv=None):
     try:
         knowledge = LocalKnowledge(ConversationStore(args.database))
         registry = knowledge.registry
-        if args.command == "install":
+        if args.command == "rebuild-index":
+            result = registry.rebuild_index()
+        elif args.command == "install":
             result = registry.install(json.loads(args.package.read_text()), knowledge.catalog.sha256)
         elif args.command == "activate":
             registry.activate(args.release_id, args.sha256, args.review_note)
@@ -60,7 +64,7 @@ def main(argv=None):
             result = registry.snapshot()
         print(json.dumps(result, ensure_ascii=False, indent=2))
         return 0
-    except (AppError, ValidationError, ValueError, OSError) as error:
+    except (AppError, ValidationError, ValueError, OSError, sqlite3.DatabaseError) as error:
         print(json.dumps({"error": getattr(error, "code", type(error).__name__), "message": str(error)}, ensure_ascii=False))
         return 1
 

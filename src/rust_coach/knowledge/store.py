@@ -3,6 +3,25 @@ import json
 from datetime import datetime, timedelta, timezone
 
 
+def web_references(advice=None, presentation=None):
+    documents = list(((advice or {}).get("evidence") or {}).get("documents", []))
+    documents.extend((presentation or {}).get("web_evidence_context", []))
+    return list({document.get("id", "unknown-source"): {"id": document.get("id", "unknown-source"),
+        "fetched_at": document.get("fetched_at")} for document in documents}.values())
+
+
+def current_web_references(references, ttl_hours, now=None):
+    now = now or datetime.now(timezone.utc)
+    for reference in references:
+        try:
+            observed = datetime.fromisoformat(reference["fetched_at"])
+            if observed.tzinfo is None or not observed <= now < observed + timedelta(hours=ttl_hours):
+                return False
+        except (KeyError, TypeError, ValueError):
+            return False
+    return True
+
+
 class EvidenceStore:
     def __init__(self, conversations):
         self.conversations = conversations

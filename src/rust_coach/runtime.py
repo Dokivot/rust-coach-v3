@@ -24,6 +24,7 @@ from rust_coach.architecture.observability import emit_trace, new_trace
 from rust_coach.architecture.task_context import inventory_selection, previous_working_state
 from rust_coach.player_state.working import effective_state, explicit_event
 from rust_coach.knowledge.service import LocalKnowledge
+from rust_coach.knowledge.store import current_web_references, web_references
 
 
 logger = logging.getLogger("rust_coach")
@@ -81,7 +82,9 @@ class ChatRuntime:
                                 request.presentation_preferences.model_dump() if request.presentation_preferences else None)):
                         raise AppError("request_conflict", "请求标识已用于另一条消息，请重新发送。", 409)
                     report_stage("replay")
-                    saved_knowledge = (turn.presentation or {}).get("knowledge")
+                    if not current_web_references(web_references(turn.advice, turn.presentation), self.settings.evidence_ttl_hours):
+                        raise AppError("knowledge_evidence_expired", "该回答使用的网页证据已过期或时间未知，请发送新请求重新取证。", 409)
+                    saved_knowledge = (turn.presentation or {}).get("knowledge") or (turn.presentation or {}).get("knowledge_context")
                     if saved_knowledge:
                         self.knowledge.registry.validate(saved_knowledge)
                     elif turn.calculation and turn.calculation.get("status") == "calculated":
@@ -148,6 +151,7 @@ class ChatRuntime:
             if request.player_inventory_container and snapshot is None:
                 raise AppError("player_scope_required", "请先为当前对话关联玩家状态档案。", 422)
             history: list[ModelMessage] = []
+            web_context = []
             previous_teaching = (conversation.turns[-1].memory or {}).get("teaching") if conversation.turns and (
                 conversation.turns[-1].player_state_ref or {}).get("scope_id") == scope_id else None
             prepared = self.memory.prepare(request.message, conversation_id, scope_id, previous_teaching)
@@ -159,6 +163,9 @@ class ChatRuntime:
             for turn in reversed(conversation.turns[-self.settings.history_turns:]):
                 if (turn.player_state_ref or {}).get("scope_id") != scope_id:
                     continue
+                web_sources = web_references(turn.advice, turn.presentation)
+                if not current_web_references(web_sources, self.settings.evidence_ttl_hours):
+                    continue
                 historical_knowledge = (turn.presentation or {}).get("knowledge") or (turn.presentation or {}).get("knowledge_context")
                 if historical_knowledge and any(historical_knowledge.get(key) != value for key, value in knowledge_reference.items()):
                     continue
@@ -169,6 +176,7 @@ class ChatRuntime:
                     break
                 history[0:0] = [ModelMessage(role="user", content=turn.user),
                                 ModelMessage(role="assistant", content=turn.assistant)]
+                web_context.extend(web_sources)
                 used_chars += turn_chars
             capabilities = ["calculators", "player_state"]
             if self.vision_service and self.vision_service.capabilities()["enabled"]:
@@ -202,6 +210,9 @@ class ChatRuntime:
                         references={"event": receipt["event"], "revision": receipt["revision"], "observation_id": receipt["observation_id"]})
                 previous_advice = conversation.turns[-1].advice if conversation.turns and (
                     conversation.turns[-1].player_state_ref or {}).get("scope_id") == scope_id else None
+                if previous_advice and not current_web_references(
+                        web_references(previous_advice, conversation.turns[-1].presentation), self.settings.evidence_ttl_hours):
+                    previous_advice = None
                 previous_reference = ((conversation.turns[-1].presentation or {}).get("knowledge") or
                                       (conversation.turns[-1].presentation or {}).get("knowledge_context")) if previous_advice else None
                 if previous_reference:
@@ -268,12 +279,17 @@ class ChatRuntime:
             if presentation:
                 presentation["request_preferences"] = request.presentation_preferences.model_dump() if request.presentation_preferences else None
                 presentation["knowledge_context"] = knowledge_reference
+                combined = web_references(result.get("advice"), {"web_evidence_context": web_context})
+                if combined:
+                    presentation["web_evidence_context"] = combined
             visual = result.get("visual")
             if visual:
                 visual["request_identity"] = self.visual_identity(request)
             report_stage("save")
             with self.store.connection() as connection:
                 connection.execute("BEGIN IMMEDIATE")
+                if not current_web_references(web_references(result.get("advice"), presentation), self.settings.evidence_ttl_hours):
+                    raise AppError("knowledge_evidence_expired", "生成期间网页证据已过期或时间未知，本轮结果未发布，请重新取证。", 409)
                 self.knowledge.registry.validate(knowledge_reference, connection)
                 binding = connection.execute("SELECT scope_id FROM conversation_player_scope WHERE conversation_id=?",
                                              (conversation_id,)).fetchone()
